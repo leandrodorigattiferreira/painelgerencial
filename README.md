@@ -44,12 +44,15 @@ Pronto — é só salvar esse link nos favoritos e usar no dia a dia.
 
 ## Jobs de Marketing · Clientes
 
-Arquivo `jobs.html` — ferramenta separada para as analistas registrarem, em duas etapas, os jobs recebidos de clientes:
+Arquivo `jobs.html` — ferramenta separada para acompanhar os jobs/projetos de clientes, espelhando a planilha de acompanhamento (Antecipa): cada job passa pelas fases **Briefing → Desenvolvimento → Validação Interna → Aprovação Cliente → Concluído** (ou Pausado/Cancelado), com praça (CAM/RIB/SCA/VAR/CE), origem (Cliente/EP Labs), analista, executivo de conta, prioridade, situação, datas por fase, prazo previsto, último contato e próximos passos. **% de conclusão**, **dias em aberto** e **alerta de prazo** são calculados automaticamente a partir da fase e do prazo, do mesmo jeito que a planilha.
 
-1. **Ao receber o job**: cliente, tipo de job, analista responsável, origem/canal, data de recebimento, prazo, valor orçado e observações.
-2. **Ao fechar o job**: marcar como **Fechado** (com valor fechado e data) ou **Perdido** (com motivo e data). Jobs em aberto podem ser fechados com um clique direto no card (✓ Fechado / ✕ Perdido).
+Por cima disso, uma camada comercial: valor orçado, valor fechado e o **veículo de mídia** onde o valor foi fechado (Google Ads, Meta Ads, TV/Rádio, etc.).
 
-A tela principal mostra KPIs (recebidos, em aberto, taxa de conversão, jobs fechados, valor fechado), um comparativo de conversão por analista, filtros por status/analista/cliente/período e a lista de jobs em cards. Os dados são salvos automaticamente (conta ou navegador, como no Painel do Leandro) e podem ser exportados/importados em JSON.
+- **Aba Jobs**: lista em cards com um botão de "▶ Avançar fase" para progredir o job com um clique, além de editar/excluir. Filtros por situação (em andamento/concluído/atrasado/aguardando cliente), praça, analista, executivo, veículo, cliente e período.
+- **Aba Dashboard**: reúne tudo — KPIs (total, em andamento, concluídos, atrasados, aguardando cliente + valor orçado/fechado), funil por fase, e quebras por praça, situação, origem, prioridade, veículo, analista e executivo de conta.
+- **⚙ Cadastros**: tela para cadastrar os nomes de analistas, executivos de conta e veículos de mídia (viram sugestão nos campos do job; um nome novo digitado ali já entra automaticamente no cadastro).
+
+Os dados são salvos automaticamente (conta ou navegador, como no Painel do Leandro) e podem ser exportados/importados em JSON.
 
 Basta abrir `jobs.html` no navegador — não precisa instalar nada.
 
