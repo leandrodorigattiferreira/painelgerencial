@@ -20,10 +20,12 @@
     --line-strong:#D6DAE3;
 
     --brand:#0E8C7F;   --brand-bg:#E4F2EF;
-    --aberto:#2F6FB2;  --aberto-bg:#E7F0F9;
-    --fechado:#159069; --fechado-bg:#E4F3EE;
-    --perdido:#DA3B41; --perdido-bg:#FBE9EA;
-    --late:#C2410C;    --late-bg:#FBEDE4;
+    --noprazo:#2F6FB2;    --noprazo-bg:#E7F0F9;
+    --aguardando:#9A57A8; --aguardando-bg:#F4EBF6;
+    --atrasado:#C2410C;   --atrasado-bg:#FBEDE4;
+    --concluido:#159069;  --concluido-bg:#E4F3EE;
+    --pausado:#838C9E;    --pausado-bg:#EEF0F4;
+    --cancelado:#DA3B41;  --cancelado-bg:#FBE9EA;
     --accent:#171C28;  --accent-bg:#EBEDF2;
 
     --r:16px; --r-sm:11px; --r-xs:8px;
@@ -62,16 +64,23 @@
   .btn.primary:hover{background:#000}
   .btn.ghost{border-color:transparent;background:transparent;box-shadow:none;color:var(--muted);padding:9px 10px}
   .savestat{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted)}
-  .savestat .dotok{width:7px;height:7px;border-radius:50%;background:var(--fechado);flex:0 0 auto;box-shadow:0 0 0 3px var(--fechado-bg)}
+  .savestat .dotok{width:7px;height:7px;border-radius:50%;background:var(--concluido);flex:0 0 auto;box-shadow:0 0 0 3px var(--concluido-bg)}
   .savestat .dotwarn{width:7px;height:7px;border-radius:50%;background:#D08412;flex:0 0 auto;box-shadow:0 0 0 3px #FBF1E2}
 
   /* kpis */
-  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:12px}
   .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
   .kpi .l{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
   .kpi .v{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;margin-top:5px;letter-spacing:-.01em}
   .kpi .v small{font-size:12px;font-weight:600;color:var(--muted);margin-left:2px}
   @media (max-width:920px){.kpis{grid-template-columns:repeat(2,1fr)}}
+  .kpis.secondary{margin-bottom:18px}
+  .kpis.secondary .kpi .v{font-size:19px}
+
+  /* tabs */
+  .maintabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;box-shadow:var(--sh);width:max-content;margin-bottom:14px}
+  .maintabs button{border:0;background:transparent;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13.5px;color:var(--muted)}
+  .maintabs button.on{background:var(--ink);color:#fff}
 
   /* toolbar / filters */
   .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
@@ -82,24 +91,19 @@
   .fselect,.fsearch,.fdate{border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:7px 11px;font-size:13px;color:var(--ink-soft);box-shadow:var(--sh)}
   .fsearch{min-width:160px}
 
-  /* tabs */
-  .maintabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;box-shadow:var(--sh);width:max-content;margin-bottom:14px}
-  .maintabs button{border:0;background:transparent;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13.5px;color:var(--muted)}
-  .maintabs button.on{background:var(--ink);color:#fff}
-
   /* breakdown / dashboard */
   .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
   @media (max-width:820px){.dash-grid{grid-template-columns:1fr}}
   .breakdown{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;box-shadow:var(--sh)}
   .breakdown h3{margin:0 0 12px;font-size:13px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
-  .brow{display:grid;grid-template-columns:120px 1fr 50px 90px;align-items:center;gap:10px;padding:7px 0;font-size:13px}
+  .brow{display:grid;grid-template-columns:minmax(90px,150px) 1fr 46px 88px;align-items:center;gap:10px;padding:7px 0;font-size:13px}
   .brow+.brow{border-top:1px solid var(--line)}
-  .brow .name{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .brow .name{font-weight:700;color:var(--ink);line-height:1.25}
   .brow .bar{height:8px;border-radius:99px;background:#E3E7EE;overflow:hidden}
   .brow .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),#1FB8A6)}
   .brow .pct{font-weight:700;color:var(--ink-soft);text-align:right}
-  .brow .val{color:var(--muted);text-align:right}
-  @media (max-width:640px){.brow{grid-template-columns:90px 1fr 60px}.brow .val{display:none}}
+  .brow .val{color:var(--muted);text-align:right;white-space:nowrap}
+  @media (max-width:640px){.brow{grid-template-columns:100px 1fr 40px}.brow .val{display:none}}
   .funnel{display:flex;gap:10px;flex-wrap:wrap}
   .funnel .fitem{flex:1;min-width:110px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
   .funnel .fitem .n{font-family:"Bricolage Grotesque";font-weight:800;font-size:20px}
@@ -111,7 +115,7 @@
   .chiplist{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
   .chip{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
   .chip button{border:0;background:var(--line);color:var(--ink-soft);width:18px;height:18px;border-radius:50%;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
-  .chip button:hover{background:var(--perdido-bg);color:var(--perdido)}
+  .chip button:hover{background:var(--cancelado-bg);color:var(--cancelado)}
   .addrow{display:flex;gap:8px;margin-top:9px}
   .addrow input{flex:1;border:1px solid var(--line-strong);border-radius:10px;padding:8px 11px;background:var(--surface-2)}
   .addrow button{border:0;background:var(--ink);color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap}
@@ -119,51 +123,56 @@
   /* list */
   .empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:40px 20px;text-align:center;color:var(--muted)}
   .cards{display:flex;flex-direction:column;gap:10px}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;box-shadow:var(--sh);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-  .card .main{flex:1;min-width:220px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;box-shadow:var(--sh)}
+  .card .top-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
   .card .cliente{font-weight:700;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-  .card .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft)}
-  .card .meta{font-size:12.5px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
-  .card .meta b{color:var(--ink-soft);font-weight:600}
-  .card .meta .late{color:var(--late);font-weight:700}
+  .card .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft);white-space:nowrap}
+  .card .badges{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
   .status{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
-  .status.aberto{background:var(--aberto-bg);color:var(--aberto)}
-  .status.fechado{background:var(--fechado-bg);color:var(--fechado)}
-  .status.perdido{background:var(--perdido-bg);color:var(--perdido)}
-  .card .valores{text-align:right;min-width:110px}
-  .card .valores .vo{font-size:11.5px;color:var(--muted)}
-  .card .valores .vf{font-family:"Bricolage Grotesque";font-weight:800;font-size:16px}
-  .card .valores .vf.up{color:var(--fechado)}
-  .card .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .status.noprazo{background:var(--noprazo-bg);color:var(--noprazo)}
+  .status.aguardandocliente{background:var(--aguardando-bg);color:var(--aguardando)}
+  .status.atrasado{background:var(--atrasado-bg);color:var(--atrasado)}
+  .status.concluido{background:var(--concluido-bg);color:var(--concluido)}
+  .status.pausado{background:var(--pausado-bg);color:var(--pausado)}
+  .status.cancelado{background:var(--cancelado-bg);color:var(--cancelado)}
+  .card .meta{font-size:12.5px;color:var(--muted);margin-top:8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .card .meta b{color:var(--ink-soft);font-weight:600}
+  .card .meta .late{color:var(--atrasado);font-weight:700}
+  .card .pbar-row{display:flex;align-items:center;gap:8px;margin-top:9px}
+  .card .pbar{flex:1;height:7px;border-radius:99px;background:#E3E7EE;overflow:hidden}
+  .card .pbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),#1FB8A6)}
+  .card .pbar-row .pctlabel{font-size:11.5px;font-weight:700;color:var(--muted);white-space:nowrap}
+  .card .valorrow{display:flex;gap:16px;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--muted)}
+  .card .valorrow b{color:var(--ink);font-family:"Bricolage Grotesque";font-weight:800;font-size:14px}
+  .card .proximos{margin-top:8px;font-size:12.5px;color:var(--ink-soft);font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .card .acts{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
   .card .acts button{border:1px solid var(--line-strong);background:var(--surface);border-radius:9px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--ink-soft)}
   .card .acts button:hover{background:var(--surface-2)}
-  .card .acts button.ok{color:var(--fechado);border-color:var(--fechado-bg)}
-  .card .acts button.no{color:var(--perdido);border-color:var(--perdido-bg)}
+  .card .acts button.ok{color:var(--concluido);border-color:var(--concluido-bg)}
   .card .acts button.del{color:var(--faint)}
 
   /* modal */
   .backdrop{position:fixed;inset:0;background:rgba(23,28,40,.42);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto;z-index:80}
   .backdrop.open{display:flex}
-  .modal{background:var(--surface);border-radius:18px;max-width:520px;width:100%;box-shadow:var(--sh-pop);overflow:hidden}
+  .modal{background:var(--surface);border-radius:18px;max-width:560px;width:100%;box-shadow:var(--sh-pop);overflow:hidden}
   .modal header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
   .modal header h3{margin:0;font-family:"Bricolage Grotesque";font-size:18px;font-weight:800}
   .modal header .x{border:0;background:transparent;font-size:20px;color:var(--muted);line-height:1;padding:4px}
-  .modal .form{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px}
+  .modal .form{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px;max-height:78vh;overflow:auto}
   .field label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px;background:var(--surface-2)}
   .field textarea{resize:vertical;min-height:56px}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   @media (max-width:480px){.row2{grid-template-columns:1fr}}
-  .statuspick{display:flex;gap:8px}
-  .statuspick button{flex:1;border:1.5px solid var(--line-strong);background:var(--surface-2);border-radius:10px;padding:9px 6px;font-weight:700;font-size:13px;color:var(--ink-soft)}
-  .statuspick button.on[data-s=aberto]{background:var(--aberto-bg);border-color:var(--aberto);color:var(--aberto)}
-  .statuspick button.on[data-s=fechado]{background:var(--fechado-bg);border-color:var(--fechado);color:var(--fechado)}
-  .statuspick button.on[data-s=perdido]{background:var(--perdido-bg);border-color:var(--perdido);color:var(--perdido)}
-  .section-extra{border-top:1px dashed var(--line-strong);padding-top:12px;margin-top:2px;display:flex;flex-direction:column;gap:12px}
   .save{width:100%;border:0;background:var(--ink);color:#fff;border-radius:11px;padding:12px;font-weight:700;font-size:14.5px;margin-top:4px}
   .save:hover{background:#000}
   .delrow{display:flex;justify-content:center;margin-top:6px}
-  .delrow button{border:0;background:transparent;color:var(--perdido);font-weight:600;font-size:13px}
+  .delrow button{border:0;background:transparent;color:var(--cancelado);font-weight:600;font-size:13px}
+  details.more{border-top:1px dashed var(--line-strong);padding-top:10px;margin-top:2px}
+  details.more summary{cursor:pointer;font-size:12.5px;font-weight:700;color:var(--brand);list-style:none}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more[open] summary{margin-bottom:12px}
+  details.more .form{padding:0;max-height:none;overflow:visible}
 
   .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--sh-pop);z-index:90;opacity:0;transition:.28s;max-width:90vw;text-align:center}
   .toast.show{opacity:1;transform:translate(-50%,0)}
@@ -177,7 +186,7 @@
       <div class="mark">J</div>
       <div>
         <h1>Jobs de Marketing · Clientes</h1>
-        <div class="sub">Registro de recebimento e fechamento de jobs por analista</div>
+        <div class="sub">Acompanhamento de fases do projeto + fechamento comercial por analista</div>
       </div>
     </div>
     <div class="actions">
@@ -190,6 +199,7 @@
   </div>
 
   <div class="kpis" id="kpis"></div>
+  <div class="kpis secondary" id="kpisComercial"></div>
 
   <div class="maintabs" id="mainTabs">
     <button data-v="jobs" class="on">Jobs</button>
@@ -200,16 +210,18 @@
     <div class="filters">
       <div class="seg" id="segStatus">
         <button data-v="todos" class="on">Todos</button>
-        <button data-v="aberto">Em aberto</button>
-        <button data-v="fechado">Fechados</button>
-        <button data-v="perdido">Perdidos</button>
+        <button data-v="andamento">Em andamento</button>
+        <button data-v="concluido">Concluídos</button>
+        <button data-v="atrasado">Atrasados</button>
+        <button data-v="aguardando">Aguardando cliente</button>
       </div>
+      <select class="fselect" id="fPraca"><option value="todos">Todas as praças</option></select>
       <select class="fselect" id="fAnalista"><option value="todos">Todas as analistas</option></select>
       <select class="fselect" id="fExecutivo"><option value="todos">Todos os executivos</option></select>
       <select class="fselect" id="fVeiculo"><option value="todos">Todos os veículos</option></select>
       <input class="fsearch" id="fBusca" placeholder="Buscar cliente...">
-      <input class="fdate" id="fDe" type="date" title="Recebido de">
-      <input class="fdate" id="fAte" type="date" title="Recebido até">
+      <input class="fdate" id="fDe" type="date" title="Início (briefing) de">
+      <input class="fdate" id="fAte" type="date" title="Início (briefing) até">
     </div>
   </div>
 
@@ -220,16 +232,23 @@
 <div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
 
 <script>
-const KEY="jobs-marketing-v1";
+const KEY="jobs-marketing-v2";
 let data={jobs:[],config:{}};
-let filters={status:"todos",analista:"todos",executivo:"todos",veiculo:"todos",q:"",de:"",ate:""};
+let filters={seg:"todos",praca:"todos",analista:"todos",executivo:"todos",veiculo:"todos",q:"",de:"",ate:""};
 let editId=null;
 let mainView="jobs";
 
-const TIPOS=["Campanha","Criativo","Mídia paga","Social media","Landing page / Site","E-mail marketing","Outro"];
-const ORIGENS=["Cliente recorrente","Indicação","Prospecção","Outro"];
+const PRACAS=["CAM","RIB","SCA","VAR","CE"];
+const ORIGENS=["Cliente","EP Labs"];
+const PRIORIDADES=["Alta","Média","Baixa"];
+const FASES=["Briefing","Desenvolvimento","Validação Interna","Aprovação Cliente","Concluído","Pausado","Cancelado"];
+const FASE_PCT={"Briefing":.2,"Desenvolvimento":.45,"Validação Interna":.7,"Aprovação Cliente":.9,"Concluído":1,"Pausado":.1,"Cancelado":0};
+const FASE_ORDEM=["Briefing","Desenvolvimento","Validação Interna","Aprovação Cliente","Concluído"];
+const FASE_AVANCO_DATA={"Desenvolvimento":"dataConclDesenvolvimento","Validação Interna":"dataConclValidacao","Aprovação Cliente":null,"Concluído":"dataAprovacaoCliente"};
+const SITUACOES=["No prazo","Aguardando cliente","Atrasado","Concluído","Pausado","Cancelado"];
 const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu","Outro"];
 const VEICULOS_PADRAO=["Google Ads","Meta Ads","TV / Rádio / Mídia tradicional","Influenciadores / Outros digitais","LinkedIn Ads","TikTok Ads","Outro"];
+function situClass(s){return "status "+(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");}
 
 /* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
 async function load(){
@@ -283,23 +302,44 @@ function toast(msg){
   setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.remove(),320);},2600);
 }
 
+/* ============ campos calculados (espelha as fórmulas da planilha) ============ */
+function pctConcl(j){return FASE_PCT[j.faseAtual]||0;}
+function diasEmAberto(j){
+  const start=pd(j.dataInicioBriefing);if(!start)return null;
+  const end=(j.faseAtual==="Concluído"&&j.dataAprovacaoCliente)?pd(j.dataAprovacaoCliente):d0();
+  if(!end)return null;
+  return Math.round((end-start)/86400000);
+}
+function alertaPrazo(j){
+  if(j.faseAtual==="Concluído"||j.faseAtual==="Cancelado")return "—";
+  const prazo=pd(j.prazoPrevisto);if(!prazo)return "";
+  const diff=Math.round((prazo-d0())/86400000);
+  if(diff<0)return "Atrasado";
+  if(diff<=5)return "Vence em breve";
+  return "No prazo";
+}
+
 /* ============ filtro ============ */
 function filtered(){
   return data.jobs.filter(j=>{
-    if(filters.status!=="todos"&&j.status!==filters.status)return false;
+    if(filters.seg==="andamento"&&!["Briefing","Desenvolvimento","Validação Interna","Aprovação Cliente"].includes(j.faseAtual))return false;
+    if(filters.seg==="concluido"&&j.faseAtual!=="Concluído")return false;
+    if(filters.seg==="atrasado"&&alertaPrazo(j)!=="Atrasado")return false;
+    if(filters.seg==="aguardando"&&j.situacao!=="Aguardando cliente")return false;
+    if(filters.praca!=="todos"&&j.praca!==filters.praca)return false;
     if(filters.analista!=="todos"&&j.analista!==filters.analista)return false;
     if(filters.executivo!=="todos"&&j.executivo!==filters.executivo)return false;
     if(filters.veiculo!=="todos"&&j.veiculo!==filters.veiculo)return false;
     if(filters.q&&!j.cliente.toLowerCase().includes(filters.q.toLowerCase()))return false;
-    if(filters.de&&j.dataRecebimento&&j.dataRecebimento<filters.de)return false;
-    if(filters.ate&&j.dataRecebimento&&j.dataRecebimento>filters.ate)return false;
+    if(filters.de&&j.dataInicioBriefing&&j.dataInicioBriefing<filters.de)return false;
+    if(filters.ate&&j.dataInicioBriefing&&j.dataInicioBriefing>filters.ate)return false;
     return true;
-  }).sort((a,b)=>(b.dataRecebimento||"").localeCompare(a.dataRecebimento||""));
+  }).sort((a,b)=>(b.dataInicioBriefing||"").localeCompare(a.dataInicioBriefing||""));
 }
 
 /* ============ render ============ */
 function render(){
-  renderFAnalista();renderFExecutivo();renderFVeiculo();
+  renderFPraca();renderFAnalista();renderFExecutivo();renderFVeiculo();
   const list=filtered();
   renderKpis(list);
   document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
@@ -314,6 +354,10 @@ function fillFilterSelect(id,label,values,cur){
   sel.value=names.includes(cur)?cur:"todos";
   return sel.value;
 }
+function renderFPraca(){
+  const sel=document.getElementById("fPraca");
+  filters.praca=fillFilterSelect("fPraca","Todas as praças",PRACAS,sel.value||filters.praca);
+}
 function renderFAnalista(){
   const sel=document.getElementById("fAnalista");
   filters.analista=fillFilterSelect("fAnalista","Todas as analistas",[...(data.config.analistas||[]),...data.jobs.map(j=>j.analista)],sel.value||filters.analista);
@@ -327,89 +371,114 @@ function renderFVeiculo(){
   filters.veiculo=fillFilterSelect("fVeiculo","Todos os veículos",[...(data.config.veiculos||[]),...data.jobs.map(j=>j.veiculo)],sel.value||filters.veiculo);
 }
 function renderKpis(list){
-  const recebidos=list.length;
-  const abertos=list.filter(j=>j.status==="aberto").length;
-  const fechados=list.filter(j=>j.status==="fechado").length;
-  const perdidos=list.filter(j=>j.status==="perdido").length;
-  const decididos=fechados+perdidos;
-  const taxa=decididos>0?Math.round(fechados/decididos*100):0;
-  const valorFechado=list.filter(j=>j.status==="fechado").reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const total=list.length;
+  const andamento=list.filter(j=>["Briefing","Desenvolvimento","Validação Interna","Aprovação Cliente"].includes(j.faseAtual)).length;
+  const concluidos=list.filter(j=>j.faseAtual==="Concluído").length;
+  const atrasados=list.filter(j=>alertaPrazo(j)==="Atrasado").length;
+  const aguardando=list.filter(j=>j.situacao==="Aguardando cliente").length;
   document.getElementById("kpis").innerHTML=`
-    <div class="kpi"><div class="l">Recebidos</div><div class="v">${recebidos}</div></div>
-    <div class="kpi"><div class="l">Em aberto</div><div class="v">${abertos}</div></div>
-    <div class="kpi"><div class="l">Taxa de conversão</div><div class="v">${taxa}<small>%</small></div></div>
-    <div class="kpi"><div class="l">Jobs fechados</div><div class="v">${fechados}<small>de ${decididos} decididos</small></div></div>
+    <div class="kpi"><div class="l">Total de projetos</div><div class="v">${total}</div></div>
+    <div class="kpi"><div class="l">Em andamento</div><div class="v">${andamento}</div></div>
+    <div class="kpi"><div class="l">Concluídos</div><div class="v">${concluidos}</div></div>
+    <div class="kpi"><div class="l">Atrasados</div><div class="v">${atrasados}</div></div>
+    <div class="kpi"><div class="l">Aguardando cliente</div><div class="v">${aguardando}</div></div>
+  `;
+  const valorOrcado=list.reduce((s,j)=>s+(Number(j.valorOrcado)||0),0);
+  const valorFechado=list.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const comFechado=list.filter(j=>Number(j.valorFechado)>0).length;
+  const aprovPct=valorOrcado>0?Math.round(valorFechado/valorOrcado*100):0;
+  document.getElementById("kpisComercial").innerHTML=`
+    <div class="kpi"><div class="l">Valor orçado</div><div class="v">${fmtMoney(valorOrcado)}</div></div>
     <div class="kpi"><div class="l">Valor fechado</div><div class="v">${fmtMoney(valorFechado)}</div></div>
+    <div class="kpi"><div class="l">% aprovado do orçado</div><div class="v">${aprovPct}<small>%</small></div></div>
+    <div class="kpi"><div class="l">Jobs com valor fechado</div><div class="v">${comFechado}<small>de ${total}</small></div></div>
+    <div class="kpi"><div class="l">Ticket médio fechado</div><div class="v">${fmtMoney(comFechado>0?valorFechado/comFechado:0)}</div></div>
   `;
 }
-function groupData(list,keyFn){
+
+/* ============ dashboard ============ */
+function countBreakdownHtml(title,order,list,keyFn,colorFn){
+  const counts={};order.forEach(k=>counts[k]=0);
+  list.forEach(j=>{const k=keyFn(j);if(k!=null)counts[k]=(counts[k]||0)+1;});
+  const max=Math.max(1,...Object.values(counts));
+  const rows=order.map(k=>{
+    const c=counts[k]||0;const pct=Math.round(c/max*100);
+    const barStyle=colorFn?`background:${colorFn(k)}`:"";
+    return `<div class="brow"><div class="name">${esc(k)}</div><div class="bar"><i style="width:${pct}%;${barStyle}"></i></div><div class="pct">${c}</div></div>`;
+  }).join("");
+  return `<div class="breakdown"><h3>${title}</h3>${rows}</div>`;
+}
+function groupValor(list,keyFn){
   const map={};
   list.forEach(j=>{
     const k=keyFn(j)||"Não informado";
-    map[k]=map[k]||{fechado:0,decidido:0,valor:0,count:0};
-    map[k].count++;
-    if(j.status==="fechado"||j.status==="perdido")map[k].decidido++;
-    if(j.status==="fechado"){map[k].fechado++;map[k].valor+=Number(j.valorFechado)||0;}
+    map[k]=map[k]||{concluido:0,decidido:0,valor:0};
+    if(j.faseAtual==="Concluído"||j.faseAtual==="Cancelado")map[k].decidido++;
+    if(j.faseAtual==="Concluído"){map[k].concluido++;map[k].valor+=Number(j.valorFechado)||0;}
   });
   return map;
 }
-function breakdownHtml(title,map,mode){
+function valorBreakdownHtml(title,map,mode){
   const keys=Object.keys(map);
   if(!keys.length)return `<div class="breakdown"><h3>${title}</h3><div style="color:var(--muted);font-size:13px">Sem dados suficientes ainda.</div></div>`;
   const totalValor=keys.reduce((s,k)=>s+map[k].valor,0)||1;
   const rows=keys.sort((a,b)=>map[b].valor-map[a].valor).map(k=>{
     const d=map[k];
-    const pct = mode==="conv" ? (d.decidido>0?Math.round(d.fechado/d.decidido*100):0) : Math.round(d.valor/totalValor*100);
+    const pct=mode==="conv"?(d.decidido>0?Math.round(d.concluido/d.decidido*100):0):Math.round(d.valor/totalValor*100);
     return `<div class="brow"><div class="name">${esc(k)}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="pct">${pct}%</div><div class="val">${fmtMoney(d.valor)}</div></div>`;
   }).join("");
   return `<div class="breakdown"><h3>${title}</h3>${rows}</div>`;
 }
+const SITU_COLOR={"No prazo":"var(--noprazo)","Aguardando cliente":"var(--aguardando)","Atrasado":"var(--atrasado)","Concluído":"var(--concluido)","Pausado":"var(--pausado)","Cancelado":"var(--cancelado)"};
 function renderDashboard(list){
-  const abertos=list.filter(j=>j.status==="aberto").length;
-  const fechados=list.filter(j=>j.status==="fechado").length;
-  const perdidos=list.filter(j=>j.status==="perdido").length;
-  const fechadosList=list.filter(j=>j.status==="fechado");
-  const funnel=`<div class="breakdown"><h3>Funil de status</h3><div class="funnel">
-    <div class="fitem"><div class="n">${list.length}</div><div class="l">Recebidos</div></div>
-    <div class="fitem"><div class="n">${abertos}</div><div class="l">Em aberto</div></div>
-    <div class="fitem"><div class="n">${fechados}</div><div class="l">Fechados</div></div>
-    <div class="fitem"><div class="n">${perdidos}</div><div class="l">Perdidos</div></div>
-  </div></div>`;
-  const grid=`<div class="dash-grid">`
-    +breakdownHtml("Conversão por analista",groupData(list,j=>j.analista),"conv")
-    +breakdownHtml("Conversão por executivo de conta",groupData(list,j=>j.executivo),"conv")
-    +breakdownHtml("Valor fechado por veículo",groupData(fechadosList,j=>j.veiculo),"share")
-    +breakdownHtml("Valor fechado por tipo de job",groupData(fechadosList,j=>j.tipoJob),"share")
-    +`</div>`;
-  document.getElementById("dashboard").innerHTML=(list.length?funnel+grid:`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`);
+  if(!list.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
+  const html=
+    countBreakdownHtml("Funil por fase",FASES,list,j=>j.faseAtual)
+    +`<div class="dash-grid">`
+    + countBreakdownHtml("Projetos por praça",PRACAS,list,j=>j.praca)
+    + countBreakdownHtml("Projetos por situação",SITUACOES,list,j=>j.situacao,k=>SITU_COLOR[k])
+    + countBreakdownHtml("Projetos por origem",ORIGENS,list,j=>j.origem)
+    + countBreakdownHtml("Projetos por prioridade",PRIORIDADES,list,j=>j.prioridade)
+    + valorBreakdownHtml("Valor fechado por veículo",groupValor(list,j=>j.veiculo),"share")
+    + valorBreakdownHtml("Conclusão e valor por analista",groupValor(list,j=>j.analista),"conv")
+    + valorBreakdownHtml("Conclusão e valor por executivo de conta",groupValor(list,j=>j.executivo),"conv")
+    + `</div>`;
+  document.getElementById("dashboard").innerHTML=html;
 }
+
+/* ============ lista de jobs ============ */
 function renderList(list){
   const el=document.getElementById("list");
   if(!list.length){el.innerHTML=`<div class="empty">Nenhum job por aqui ainda.<br>Clique em <b>+ Novo job</b> assim que receber o primeiro.</div>`;return;}
   el.innerHTML=`<div class="cards">`+list.map(j=>{
-    const late=j.status==="aberto"&&j.prazo&&pd(j.prazo)<d0();
-    const valorLinha=j.status==="fechado"
-      ? `<div class="vo">orçado ${fmtMoney(j.valorOrcado)}</div><div class="vf up">${fmtMoney(j.valorFechado)}</div>`
-      : `<div class="vo">orçado</div><div class="vf">${fmtMoney(j.valorOrcado)}</div>`;
-    const acts = j.status==="aberto"
-      ? `<button class="ok" data-act="close-ok" data-id="${j.id}">✓ Fechado</button><button class="no" data-act="close-no" data-id="${j.id}">✕ Perdido</button>`
-      : `<button data-act="reopen" data-id="${j.id}">↺ Reabrir</button>`;
+    const alerta=alertaPrazo(j);
+    const dias=diasEmAberto(j);
+    const pct=Math.round(pctConcl(j)*100);
+    const podeAvancar=FASE_ORDEM.includes(j.faseAtual)&&j.faseAtual!=="Concluído";
+    const proxFase=podeAvancar?FASE_ORDEM[FASE_ORDEM.indexOf(j.faseAtual)+1]:null;
+    const temValor=j.valorOrcado||j.valorFechado;
     return `<div class="card">
-      <div class="main">
-        <div class="cliente">${esc(j.cliente)} <span class="tag">${esc(j.tipoJob)}</span>${j.status==="fechado"&&j.veiculo?`<span class="tag" style="background:var(--fechado-bg);color:var(--fechado)">${esc(j.veiculo)}</span>`:""}</div>
-        <div class="meta">
-          <span>Analista: <b>${esc(j.analista||"—")}</b></span>
-          ${j.executivo?`<span>Executivo: <b>${esc(j.executivo)}</b></span>`:""}
-          <span>Recebido ${fmtDate(j.dataRecebimento)}</span>
-          ${j.status==="aberto"?`<span class="${late?'late':''}">Prazo ${fmtDate(j.prazo)}${late?" · atrasado":""}</span>`:""}
-          ${j.status!=="aberto"?`<span>Fechado em ${fmtDate(j.dataFechamento)}</span>`:""}
-          ${j.status==="perdido"&&j.motivoPerda?`<span>Motivo: ${esc(j.motivoPerda)}</span>`:""}
+      <div class="top-row">
+        <div class="cliente">${esc(j.cliente)} <span class="tag">${esc(j.praca)}</span><span class="tag">${esc(j.prioridade)}</span></div>
+        <div class="badges">
+          <span class="tag">${esc(j.faseAtual)}</span>
+          <span class="${situClass(j.situacao)}">${esc(j.situacao)}</span>
         </div>
       </div>
-      <div class="valores">${valorLinha}</div>
-      <span class="status ${j.status}">${j.status==="aberto"?"Em aberto":j.status==="fechado"?"Fechado":"Perdido"}</span>
+      <div class="meta">
+        <span>Analista: <b>${esc(j.analista||"—")}</b></span>
+        ${j.executivo?`<span>Executivo: <b>${esc(j.executivo)}</b></span>`:""}
+        <span>Origem: ${esc(j.origem||"—")}</span>
+        <span>Início ${fmtDate(j.dataInicioBriefing)}</span>
+        <span class="${alerta==='Atrasado'?'late':''}">Prazo ${fmtDate(j.prazoPrevisto)}${(alerta&&alerta!=="—")?" · "+alerta:""}</span>
+        ${dias!==null?`<span>${dias}d em aberto</span>`:""}
+        ${j.ultimoContato?`<span>Último contato ${fmtDate(j.ultimoContato)}</span>`:""}
+      </div>
+      <div class="pbar-row"><div class="pbar"><i style="width:${pct}%"></i></div><span class="pctlabel">${pct}% concl.</span></div>
+      ${temValor?`<div class="valorrow"><span>Orçado: <b>${fmtMoney(j.valorOrcado)}</b></span><span>Fechado: <b>${fmtMoney(j.valorFechado)}</b></span>${j.veiculo?`<span>Veículo: <b>${esc(j.veiculo)}</b></span>`:""}</div>`:""}
+      ${j.proximosPassos?`<div class="proximos">${esc(j.proximosPassos)}</div>`:""}
       <div class="acts">
-        ${acts}
+        ${proxFase?`<button class="ok" data-act="avancar" data-id="${j.id}">▶ Avançar para ${esc(proxFase)}</button>`:""}
         <button data-act="edit" data-id="${j.id}">Editar</button>
         <button class="del" data-act="del" data-id="${j.id}">Excluir</button>
       </div>
@@ -427,89 +496,91 @@ function closeModal(){document.getElementById("backdrop").classList.remove("open
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
 
-function jobForm(j,forceStatus){
-  const st=forceStatus||j.status||"aberto";
+function jobForm(j){
   return `
     <header><h3>${j.id?"Editar job":"Novo job"}</h3><button class="x" data-act="close">×</button></header>
     <div class="form" id="jobForm" data-id="${j.id||""}">
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
       <div class="row2">
-        <div class="field"><label>Tipo de job</label><select id="f_tipo">${optionsHtml(TIPOS,j.tipoJob)}</select></div>
-        <div class="field"><label>Origem / canal</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem)}</select></div>
+        <div class="field"><label>Praça</label><select id="f_praca">${optionsHtml(PRACAS,j.praca||"CAM")}</select></div>
+        <div class="field"><label>Origem</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem||"Cliente")}</select></div>
       </div>
       <div class="row2">
         <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",data.config.analistas)}</div>
         <div class="field"><label>Executivo de conta</label><input id="f_executivo" list="dl_executivos" value="${esc(j.executivo||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos",data.config.executivos)}</div>
       </div>
       <div class="row2">
-        <div class="field"><label>Data de recebimento</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
-        <div class="field"><label>Prazo</label><input id="f_prazo" type="date" value="${j.prazo||""}"></div>
+        <div class="field"><label>Prioridade</label><select id="f_prioridade">${optionsHtml(PRIORIDADES,j.prioridade||"Média")}</select></div>
+        <div class="field"><label>Fase atual</label><select id="f_fase">${optionsHtml(FASES,j.faseAtual||"Briefing")}</select></div>
       </div>
-      <div class="field"><label>Valor orçado</label><input id="f_valorOrcado" type="number" step="0.01" min="0" value="${j.valorOrcado||""}" placeholder="0,00"></div>
-      <div class="field"><label>Observações</label><textarea id="f_obs" placeholder="Contexto do job (opcional)">${esc(j.obs||"")}</textarea></div>
+      <div class="row2">
+        <div class="field"><label>Situação</label><select id="f_situacao">${optionsHtml(SITUACOES,j.situacao||"No prazo")}</select></div>
+        <div class="field"><label>Prazo previsto</label><input id="f_prazo" type="date" value="${j.prazoPrevisto||""}"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Início (briefing)</label><input id="f_inicio" type="date" value="${j.dataInicioBriefing||today()}"></div>
+        <div class="field"><label>Último contato</label><input id="f_ultimoContato" type="date" value="${j.ultimoContato||""}"></div>
+      </div>
+      <div class="field" id="campoMotivo" style="display:${j.situacao==='Cancelado'?'block':'none'}"><label>Motivo (cancelamento/perda)</label><select id="f_motivo">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>
+      <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
 
-      <div class="field"><label>Situação</label>
-        <div class="statuspick" id="statusPick">
-          <button type="button" data-s="aberto" class="${st==='aberto'?'on':''}">Em aberto</button>
-          <button type="button" data-s="fechado" class="${st==='fechado'?'on':''}">Fechado</button>
-          <button type="button" data-s="perdido" class="${st==='perdido'?'on':''}">Perdido</button>
+      <details class="more" ${(j.dataConclDesenvolvimento||j.dataConclValidacao||j.dataAprovacaoCliente||j.valorOrcado||j.valorFechado||j.veiculo)?"open":""}>
+        <summary>+ Datas de conclusão por fase, valor e veículo</summary>
+        <div class="form">
+          <div class="row2">
+            <div class="field"><label>Concl. Desenvolvimento</label><input id="f_conclDesenv" type="date" value="${j.dataConclDesenvolvimento||""}"></div>
+            <div class="field"><label>Concl. Validação Interna</label><input id="f_conclValidacao" type="date" value="${j.dataConclValidacao||""}"></div>
+          </div>
+          <div class="field"><label>Aprovação cliente (data)</label><input id="f_aprovacaoCliente" type="date" value="${j.dataAprovacaoCliente||""}"></div>
+          <div class="row2">
+            <div class="field"><label>Valor orçado</label><input id="f_valorOrcado" type="number" step="0.01" min="0" value="${j.valorOrcado||""}" placeholder="0,00"></div>
+            <div class="field"><label>Valor fechado</label><input id="f_valorFechado" type="number" step="0.01" min="0" value="${j.valorFechado||""}" placeholder="0,00"></div>
+          </div>
+          <div class="field"><label>Veículo (onde o valor foi fechado)</label><select id="f_veiculo"><option value="">Selecione...</option>${optionsHtml(data.config.veiculos,j.veiculo)}</select></div>
         </div>
-      </div>
-
-      <div class="section-extra" id="extraFechado" style="display:${st==='fechado'?'flex':'none'}">
-        <div class="row2">
-          <div class="field"><label>Valor fechado</label><input id="f_valorFechado" type="number" step="0.01" min="0" value="${j.valorFechado||j.valorOrcado||""}"></div>
-          <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento1" type="date" value="${j.dataFechamento||today()}"></div>
-        </div>
-        <div class="field"><label>Veículo (onde o valor foi fechado)</label><select id="f_veiculo"><option value="">Selecione...</option>${optionsHtml(data.config.veiculos,j.veiculo)}</select></div>
-      </div>
-      <div class="section-extra" id="extraPerdido" style="display:${st==='perdido'?'flex':'none'}">
-        <div class="row2">
-          <div class="field"><label>Motivo da perda</label><select id="f_motivo">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>
-          <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento2" type="date" value="${j.dataFechamento||today()}"></div>
-        </div>
-      </div>
+      </details>
 
       <button class="save" data-act="save-job">Salvar</button>
       ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
     </div>`;
 }
-function openNewJobModal(){editId=null;openModal(jobForm({}));wireStatusPick();}
-function openEditJobModal(id,forceStatus){
+function openNewJobModal(){editId=null;openModal(jobForm({}));wireForm();}
+function openEditJobModal(id){
   const j=data.jobs.find(x=>x.id===id);if(!j)return;
-  editId=id;openModal(jobForm(j,forceStatus));wireStatusPick();
+  editId=id;openModal(jobForm(j));wireForm();
 }
-function wireStatusPick(){
-  document.getElementById("statusPick").addEventListener("click",e=>{
-    const b=e.target.closest("button[data-s]");if(!b)return;
-    document.querySelectorAll("#statusPick button").forEach(x=>x.classList.remove("on"));
-    b.classList.add("on");
-    document.getElementById("extraFechado").style.display=b.dataset.s==="fechado"?"flex":"none";
-    document.getElementById("extraPerdido").style.display=b.dataset.s==="perdido"?"flex":"none";
+function wireForm(){
+  document.getElementById("f_situacao").addEventListener("change",e=>{
+    document.getElementById("campoMotivo").style.display=e.target.value==="Cancelado"?"block":"none";
   });
 }
 function saveJobForm(){
   const cliente=document.getElementById("f_cliente").value.trim();
   if(!cliente){toast("Informe o cliente.");return;}
-  const st=document.querySelector("#statusPick button.on").dataset.s;
   const analista=document.getElementById("f_analista").value.trim();
   const executivo=document.getElementById("f_executivo").value.trim();
+  const situacao=document.getElementById("f_situacao").value;
   const j={
     id:editId||uid(),
     cliente,
-    tipoJob:document.getElementById("f_tipo").value,
+    praca:document.getElementById("f_praca").value,
+    origem:document.getElementById("f_origem").value,
     analista,
     executivo,
-    origem:document.getElementById("f_origem").value,
+    prioridade:document.getElementById("f_prioridade").value,
+    faseAtual:document.getElementById("f_fase").value,
+    situacao,
+    prazoPrevisto:document.getElementById("f_prazo").value,
+    dataInicioBriefing:document.getElementById("f_inicio").value||today(),
+    ultimoContato:document.getElementById("f_ultimoContato").value,
+    motivoPerda:situacao==="Cancelado"?document.getElementById("f_motivo").value:"",
+    proximosPassos:document.getElementById("f_proximos").value.trim(),
+    dataConclDesenvolvimento:document.getElementById("f_conclDesenv").value,
+    dataConclValidacao:document.getElementById("f_conclValidacao").value,
+    dataAprovacaoCliente:document.getElementById("f_aprovacaoCliente").value,
     valorOrcado:Number(document.getElementById("f_valorOrcado").value)||0,
-    dataRecebimento:document.getElementById("f_recebimento").value||today(),
-    prazo:document.getElementById("f_prazo").value,
-    obs:document.getElementById("f_obs").value.trim(),
-    status:st,
-    valorFechado:st==="fechado"?Number(document.getElementById("f_valorFechado").value)||0:(st==="aberto"?"":undefined),
-    veiculo:st==="fechado"?document.getElementById("f_veiculo").value:"",
-    dataFechamento:st==="fechado"?document.getElementById("f_dataFechamento1").value:(st==="perdido"?document.getElementById("f_dataFechamento2").value:""),
-    motivoPerda:st==="perdido"?document.getElementById("f_motivo").value:"",
+    valorFechado:Number(document.getElementById("f_valorFechado").value)||0,
+    veiculo:document.getElementById("f_veiculo").value,
     updatedAt:Date.now()
   };
   if(analista&&!data.config.analistas.includes(analista))data.config.analistas.push(analista);
@@ -519,6 +590,18 @@ function saveJobForm(){
   else{j.createdAt=Date.now();data.jobs.push(j);}
   save();closeModal();render();
   toast("Job salvo ✓");
+}
+function avancarFase(id){
+  const j=data.jobs.find(x=>x.id===id);if(!j)return;
+  const idx=FASE_ORDEM.indexOf(j.faseAtual);if(idx<0||idx>=FASE_ORDEM.length-1)return;
+  const proxima=FASE_ORDEM[idx+1];
+  const campoData=FASE_AVANCO_DATA[proxima];
+  if(campoData)j[campoData]=today();
+  j.faseAtual=proxima;
+  if(proxima==="Concluído")j.situacao="Concluído";
+  j.updatedAt=Date.now();
+  save();render();
+  toast(`Avançou para ${proxima} ✓`);
 }
 
 /* ============ cadastros (analistas / executivos / veículos) ============ */
@@ -531,7 +614,7 @@ function settingsHtml(){
     </div>`;
   return `<header><h3>Cadastros</h3><button class="x" data-act="close">×</button></header>
     <div class="form">
-      <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Esses nomes viram sugestão nos campos do job. Um nome novo digitado ali também entra pra cá automaticamente.</p>
+      <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Esses nomes viram sugestão nos campos do job. Um nome novo digitado ali também entra pra cá automaticamente. Praça, prioridade, fase e situação já vêm fixas (mesmas listas da planilha).</p>
       ${sec("Analistas","analistas","Nome da analista")}
       ${sec("Executivos de conta","executivos","Nome do executivo")}
       ${sec("Veículos de mídia","veiculos","Nome do veículo")}
@@ -562,7 +645,7 @@ function importData(file){
     openModal(`<header><h3>Importar backup</h3><button class="x" data-act="close">×</button></header>
       <div class="form"><p style="color:var(--ink-soft);font-size:14.5px;line-height:1.55;margin:8px 0 0">O arquivo contém <b>${pendingImport.length} job(s)</b>.</p>
       <button class="save" data-act="do-import-merge">Somar ao que já existe</button>
-      <button class="save" data-act="do-import-replace" style="background:var(--perdido);margin-top:9px">Substituir tudo</button>
+      <button class="save" data-act="do-import-replace" style="background:var(--cancelado);margin-top:9px">Substituir tudo</button>
       <div class="delrow"><button data-act="close">Cancelar</button></div></div>`);
   };
   r.readAsText(file);
@@ -579,16 +662,17 @@ function doImport(mode){
 }
 
 /* ============ eventos ============ */
-document.getElementById("segStatus").addEventListener("click",e=>{
-  const b=e.target.closest("button");if(!b)return;
-  document.querySelectorAll("#segStatus button").forEach(x=>x.classList.remove("on"));
-  b.classList.add("on");filters.status=b.dataset.v;render();
-});
 document.getElementById("mainTabs").addEventListener("click",e=>{
   const b=e.target.closest("button");if(!b)return;
   document.querySelectorAll("#mainTabs button").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");mainView=b.dataset.v;render();
 });
+document.getElementById("segStatus").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#segStatus button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");filters.seg=b.dataset.v;render();
+});
+document.getElementById("fPraca").addEventListener("change",e=>{filters.praca=e.target.value;render();});
 document.getElementById("fAnalista").addEventListener("change",e=>{filters.analista=e.target.value;render();});
 document.getElementById("fExecutivo").addEventListener("change",e=>{filters.executivo=e.target.value;render();});
 document.getElementById("fVeiculo").addEventListener("change",e=>{filters.veiculo=e.target.value;render();});
@@ -601,6 +685,7 @@ document.body.addEventListener("keydown",e=>{
     e.preventDefault();
     document.querySelector(`button[data-act="cfg-add"][data-key="${e.target.dataset.cfgInput}"]`).click();
   }
+  if(e.key==="Escape")closeModal();
 });
 
 document.body.addEventListener("click",e=>{
@@ -608,9 +693,7 @@ document.body.addEventListener("click",e=>{
   const act=b.dataset.act,id=b.dataset.id;
   if(act==="new")openNewJobModal();
   else if(act==="edit")openEditJobModal(id);
-  else if(act==="close-ok")openEditJobModal(id,"fechado");
-  else if(act==="close-no")openEditJobModal(id,"perdido");
-  else if(act==="reopen")openEditJobModal(id,"aberto");
+  else if(act==="avancar")avancarFase(id);
   else if(act==="save-job")saveJobForm();
   else if(act==="del"){
     if(confirm("Excluir este job? Essa ação não pode ser desfeita.")){
@@ -638,7 +721,6 @@ document.body.addEventListener("click",e=>{
   else if(act==="close")closeModal();
 });
 document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
-document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
 
 /* ============ boot ============ */
 (async function(){await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));})();
