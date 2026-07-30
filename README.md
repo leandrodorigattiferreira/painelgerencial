@@ -4,6 +4,8 @@ Ferramenta de produtividade para gestores de marketing. Organiza tarefas em trê
 
 É um único arquivo `index.html`, sem dependências de build. Abre em qualquer navegador.
 
+Este repositório também tem o `jobs.html`, uma ferramenta separada para as analistas registrarem os jobs de clientes que recebem e o resultado do fechamento — veja a seção [Jobs de Marketing](#jobs-de-marketing--clientes) abaixo.
+
 ## Funcionalidades
 
 - **Três lentes** com cores próprias e contagem de tarefas abertas.
@@ -39,6 +41,17 @@ O indicador no rodapé da barra lateral mostra o estado atual ("Salvo na sua con
    `https://SEU-USUARIO.github.io/painel-do-leandro/`
 
 Pronto — é só salvar esse link nos favoritos e usar no dia a dia.
+
+## Jobs de Marketing · Clientes
+
+Arquivo `jobs.html` — ferramenta separada para as analistas registrarem, em duas etapas, os jobs recebidos de clientes:
+
+1. **Ao receber o job**: cliente, tipo de job, analista responsável, origem/canal, data de recebimento, prazo, valor orçado e observações.
+2. **Ao fechar o job**: marcar como **Fechado** (com valor fechado e data) ou **Perdido** (com motivo e data). Jobs em aberto podem ser fechados com um clique direto no card (✓ Fechado / ✕ Perdido).
+
+A tela principal mostra KPIs (recebidos, em aberto, taxa de conversão, jobs fechados, valor fechado), um comparativo de conversão por analista, filtros por status/analista/cliente/período e a lista de jobs em cards. Os dados são salvos automaticamente (conta ou navegador, como no Painel do Leandro) e podem ser exportados/importados em JSON.
+
+Basta abrir `jobs.html` no navegador — não precisa instalar nada.
 
 ## Privacidade
 

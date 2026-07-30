@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Jobs de Marketing · Clientes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F6;
+    --surface:#FFFFFF;
+    --surface-2:#F8F9FC;
+    --ink:#171C28;
+    --ink-soft:#414A5E;
+    --muted:#838C9E;
+    --faint:#AEB5C2;
+    --line:#E7EAF0;
+    --line-strong:#D6DAE3;
+
+    --brand:#0E8C7F;   --brand-bg:#E4F2EF;
+    --aberto:#2F6FB2;  --aberto-bg:#E7F0F9;
+    --fechado:#159069; --fechado-bg:#E4F3EE;
+    --perdido:#DA3B41; --perdido-bg:#FBE9EA;
+    --late:#C2410C;    --late-bg:#FBEDE4;
+    --accent:#171C28;  --accent-bg:#EBEDF2;
+
+    --r:16px; --r-sm:11px; --r-xs:8px;
+    --sh:0 1px 2px rgba(23,28,40,.04), 0 4px 16px rgba(23,28,40,.05);
+    --sh-pop:0 16px 50px rgba(23,28,40,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100%}
+  body{
+    background:
+      radial-gradient(1100px 520px at 15% -8%, #F3F6FB 0%, rgba(243,246,251,0) 60%),
+      radial-gradient(900px 480px at 100% 0%, #EAF6F3 0%, rgba(234,246,243,0) 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:"Hanken Grotesk",system-ui,sans-serif;
+    font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",monospace;font-feature-settings:"tnum"}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  input,select,textarea{font-family:inherit;font-size:14.5px}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+
+  .wrap{max-width:1180px;margin:0 auto;padding:26px 22px 90px}
+
+  /* header */
+  .top{display:flex;align-items:flex-start;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:20px}
+  .top .logo{display:flex;align-items:center;gap:11px}
+  .top .mark{width:38px;height:38px;border-radius:11px;background:linear-gradient(135deg,var(--brand),#1FB8A6);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-family:"Bricolage Grotesque";font-size:17px;flex:0 0 auto}
+  .top h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:24px;letter-spacing:-.02em;margin:0;line-height:1.1}
+  .top .sub{color:var(--muted);font-size:13px;margin-top:3px}
+  .top .actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .btn{border:1px solid var(--line-strong);background:var(--surface);border-radius:11px;padding:9px 14px;font-weight:700;font-size:13.5px;color:var(--ink-soft);box-shadow:var(--sh);white-space:nowrap}
+  .btn:hover{background:var(--surface-2);color:var(--ink)}
+  .btn.primary{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .btn.primary:hover{background:#000}
+  .btn.ghost{border-color:transparent;background:transparent;box-shadow:none;color:var(--muted);padding:9px 10px}
+  .savestat{display:flex;align-items:center;gap:6px;font-size:11.5px;font-weight:600;color:var(--muted)}
+  .savestat .dotok{width:7px;height:7px;border-radius:50%;background:var(--fechado);flex:0 0 auto;box-shadow:0 0 0 3px var(--fechado-bg)}
+  .savestat .dotwarn{width:7px;height:7px;border-radius:50%;background:#D08412;flex:0 0 auto;box-shadow:0 0 0 3px #FBF1E2}
+
+  /* kpis */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+  .kpi .l{font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .kpi .v{font-family:"Bricolage Grotesque";font-weight:800;font-size:22px;margin-top:5px;letter-spacing:-.01em}
+  .kpi .v small{font-size:12px;font-weight:600;color:var(--muted);margin-left:2px}
+  @media (max-width:920px){.kpis{grid-template-columns:repeat(2,1fr)}}
+
+  /* toolbar / filters */
+  .toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+  .filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+  .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;box-shadow:var(--sh)}
+  .seg button{border:0;background:transparent;border-radius:8px;padding:7px 12px;font-weight:600;font-size:12.5px;color:var(--muted)}
+  .seg button.on{background:var(--ink);color:#fff}
+  .fselect,.fsearch,.fdate{border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:7px 11px;font-size:13px;color:var(--ink-soft);box-shadow:var(--sh)}
+  .fsearch{min-width:160px}
+
+  /* breakdown */
+  .breakdown{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh)}
+  .breakdown h3{margin:0 0 12px;font-size:13px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
+  .brow{display:grid;grid-template-columns:120px 1fr 90px 100px;align-items:center;gap:10px;padding:7px 0;font-size:13px}
+  .brow+.brow{border-top:1px solid var(--line)}
+  .brow .name{font-weight:700;color:var(--ink)}
+  .brow .bar{height:8px;border-radius:99px;background:#E3E7EE;overflow:hidden}
+  .brow .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),#1FB8A6)}
+  .brow .pct{font-weight:700;color:var(--ink-soft);text-align:right}
+  .brow .val{color:var(--muted);text-align:right}
+  @media (max-width:640px){.brow{grid-template-columns:90px 1fr 60px}.brow .val{display:none}}
+
+  /* list */
+  .empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:40px 20px;text-align:center;color:var(--muted)}
+  .cards{display:flex;flex-direction:column;gap:10px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:14px 16px;box-shadow:var(--sh);display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .card .main{flex:1;min-width:220px}
+  .card .cliente{font-weight:700;font-size:15px;color:var(--ink);display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .card .tag{font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft)}
+  .card .meta{font-size:12.5px;color:var(--muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap}
+  .card .meta b{color:var(--ink-soft);font-weight:600}
+  .card .meta .late{color:var(--late);font-weight:700}
+  .status{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+  .status.aberto{background:var(--aberto-bg);color:var(--aberto)}
+  .status.fechado{background:var(--fechado-bg);color:var(--fechado)}
+  .status.perdido{background:var(--perdido-bg);color:var(--perdido)}
+  .card .valores{text-align:right;min-width:110px}
+  .card .valores .vo{font-size:11.5px;color:var(--muted)}
+  .card .valores .vf{font-family:"Bricolage Grotesque";font-weight:800;font-size:16px}
+  .card .valores .vf.up{color:var(--fechado)}
+  .card .acts{display:flex;gap:6px;flex-wrap:wrap}
+  .card .acts button{border:1px solid var(--line-strong);background:var(--surface);border-radius:9px;padding:6px 10px;font-size:12px;font-weight:700;color:var(--ink-soft)}
+  .card .acts button:hover{background:var(--surface-2)}
+  .card .acts button.ok{color:var(--fechado);border-color:var(--fechado-bg)}
+  .card .acts button.no{color:var(--perdido);border-color:var(--perdido-bg)}
+  .card .acts button.del{color:var(--faint)}
+
+  /* modal */
+  .backdrop{position:fixed;inset:0;background:rgba(23,28,40,.42);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto;z-index:80}
+  .backdrop.open{display:flex}
+  .modal{background:var(--surface);border-radius:18px;max-width:520px;width:100%;box-shadow:var(--sh-pop);overflow:hidden}
+  .modal header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--line)}
+  .modal header h3{margin:0;font-family:"Bricolage Grotesque";font-size:18px;font-weight:800}
+  .modal header .x{border:0;background:transparent;font-size:20px;color:var(--muted);line-height:1;padding:4px}
+  .modal .form{padding:18px 20px 20px;display:flex;flex-direction:column;gap:12px}
+  .field label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
+  .field input,.field select,.field textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px;background:var(--surface-2)}
+  .field textarea{resize:vertical;min-height:56px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  @media (max-width:480px){.row2{grid-template-columns:1fr}}
+  .statuspick{display:flex;gap:8px}
+  .statuspick button{flex:1;border:1.5px solid var(--line-strong);background:var(--surface-2);border-radius:10px;padding:9px 6px;font-weight:700;font-size:13px;color:var(--ink-soft)}
+  .statuspick button.on[data-s=aberto]{background:var(--aberto-bg);border-color:var(--aberto);color:var(--aberto)}
+  .statuspick button.on[data-s=fechado]{background:var(--fechado-bg);border-color:var(--fechado);color:var(--fechado)}
+  .statuspick button.on[data-s=perdido]{background:var(--perdido-bg);border-color:var(--perdido);color:var(--perdido)}
+  .section-extra{border-top:1px dashed var(--line-strong);padding-top:12px;margin-top:2px;display:flex;flex-direction:column;gap:12px}
+  .save{width:100%;border:0;background:var(--ink);color:#fff;border-radius:11px;padding:12px;font-weight:700;font-size:14.5px;margin-top:4px}
+  .save:hover{background:#000}
+  .delrow{display:flex;justify-content:center;margin-top:6px}
+  .delrow button{border:0;background:transparent;color:var(--perdido);font-weight:600;font-size:13px}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--sh-pop);z-index:90;opacity:0;transition:.28s;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  input[type=file]{display:none}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="logo">
+      <div class="mark">J</div>
+      <div>
+        <h1>Jobs de Marketing · Clientes</h1>
+        <div class="sub">Registro de recebimento e fechamento de jobs por analista</div>
+      </div>
+    </div>
+    <div class="actions">
+      <span class="savestat" id="saveStat"></span>
+      <button class="btn ghost" data-act="export" title="Baixar backup em JSON">⬇ Exportar</button>
+      <label class="btn ghost" title="Importar backup em JSON">⬆ Importar<input type="file" id="fileImport" accept="application/json"></label>
+      <button class="btn primary" data-act="new">+ Novo job</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+  <div class="breakdown" id="breakdown" style="display:none"></div>
+
+  <div class="toolbar">
+    <div class="filters">
+      <div class="seg" id="segStatus">
+        <button data-v="todos" class="on">Todos</button>
+        <button data-v="aberto">Em aberto</button>
+        <button data-v="fechado">Fechados</button>
+        <button data-v="perdido">Perdidos</button>
+      </div>
+      <select class="fselect" id="fAnalista"><option value="todos">Todas as analistas</option></select>
+      <input class="fsearch" id="fBusca" placeholder="Buscar cliente...">
+      <input class="fdate" id="fDe" type="date" title="Recebido de">
+      <input class="fdate" id="fAte" type="date" title="Recebido até">
+    </div>
+  </div>
+
+  <div id="list"></div>
+</div>
+
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+
+<script>
+const KEY="jobs-marketing-v1";
+let data={jobs:[]};
+let filters={status:"todos",analista:"todos",q:"",de:"",ate:""};
+let editId=null;
+
+const TIPOS=["Campanha","Criativo","Mídia paga","Social media","Landing page / Site","E-mail marketing","Outro"];
+const ORIGENS=["Cliente recorrente","Indicação","Prospecção","Outro"];
+const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu","Outro"];
+
+/* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
+async function load(){
+  try{
+    if(window.storage){
+      let r=await window.storage.get(KEY).catch(()=>null);
+      if(r&&r.value) data=JSON.parse(r.value);
+    }else if(window.localStorage){
+      const v=localStorage.getItem(KEY);
+      if(v) data=JSON.parse(v);
+    }
+  }catch(e){}
+  data.jobs=data.jobs||[];
+}
+async function save(){
+  try{
+    if(window.storage){ await window.storage.set(KEY,JSON.stringify(data)); setSaveStat("ok"); }
+    else if(window.localStorage){ localStorage.setItem(KEY,JSON.stringify(data)); setSaveStat("local"); }
+    else setSaveStat("none");
+  }catch(e){ setSaveStat("err"); }
+}
+function setSaveStat(s){
+  const el=document.getElementById("saveStat");if(!el)return;
+  const h=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  if(s==="ok")el.innerHTML=`<span class="dotok"></span>Salvo na sua conta · ${h}`;
+  else if(s==="local")el.innerHTML=`<span class="dotok"></span>Salvo neste navegador · ${h}`;
+  else if(s==="none")el.innerHTML=`<span class="dotwarn"></span>Sem salvamento — exporte`;
+  else el.innerHTML=`<span class="dotwarn"></span>Falha ao salvar — exporte`;
+}
+
+/* ============ helpers ============ */
+function uid(){return "j"+Date.now()+Math.random().toString(36).slice(2,7);}
+function d0(){const d=new Date();d.setHours(0,0,0,0);return d;}
+function pd(s){if(!s)return null;const d=new Date(s+"T00:00:00");return isNaN(d)?null:d;}
+function today(){const d=new Date();return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+function fmtDate(s){const d=pd(s);if(!d)return"—";return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"short"});}
+function fmtMoney(n){n=Number(n)||0;return n.toLocaleString("pt-BR",{style:"currency",currency:"BRL",maximumFractionDigits:0});}
+function esc(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function toast(msg){
+  const t=document.createElement("div");t.className="toast";t.textContent=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>t.classList.add("show"));
+  setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.remove(),320);},2600);
+}
+
+/* ============ filtro ============ */
+function filtered(){
+  return data.jobs.filter(j=>{
+    if(filters.status!=="todos"&&j.status!==filters.status)return false;
+    if(filters.analista!=="todos"&&j.analista!==filters.analista)return false;
+    if(filters.q&&!j.cliente.toLowerCase().includes(filters.q.toLowerCase()))return false;
+    if(filters.de&&j.dataRecebimento&&j.dataRecebimento<filters.de)return false;
+    if(filters.ate&&j.dataRecebimento&&j.dataRecebimento>filters.ate)return false;
+    return true;
+  }).sort((a,b)=>(b.dataRecebimento||"").localeCompare(a.dataRecebimento||""));
+}
+
+/* ============ render ============ */
+function render(){
+  renderFAnalista();
+  const list=filtered();
+  renderKpis(list);
+  renderBreakdown(list);
+  renderList(list);
+}
+function renderFAnalista(){
+  const sel=document.getElementById("fAnalista");
+  const cur=sel.value||filters.analista;
+  const names=[...new Set(data.jobs.map(j=>j.analista).filter(Boolean))].sort();
+  sel.innerHTML=`<option value="todos">Todas as analistas</option>`+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  sel.value=names.includes(cur)?cur:"todos";
+  filters.analista=sel.value;
+}
+function renderKpis(list){
+  const recebidos=list.length;
+  const abertos=list.filter(j=>j.status==="aberto").length;
+  const fechados=list.filter(j=>j.status==="fechado").length;
+  const perdidos=list.filter(j=>j.status==="perdido").length;
+  const decididos=fechados+perdidos;
+  const taxa=decididos>0?Math.round(fechados/decididos*100):0;
+  const valorFechado=list.filter(j=>j.status==="fechado").reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  document.getElementById("kpis").innerHTML=`
+    <div class="kpi"><div class="l">Recebidos</div><div class="v">${recebidos}</div></div>
+    <div class="kpi"><div class="l">Em aberto</div><div class="v">${abertos}</div></div>
+    <div class="kpi"><div class="l">Taxa de conversão</div><div class="v">${taxa}<small>%</small></div></div>
+    <div class="kpi"><div class="l">Jobs fechados</div><div class="v">${fechados}<small>de ${decididos} decididos</small></div></div>
+    <div class="kpi"><div class="l">Valor fechado</div><div class="v">${fmtMoney(valorFechado)}</div></div>
+  `;
+}
+function renderBreakdown(list){
+  const box=document.getElementById("breakdown");
+  const byName={};
+  list.forEach(j=>{
+    const n=j.analista||"Sem analista";
+    byName[n]=byName[n]||{fechado:0,decidido:0,valor:0};
+    if(j.status==="fechado"||j.status==="perdido")byName[n].decidido++;
+    if(j.status==="fechado"){byName[n].fechado++;byName[n].valor+=Number(j.valorFechado)||0;}
+  });
+  const names=Object.keys(byName);
+  if(names.length<2){box.style.display="none";return;}
+  box.style.display="block";
+  box.innerHTML=`<h3>Conversão por analista</h3>`+names.sort().map(n=>{
+    const d=byName[n];const pct=d.decidido>0?Math.round(d.fechado/d.decidido*100):0;
+    return `<div class="brow"><div class="name">${esc(n)}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="pct">${pct}%</div><div class="val">${fmtMoney(d.valor)}</div></div>`;
+  }).join("");
+}
+function renderList(list){
+  const el=document.getElementById("list");
+  if(!list.length){el.innerHTML=`<div class="empty">Nenhum job por aqui ainda.<br>Clique em <b>+ Novo job</b> assim que receber o primeiro.</div>`;return;}
+  el.innerHTML=`<div class="cards">`+list.map(j=>{
+    const late=j.status==="aberto"&&j.prazo&&pd(j.prazo)<d0();
+    const valorLinha=j.status==="fechado"
+      ? `<div class="vo">orçado ${fmtMoney(j.valorOrcado)}</div><div class="vf up">${fmtMoney(j.valorFechado)}</div>`
+      : `<div class="vo">orçado</div><div class="vf">${fmtMoney(j.valorOrcado)}</div>`;
+    const acts = j.status==="aberto"
+      ? `<button class="ok" data-act="close-ok" data-id="${j.id}">✓ Fechado</button><button class="no" data-act="close-no" data-id="${j.id}">✕ Perdido</button>`
+      : `<button data-act="reopen" data-id="${j.id}">↺ Reabrir</button>`;
+    return `<div class="card">
+      <div class="main">
+        <div class="cliente">${esc(j.cliente)} <span class="tag">${esc(j.tipoJob)}</span></div>
+        <div class="meta">
+          <span><b>${esc(j.analista||"—")}</b></span>
+          <span>Recebido ${fmtDate(j.dataRecebimento)}</span>
+          ${j.status==="aberto"?`<span class="${late?'late':''}">Prazo ${fmtDate(j.prazo)}${late?" · atrasado":""}</span>`:""}
+          ${j.status!=="aberto"?`<span>Fechado em ${fmtDate(j.dataFechamento)}</span>`:""}
+          ${j.status==="perdido"&&j.motivoPerda?`<span>Motivo: ${esc(j.motivoPerda)}</span>`:""}
+        </div>
+      </div>
+      <div class="valores">${valorLinha}</div>
+      <span class="status ${j.status}">${j.status==="aberto"?"Em aberto":j.status==="fechado"?"Fechado":"Perdido"}</span>
+      <div class="acts">
+        ${acts}
+        <button data-act="edit" data-id="${j.id}">Editar</button>
+        <button class="del" data-act="del" data-id="${j.id}">Excluir</button>
+      </div>
+    </div>`;
+  }).join("")+`</div>`;
+}
+
+/* ============ modal: novo / editar job ============ */
+function openModal(html){
+  document.getElementById("modal").innerHTML=html;
+  document.getElementById("backdrop").classList.add("open");
+}
+function closeModal(){document.getElementById("backdrop").classList.remove("open");editId=null;}
+
+function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
+
+function jobForm(j,forceStatus){
+  const st=forceStatus||j.status||"aberto";
+  return `
+    <header><h3>${j.id?"Editar job":"Novo job"}</h3><button class="x" data-act="close">×</button></header>
+    <div class="form" id="jobForm" data-id="${j.id||""}">
+      <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
+      <div class="row2">
+        <div class="field"><label>Tipo de job</label><select id="f_tipo">${optionsHtml(TIPOS,j.tipoJob)}</select></div>
+        <div class="field"><label>Analista responsável</label><input id="f_analista" value="${esc(j.analista||"")}" placeholder="Quem está tocando"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Origem / canal</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem)}</select></div>
+        <div class="field"><label>Valor orçado</label><input id="f_valorOrcado" type="number" step="0.01" min="0" value="${j.valorOrcado||""}" placeholder="0,00"></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Data de recebimento</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
+        <div class="field"><label>Prazo</label><input id="f_prazo" type="date" value="${j.prazo||""}"></div>
+      </div>
+      <div class="field"><label>Observações</label><textarea id="f_obs" placeholder="Contexto do job (opcional)">${esc(j.obs||"")}</textarea></div>
+
+      <div class="field"><label>Situação</label>
+        <div class="statuspick" id="statusPick">
+          <button type="button" data-s="aberto" class="${st==='aberto'?'on':''}">Em aberto</button>
+          <button type="button" data-s="fechado" class="${st==='fechado'?'on':''}">Fechado</button>
+          <button type="button" data-s="perdido" class="${st==='perdido'?'on':''}">Perdido</button>
+        </div>
+      </div>
+
+      <div class="section-extra" id="extraFechado" style="display:${st==='fechado'?'flex':'none'}">
+        <div class="row2">
+          <div class="field"><label>Valor fechado</label><input id="f_valorFechado" type="number" step="0.01" min="0" value="${j.valorFechado||j.valorOrcado||""}"></div>
+          <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento1" type="date" value="${j.dataFechamento||today()}"></div>
+        </div>
+      </div>
+      <div class="section-extra" id="extraPerdido" style="display:${st==='perdido'?'flex':'none'}">
+        <div class="row2">
+          <div class="field"><label>Motivo da perda</label><select id="f_motivo">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>
+          <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento2" type="date" value="${j.dataFechamento||today()}"></div>
+        </div>
+      </div>
+
+      <button class="save" data-act="save-job">Salvar</button>
+      ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
+    </div>`;
+}
+function openNewJobModal(){editId=null;openModal(jobForm({}));wireStatusPick();}
+function openEditJobModal(id,forceStatus){
+  const j=data.jobs.find(x=>x.id===id);if(!j)return;
+  editId=id;openModal(jobForm(j,forceStatus));wireStatusPick();
+}
+function wireStatusPick(){
+  document.getElementById("statusPick").addEventListener("click",e=>{
+    const b=e.target.closest("button[data-s]");if(!b)return;
+    document.querySelectorAll("#statusPick button").forEach(x=>x.classList.remove("on"));
+    b.classList.add("on");
+    document.getElementById("extraFechado").style.display=b.dataset.s==="fechado"?"flex":"none";
+    document.getElementById("extraPerdido").style.display=b.dataset.s==="perdido"?"flex":"none";
+  });
+}
+function saveJobForm(){
+  const cliente=document.getElementById("f_cliente").value.trim();
+  if(!cliente){toast("Informe o cliente.");return;}
+  const st=document.querySelector("#statusPick button.on").dataset.s;
+  const j={
+    id:editId||uid(),
+    cliente,
+    tipoJob:document.getElementById("f_tipo").value,
+    analista:document.getElementById("f_analista").value.trim(),
+    origem:document.getElementById("f_origem").value,
+    valorOrcado:Number(document.getElementById("f_valorOrcado").value)||0,
+    dataRecebimento:document.getElementById("f_recebimento").value||today(),
+    prazo:document.getElementById("f_prazo").value,
+    obs:document.getElementById("f_obs").value.trim(),
+    status:st,
+    valorFechado:st==="fechado"?Number(document.getElementById("f_valorFechado").value)||0:(st==="aberto"?"":undefined),
+    dataFechamento:st==="fechado"?document.getElementById("f_dataFechamento1").value:(st==="perdido"?document.getElementById("f_dataFechamento2").value:""),
+    motivoPerda:st==="perdido"?document.getElementById("f_motivo").value:"",
+    updatedAt:Date.now()
+  };
+  const idx=data.jobs.findIndex(x=>x.id===j.id);
+  if(idx>=0)data.jobs[idx]=Object.assign({},data.jobs[idx],j);
+  else{j.createdAt=Date.now();data.jobs.push(j);}
+  save();closeModal();render();
+  toast("Job salvo ✓");
+}
+
+/* ============ exportar / importar ============ */
+let pendingImport=null;
+function exportData(){
+  try{
+    const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");
+    a.href=url;a.download="jobs-marketing-"+today()+".json";
+    document.body.appendChild(a);a.click();a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1500);
+    toast("Backup baixado ✓");
+  }catch(e){toast("Não consegui gerar o arquivo.");}
+}
+function importData(file){
+  const r=new FileReader();
+  r.onload=()=>{
+    let obj;
+    try{obj=JSON.parse(r.result);}catch(e){toast("Arquivo inválido.");return;}
+    if(!obj||!Array.isArray(obj.jobs)){toast("Não parece um backup de Jobs.");return;}
+    pendingImport=obj.jobs;
+    openModal(`<header><h3>Importar backup</h3><button class="x" data-act="close">×</button></header>
+      <div class="form"><p style="color:var(--ink-soft);font-size:14.5px;line-height:1.55;margin:8px 0 0">O arquivo contém <b>${pendingImport.length} job(s)</b>.</p>
+      <button class="save" data-act="do-import-merge">Somar ao que já existe</button>
+      <button class="save" data-act="do-import-replace" style="background:var(--perdido);margin-top:9px">Substituir tudo</button>
+      <div class="delrow"><button data-act="close">Cancelar</button></div></div>`);
+  };
+  r.readAsText(file);
+}
+function doImport(mode){
+  if(!pendingImport)return;
+  if(mode==="replace")data.jobs=pendingImport;
+  else{
+    const ids=new Set(data.jobs.map(j=>j.id));
+    pendingImport.forEach(j=>{if(!j.id||ids.has(j.id))j.id=uid();data.jobs.push(j);});
+  }
+  pendingImport=null;save();closeModal();render();
+  toast(mode==="replace"?"Dados substituídos ✓":"Dados somados ✓");
+}
+
+/* ============ eventos ============ */
+document.getElementById("segStatus").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#segStatus button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");filters.status=b.dataset.v;render();
+});
+document.getElementById("fAnalista").addEventListener("change",e=>{filters.analista=e.target.value;render();});
+document.getElementById("fBusca").addEventListener("input",e=>{filters.q=e.target.value;render();});
+document.getElementById("fDe").addEventListener("change",e=>{filters.de=e.target.value;render();});
+document.getElementById("fAte").addEventListener("change",e=>{filters.ate=e.target.value;render();});
+document.getElementById("fileImport").addEventListener("change",e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value="";});
+
+document.body.addEventListener("click",e=>{
+  const b=e.target.closest("button[data-act]");if(!b)return;
+  const act=b.dataset.act,id=b.dataset.id;
+  if(act==="new")openNewJobModal();
+  else if(act==="edit")openEditJobModal(id);
+  else if(act==="close-ok")openEditJobModal(id,"fechado");
+  else if(act==="close-no")openEditJobModal(id,"perdido");
+  else if(act==="reopen")openEditJobModal(id,"aberto");
+  else if(act==="save-job")saveJobForm();
+  else if(act==="del"){
+    if(confirm("Excluir este job? Essa ação não pode ser desfeita.")){
+      data.jobs=data.jobs.filter(j=>j.id!==id);
+      save();closeModal();render();toast("Job excluído");
+    }
+  }
+  else if(act==="export")exportData();
+  else if(act==="do-import-merge")doImport("merge");
+  else if(act==="do-import-replace")doImport("replace");
+  else if(act==="close")closeModal();
+});
+document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+
+/* ============ boot ============ */
+(async function(){await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));})();
+</script>
+</body>
+</html>
