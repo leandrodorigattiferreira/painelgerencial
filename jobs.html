@@ -82,17 +82,39 @@
   .fselect,.fsearch,.fdate{border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:7px 11px;font-size:13px;color:var(--ink-soft);box-shadow:var(--sh)}
   .fsearch{min-width:160px}
 
-  /* breakdown */
-  .breakdown{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:18px;box-shadow:var(--sh)}
+  /* tabs */
+  .maintabs{display:flex;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;box-shadow:var(--sh);width:max-content;margin-bottom:14px}
+  .maintabs button{border:0;background:transparent;border-radius:8px;padding:8px 16px;font-weight:700;font-size:13.5px;color:var(--muted)}
+  .maintabs button.on{background:var(--ink);color:#fff}
+
+  /* breakdown / dashboard */
+  .dash-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  @media (max-width:820px){.dash-grid{grid-template-columns:1fr}}
+  .breakdown{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;margin-bottom:14px;box-shadow:var(--sh)}
   .breakdown h3{margin:0 0 12px;font-size:13px;font-weight:700;color:var(--ink-soft);text-transform:uppercase;letter-spacing:.04em}
-  .brow{display:grid;grid-template-columns:120px 1fr 90px 100px;align-items:center;gap:10px;padding:7px 0;font-size:13px}
+  .brow{display:grid;grid-template-columns:120px 1fr 50px 90px;align-items:center;gap:10px;padding:7px 0;font-size:13px}
   .brow+.brow{border-top:1px solid var(--line)}
-  .brow .name{font-weight:700;color:var(--ink)}
+  .brow .name{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .brow .bar{height:8px;border-radius:99px;background:#E3E7EE;overflow:hidden}
   .brow .bar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),#1FB8A6)}
   .brow .pct{font-weight:700;color:var(--ink-soft);text-align:right}
   .brow .val{color:var(--muted);text-align:right}
   @media (max-width:640px){.brow{grid-template-columns:90px 1fr 60px}.brow .val{display:none}}
+  .funnel{display:flex;gap:10px;flex-wrap:wrap}
+  .funnel .fitem{flex:1;min-width:110px;background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  .funnel .fitem .n{font-family:"Bricolage Grotesque";font-weight:800;font-size:20px}
+  .funnel .fitem .l{font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase;margin-top:2px}
+
+  /* cadastros (settings) */
+  .cfgsection+.cfgsection{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+  .cfgsection h4{margin:0;font-size:13px;font-weight:700;color:var(--ink-soft)}
+  .chiplist{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}
+  .chip{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .chip button{border:0;background:var(--line);color:var(--ink-soft);width:18px;height:18px;border-radius:50%;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
+  .chip button:hover{background:var(--perdido-bg);color:var(--perdido)}
+  .addrow{display:flex;gap:8px;margin-top:9px}
+  .addrow input{flex:1;border:1px solid var(--line-strong);border-radius:10px;padding:8px 11px;background:var(--surface-2)}
+  .addrow button{border:0;background:var(--ink);color:#fff;border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap}
 
   /* list */
   .empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:40px 20px;text-align:center;color:var(--muted)}
@@ -160,6 +182,7 @@
     </div>
     <div class="actions">
       <span class="savestat" id="saveStat"></span>
+      <button class="btn ghost" data-act="settings" title="Cadastrar analistas, executivos e veículos">⚙ Cadastros</button>
       <button class="btn ghost" data-act="export" title="Baixar backup em JSON">⬇ Exportar</button>
       <label class="btn ghost" title="Importar backup em JSON">⬆ Importar<input type="file" id="fileImport" accept="application/json"></label>
       <button class="btn primary" data-act="new">+ Novo job</button>
@@ -167,7 +190,11 @@
   </div>
 
   <div class="kpis" id="kpis"></div>
-  <div class="breakdown" id="breakdown" style="display:none"></div>
+
+  <div class="maintabs" id="mainTabs">
+    <button data-v="jobs" class="on">Jobs</button>
+    <button data-v="dashboard">Dashboard</button>
+  </div>
 
   <div class="toolbar">
     <div class="filters">
@@ -178,26 +205,31 @@
         <button data-v="perdido">Perdidos</button>
       </div>
       <select class="fselect" id="fAnalista"><option value="todos">Todas as analistas</option></select>
+      <select class="fselect" id="fExecutivo"><option value="todos">Todos os executivos</option></select>
+      <select class="fselect" id="fVeiculo"><option value="todos">Todos os veículos</option></select>
       <input class="fsearch" id="fBusca" placeholder="Buscar cliente...">
       <input class="fdate" id="fDe" type="date" title="Recebido de">
       <input class="fdate" id="fAte" type="date" title="Recebido até">
     </div>
   </div>
 
-  <div id="list"></div>
+  <div id="viewJobs"><div id="list"></div></div>
+  <div id="viewDashboard" style="display:none"><div id="dashboard"></div></div>
 </div>
 
 <div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
 
 <script>
 const KEY="jobs-marketing-v1";
-let data={jobs:[]};
-let filters={status:"todos",analista:"todos",q:"",de:"",ate:""};
+let data={jobs:[],config:{}};
+let filters={status:"todos",analista:"todos",executivo:"todos",veiculo:"todos",q:"",de:"",ate:""};
 let editId=null;
+let mainView="jobs";
 
 const TIPOS=["Campanha","Criativo","Mídia paga","Social media","Landing page / Site","E-mail marketing","Outro"];
 const ORIGENS=["Cliente recorrente","Indicação","Prospecção","Outro"];
 const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu","Outro"];
+const VEICULOS_PADRAO=["Google Ads","Meta Ads","TV / Rádio / Mídia tradicional","Influenciadores / Outros digitais","LinkedIn Ads","TikTok Ads","Outro"];
 
 /* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
 async function load(){
@@ -211,6 +243,14 @@ async function load(){
     }
   }catch(e){}
   data.jobs=data.jobs||[];
+  data.config=data.config||{};
+  data.config.analistas=data.config.analistas||[];
+  data.config.executivos=data.config.executivos||[];
+  data.config.veiculos=(data.config.veiculos&&data.config.veiculos.length)?data.config.veiculos:VEICULOS_PADRAO.slice();
+  data.jobs.forEach(j=>{
+    if(j.analista&&!data.config.analistas.includes(j.analista))data.config.analistas.push(j.analista);
+    if(j.executivo&&!data.config.executivos.includes(j.executivo))data.config.executivos.push(j.executivo);
+  });
 }
 async function save(){
   try{
@@ -248,6 +288,8 @@ function filtered(){
   return data.jobs.filter(j=>{
     if(filters.status!=="todos"&&j.status!==filters.status)return false;
     if(filters.analista!=="todos"&&j.analista!==filters.analista)return false;
+    if(filters.executivo!=="todos"&&j.executivo!==filters.executivo)return false;
+    if(filters.veiculo!=="todos"&&j.veiculo!==filters.veiculo)return false;
     if(filters.q&&!j.cliente.toLowerCase().includes(filters.q.toLowerCase()))return false;
     if(filters.de&&j.dataRecebimento&&j.dataRecebimento<filters.de)return false;
     if(filters.ate&&j.dataRecebimento&&j.dataRecebimento>filters.ate)return false;
@@ -257,19 +299,32 @@ function filtered(){
 
 /* ============ render ============ */
 function render(){
-  renderFAnalista();
+  renderFAnalista();renderFExecutivo();renderFVeiculo();
   const list=filtered();
   renderKpis(list);
-  renderBreakdown(list);
-  renderList(list);
+  document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
+  document.getElementById("viewDashboard").style.display=mainView==="dashboard"?"block":"none";
+  if(mainView==="jobs")renderList(list);
+  else renderDashboard(list);
+}
+function fillFilterSelect(id,label,values,cur){
+  const sel=document.getElementById(id);
+  const names=[...new Set((values||[]).filter(Boolean))].sort();
+  sel.innerHTML=`<option value="todos">${label}</option>`+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
+  sel.value=names.includes(cur)?cur:"todos";
+  return sel.value;
 }
 function renderFAnalista(){
   const sel=document.getElementById("fAnalista");
-  const cur=sel.value||filters.analista;
-  const names=[...new Set(data.jobs.map(j=>j.analista).filter(Boolean))].sort();
-  sel.innerHTML=`<option value="todos">Todas as analistas</option>`+names.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("");
-  sel.value=names.includes(cur)?cur:"todos";
-  filters.analista=sel.value;
+  filters.analista=fillFilterSelect("fAnalista","Todas as analistas",[...(data.config.analistas||[]),...data.jobs.map(j=>j.analista)],sel.value||filters.analista);
+}
+function renderFExecutivo(){
+  const sel=document.getElementById("fExecutivo");
+  filters.executivo=fillFilterSelect("fExecutivo","Todos os executivos",[...(data.config.executivos||[]),...data.jobs.map(j=>j.executivo)],sel.value||filters.executivo);
+}
+function renderFVeiculo(){
+  const sel=document.getElementById("fVeiculo");
+  filters.veiculo=fillFilterSelect("fVeiculo","Todos os veículos",[...(data.config.veiculos||[]),...data.jobs.map(j=>j.veiculo)],sel.value||filters.veiculo);
 }
 function renderKpis(list){
   const recebidos=list.length;
@@ -287,22 +342,46 @@ function renderKpis(list){
     <div class="kpi"><div class="l">Valor fechado</div><div class="v">${fmtMoney(valorFechado)}</div></div>
   `;
 }
-function renderBreakdown(list){
-  const box=document.getElementById("breakdown");
-  const byName={};
+function groupData(list,keyFn){
+  const map={};
   list.forEach(j=>{
-    const n=j.analista||"Sem analista";
-    byName[n]=byName[n]||{fechado:0,decidido:0,valor:0};
-    if(j.status==="fechado"||j.status==="perdido")byName[n].decidido++;
-    if(j.status==="fechado"){byName[n].fechado++;byName[n].valor+=Number(j.valorFechado)||0;}
+    const k=keyFn(j)||"Não informado";
+    map[k]=map[k]||{fechado:0,decidido:0,valor:0,count:0};
+    map[k].count++;
+    if(j.status==="fechado"||j.status==="perdido")map[k].decidido++;
+    if(j.status==="fechado"){map[k].fechado++;map[k].valor+=Number(j.valorFechado)||0;}
   });
-  const names=Object.keys(byName);
-  if(names.length<2){box.style.display="none";return;}
-  box.style.display="block";
-  box.innerHTML=`<h3>Conversão por analista</h3>`+names.sort().map(n=>{
-    const d=byName[n];const pct=d.decidido>0?Math.round(d.fechado/d.decidido*100):0;
-    return `<div class="brow"><div class="name">${esc(n)}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="pct">${pct}%</div><div class="val">${fmtMoney(d.valor)}</div></div>`;
+  return map;
+}
+function breakdownHtml(title,map,mode){
+  const keys=Object.keys(map);
+  if(!keys.length)return `<div class="breakdown"><h3>${title}</h3><div style="color:var(--muted);font-size:13px">Sem dados suficientes ainda.</div></div>`;
+  const totalValor=keys.reduce((s,k)=>s+map[k].valor,0)||1;
+  const rows=keys.sort((a,b)=>map[b].valor-map[a].valor).map(k=>{
+    const d=map[k];
+    const pct = mode==="conv" ? (d.decidido>0?Math.round(d.fechado/d.decidido*100):0) : Math.round(d.valor/totalValor*100);
+    return `<div class="brow"><div class="name">${esc(k)}</div><div class="bar"><i style="width:${pct}%"></i></div><div class="pct">${pct}%</div><div class="val">${fmtMoney(d.valor)}</div></div>`;
   }).join("");
+  return `<div class="breakdown"><h3>${title}</h3>${rows}</div>`;
+}
+function renderDashboard(list){
+  const abertos=list.filter(j=>j.status==="aberto").length;
+  const fechados=list.filter(j=>j.status==="fechado").length;
+  const perdidos=list.filter(j=>j.status==="perdido").length;
+  const fechadosList=list.filter(j=>j.status==="fechado");
+  const funnel=`<div class="breakdown"><h3>Funil de status</h3><div class="funnel">
+    <div class="fitem"><div class="n">${list.length}</div><div class="l">Recebidos</div></div>
+    <div class="fitem"><div class="n">${abertos}</div><div class="l">Em aberto</div></div>
+    <div class="fitem"><div class="n">${fechados}</div><div class="l">Fechados</div></div>
+    <div class="fitem"><div class="n">${perdidos}</div><div class="l">Perdidos</div></div>
+  </div></div>`;
+  const grid=`<div class="dash-grid">`
+    +breakdownHtml("Conversão por analista",groupData(list,j=>j.analista),"conv")
+    +breakdownHtml("Conversão por executivo de conta",groupData(list,j=>j.executivo),"conv")
+    +breakdownHtml("Valor fechado por veículo",groupData(fechadosList,j=>j.veiculo),"share")
+    +breakdownHtml("Valor fechado por tipo de job",groupData(fechadosList,j=>j.tipoJob),"share")
+    +`</div>`;
+  document.getElementById("dashboard").innerHTML=(list.length?funnel+grid:`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`);
 }
 function renderList(list){
   const el=document.getElementById("list");
@@ -317,9 +396,10 @@ function renderList(list){
       : `<button data-act="reopen" data-id="${j.id}">↺ Reabrir</button>`;
     return `<div class="card">
       <div class="main">
-        <div class="cliente">${esc(j.cliente)} <span class="tag">${esc(j.tipoJob)}</span></div>
+        <div class="cliente">${esc(j.cliente)} <span class="tag">${esc(j.tipoJob)}</span>${j.status==="fechado"&&j.veiculo?`<span class="tag" style="background:var(--fechado-bg);color:var(--fechado)">${esc(j.veiculo)}</span>`:""}</div>
         <div class="meta">
-          <span><b>${esc(j.analista||"—")}</b></span>
+          <span>Analista: <b>${esc(j.analista||"—")}</b></span>
+          ${j.executivo?`<span>Executivo: <b>${esc(j.executivo)}</b></span>`:""}
           <span>Recebido ${fmtDate(j.dataRecebimento)}</span>
           ${j.status==="aberto"?`<span class="${late?'late':''}">Prazo ${fmtDate(j.prazo)}${late?" · atrasado":""}</span>`:""}
           ${j.status!=="aberto"?`<span>Fechado em ${fmtDate(j.dataFechamento)}</span>`:""}
@@ -345,6 +425,7 @@ function openModal(html){
 function closeModal(){document.getElementById("backdrop").classList.remove("open");editId=null;}
 
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
+function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
 
 function jobForm(j,forceStatus){
   const st=forceStatus||j.status||"aberto";
@@ -354,16 +435,17 @@ function jobForm(j,forceStatus){
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
       <div class="row2">
         <div class="field"><label>Tipo de job</label><select id="f_tipo">${optionsHtml(TIPOS,j.tipoJob)}</select></div>
-        <div class="field"><label>Analista responsável</label><input id="f_analista" value="${esc(j.analista||"")}" placeholder="Quem está tocando"></div>
+        <div class="field"><label>Origem / canal</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem)}</select></div>
       </div>
       <div class="row2">
-        <div class="field"><label>Origem / canal</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem)}</select></div>
-        <div class="field"><label>Valor orçado</label><input id="f_valorOrcado" type="number" step="0.01" min="0" value="${j.valorOrcado||""}" placeholder="0,00"></div>
+        <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",data.config.analistas)}</div>
+        <div class="field"><label>Executivo de conta</label><input id="f_executivo" list="dl_executivos" value="${esc(j.executivo||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos",data.config.executivos)}</div>
       </div>
       <div class="row2">
         <div class="field"><label>Data de recebimento</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
         <div class="field"><label>Prazo</label><input id="f_prazo" type="date" value="${j.prazo||""}"></div>
       </div>
+      <div class="field"><label>Valor orçado</label><input id="f_valorOrcado" type="number" step="0.01" min="0" value="${j.valorOrcado||""}" placeholder="0,00"></div>
       <div class="field"><label>Observações</label><textarea id="f_obs" placeholder="Contexto do job (opcional)">${esc(j.obs||"")}</textarea></div>
 
       <div class="field"><label>Situação</label>
@@ -379,6 +461,7 @@ function jobForm(j,forceStatus){
           <div class="field"><label>Valor fechado</label><input id="f_valorFechado" type="number" step="0.01" min="0" value="${j.valorFechado||j.valorOrcado||""}"></div>
           <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento1" type="date" value="${j.dataFechamento||today()}"></div>
         </div>
+        <div class="field"><label>Veículo (onde o valor foi fechado)</label><select id="f_veiculo"><option value="">Selecione...</option>${optionsHtml(data.config.veiculos,j.veiculo)}</select></div>
       </div>
       <div class="section-extra" id="extraPerdido" style="display:${st==='perdido'?'flex':'none'}">
         <div class="row2">
@@ -409,11 +492,14 @@ function saveJobForm(){
   const cliente=document.getElementById("f_cliente").value.trim();
   if(!cliente){toast("Informe o cliente.");return;}
   const st=document.querySelector("#statusPick button.on").dataset.s;
+  const analista=document.getElementById("f_analista").value.trim();
+  const executivo=document.getElementById("f_executivo").value.trim();
   const j={
     id:editId||uid(),
     cliente,
     tipoJob:document.getElementById("f_tipo").value,
-    analista:document.getElementById("f_analista").value.trim(),
+    analista,
+    executivo,
     origem:document.getElementById("f_origem").value,
     valorOrcado:Number(document.getElementById("f_valorOrcado").value)||0,
     dataRecebimento:document.getElementById("f_recebimento").value||today(),
@@ -421,16 +507,37 @@ function saveJobForm(){
     obs:document.getElementById("f_obs").value.trim(),
     status:st,
     valorFechado:st==="fechado"?Number(document.getElementById("f_valorFechado").value)||0:(st==="aberto"?"":undefined),
+    veiculo:st==="fechado"?document.getElementById("f_veiculo").value:"",
     dataFechamento:st==="fechado"?document.getElementById("f_dataFechamento1").value:(st==="perdido"?document.getElementById("f_dataFechamento2").value:""),
     motivoPerda:st==="perdido"?document.getElementById("f_motivo").value:"",
     updatedAt:Date.now()
   };
+  if(analista&&!data.config.analistas.includes(analista))data.config.analistas.push(analista);
+  if(executivo&&!data.config.executivos.includes(executivo))data.config.executivos.push(executivo);
   const idx=data.jobs.findIndex(x=>x.id===j.id);
   if(idx>=0)data.jobs[idx]=Object.assign({},data.jobs[idx],j);
   else{j.createdAt=Date.now();data.jobs.push(j);}
   save();closeModal();render();
   toast("Job salvo ✓");
 }
+
+/* ============ cadastros (analistas / executivos / veículos) ============ */
+function settingsHtml(){
+  const sec=(title,key,placeholder)=>`
+    <div class="cfgsection" data-key="${key}">
+      <h4>${title}</h4>
+      <div class="chiplist">${(data.config[key]||[]).map(n=>`<span class="chip">${esc(n)}<button data-act="cfg-del" data-key="${key}" data-name="${esc(n)}">×</button></span>`).join("")||`<span style="color:var(--muted);font-size:12.5px">Nenhum cadastrado ainda</span>`}</div>
+      <div class="addrow"><input data-cfg-input="${key}" placeholder="${placeholder}"><button data-act="cfg-add" data-key="${key}">Adicionar</button></div>
+    </div>`;
+  return `<header><h3>Cadastros</h3><button class="x" data-act="close">×</button></header>
+    <div class="form">
+      <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Esses nomes viram sugestão nos campos do job. Um nome novo digitado ali também entra pra cá automaticamente.</p>
+      ${sec("Analistas","analistas","Nome da analista")}
+      ${sec("Executivos de conta","executivos","Nome do executivo")}
+      ${sec("Veículos de mídia","veiculos","Nome do veículo")}
+    </div>`;
+}
+function openSettings(){openModal(settingsHtml());}
 
 /* ============ exportar / importar ============ */
 let pendingImport=null;
@@ -477,11 +584,24 @@ document.getElementById("segStatus").addEventListener("click",e=>{
   document.querySelectorAll("#segStatus button").forEach(x=>x.classList.remove("on"));
   b.classList.add("on");filters.status=b.dataset.v;render();
 });
+document.getElementById("mainTabs").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  document.querySelectorAll("#mainTabs button").forEach(x=>x.classList.remove("on"));
+  b.classList.add("on");mainView=b.dataset.v;render();
+});
 document.getElementById("fAnalista").addEventListener("change",e=>{filters.analista=e.target.value;render();});
+document.getElementById("fExecutivo").addEventListener("change",e=>{filters.executivo=e.target.value;render();});
+document.getElementById("fVeiculo").addEventListener("change",e=>{filters.veiculo=e.target.value;render();});
 document.getElementById("fBusca").addEventListener("input",e=>{filters.q=e.target.value;render();});
 document.getElementById("fDe").addEventListener("change",e=>{filters.de=e.target.value;render();});
 document.getElementById("fAte").addEventListener("change",e=>{filters.ate=e.target.value;render();});
 document.getElementById("fileImport").addEventListener("change",e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value="";});
+document.body.addEventListener("keydown",e=>{
+  if(e.key==="Enter"&&e.target.matches("[data-cfg-input]")){
+    e.preventDefault();
+    document.querySelector(`button[data-act="cfg-add"][data-key="${e.target.dataset.cfgInput}"]`).click();
+  }
+});
 
 document.body.addEventListener("click",e=>{
   const b=e.target.closest("button[data-act]");if(!b)return;
@@ -501,6 +621,20 @@ document.body.addEventListener("click",e=>{
   else if(act==="export")exportData();
   else if(act==="do-import-merge")doImport("merge");
   else if(act==="do-import-replace")doImport("replace");
+  else if(act==="settings")openSettings();
+  else if(act==="cfg-add"){
+    const key=b.dataset.key;
+    const input=document.querySelector(`[data-cfg-input="${key}"]`);
+    const v=input.value.trim();
+    if(!v)return;
+    data.config[key]=data.config[key]||[];
+    if(!data.config[key].includes(v))data.config[key].push(v);
+    save();openModal(settingsHtml());render();
+  }
+  else if(act==="cfg-del"){
+    data.config[b.dataset.key]=(data.config[b.dataset.key]||[]).filter(n=>n!==b.dataset.name);
+    save();openModal(settingsHtml());render();
+  }
   else if(act==="close")closeModal();
 });
 document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
