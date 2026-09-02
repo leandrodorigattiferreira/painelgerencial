@@ -434,6 +434,10 @@ function migrateJob(j){
     const r=oldDevRank[l.faseAtual];
     if(r!=null&&(minRank===null||r<minRank))minRank=r;
   });
+  if(!j.dataEntrega){
+    const datasEntrega=j.linhas.map(l=>l.dataEntrega).filter(Boolean).sort();
+    if(datasEntrega.length)j.dataEntrega=datasEntrega[datasEntrega.length-1];
+  }
   j.linhas=j.linhas.map(l=>{
     if(!l.status){
       l.status=l.faseAtual==="Fechado"?"Fechado":l.faseAtual==="Declinado"?"Declinado":"Em aberto";
