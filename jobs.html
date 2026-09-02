@@ -177,6 +177,9 @@
   .mcard .advance:hover{filter:brightness(.95)}
   .mcard .valorline{margin-top:6px;font-size:10.5px;color:var(--muted)}
   .mcard .valorline b{color:var(--ink)}
+  .mcard .joblinks{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+  .mcard .joblink{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft);text-decoration:none;white-space:nowrap}
+  .mcard .joblink:hover{background:var(--line-strong)}
 
   /* linhas de veículo mini-lista dentro do card */
   .linhaslist{margin-top:7px;display:flex;flex-direction:column;gap:3px;border-top:1px dashed var(--line-strong);padding-top:6px}
@@ -762,6 +765,10 @@ function mcardHtml(job){
     <div class="pbar"><i style="width:${pct}%"></i></div>
     <div class="linhaslist">${linhas.map(l=>linhaMiniHtml(job,l)).join("")}</div>
     ${(totalFechado||totalOrcado)?`<div class="valorline">${totalFechado?"Fechado":"Orçado"}: <b>${fmtMoney(totalFechado||totalOrcado)}</b></div>`:""}
+    ${(job.linkCanva||job.linkPlanilha)?`<div class="joblinks">
+      ${job.linkCanva?`<a class="joblink" href="${esc(job.linkCanva)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎨 Canva</a>`:""}
+      ${job.linkPlanilha?`<a class="joblink" href="${esc(job.linkPlanilha)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📊 Planilha</a>`:""}
+    </div>`:""}
     <div class="foot">
       <span>${esc(job.analista||"—")}</span>
       <span class="${alerta==='Atrasado'?'late':''}">${alerta==='Atrasado'?'Atrasado':fmtDate(job.prazoPrevisto)}</span>
@@ -840,6 +847,10 @@ function jobForm(j){
       <div class="field"><label>Último contato</label><input id="f_ultimoContato" type="date" value="${j.ultimoContato||""}"></div>
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
       <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
+      <div class="row2">
+        <div class="field"><label>Link do Canva</label><input id="f_linkCanva" type="url" value="${esc(j.linkCanva||"")}" placeholder="https://www.canva.com/design/..."></div>
+        <div class="field"><label>Link da planilha</label><input id="f_linkPlanilha" type="url" value="${esc(j.linkPlanilha||"")}" placeholder="https://docs.google.com/spreadsheets/..."></div>
+      </div>
 
       <div class="linhas-section">
         <div class="linhas-head"><label>Linhas de veículo</label><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar linha</button></div>
@@ -897,6 +908,8 @@ function saveJobForm(){
     ultimoContato:document.getElementById("f_ultimoContato").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
+    linkCanva:document.getElementById("f_linkCanva").value.trim(),
+    linkPlanilha:document.getElementById("f_linkPlanilha").value.trim(),
     linhas,
     updatedAt:Date.now()
   };
