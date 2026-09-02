@@ -4,8 +4,6 @@ Ferramenta de produtividade para gestores de marketing. Organiza tarefas em trê
 
 É um único arquivo `index.html`, sem dependências de build. Abre em qualquer navegador.
 
-Este repositório também tem o `jobs.html`, uma ferramenta separada para as analistas registrarem os jobs de clientes que recebem e o resultado do fechamento — veja a seção [Jobs de Marketing](#jobs-de-marketing--clientes) abaixo.
-
 ## Funcionalidades
 
 - **Três lentes** com cores próprias e contagem de tarefas abertas.
@@ -42,22 +40,18 @@ O indicador no rodapé da barra lateral mostra o estado atual ("Salvo na sua con
 
 Pronto — é só salvar esse link nos favoritos e usar no dia a dia.
 
-## Jobs de Marketing · Clientes
-
-Arquivo `jobs.html` — ferramenta separada para acompanhar os jobs/projetos de clientes, espelhando a planilha de acompanhamento (Antecipa): cada job passa pelas fases **Briefing → Desenvolvimento → Validação Interna → Aprovação Cliente → Concluído** (ou Pausado/Cancelado), com praça (CAM/RIB/SCA/VAR/CE), origem (Cliente/EP Labs), analista, executivo de conta, prioridade, situação, datas por fase, prazo previsto, último contato e próximos passos. **% de conclusão**, **dias em aberto** e **alerta de prazo** são calculados automaticamente a partir da fase e do prazo, do mesmo jeito que a planilha.
-
-Por cima disso, uma camada comercial: valor orçado, valor fechado e o **veículo de mídia** onde o valor foi fechado (Google Ads, Meta Ads, TV/Rádio, etc.).
-
-- **Aba Jobs**: lista em cards com um botão de "▶ Avançar fase" para progredir o job com um clique, além de editar/excluir. Filtros por situação (em andamento/concluído/atrasado/aguardando cliente), praça, analista, executivo, veículo, cliente e período.
-- **Aba Dashboard**: reúne tudo — KPIs (total, em andamento, concluídos, atrasados, aguardando cliente + valor orçado/fechado), funil por fase, e quebras por praça, situação, origem, prioridade, veículo, analista e executivo de conta.
-- **⚙ Cadastros**: tela para cadastrar os nomes de analistas, executivos de conta e veículos de mídia (viram sugestão nos campos do job; um nome novo digitado ali já entra automaticamente no cadastro).
-
-Os dados são salvos automaticamente (conta ou navegador, como no Painel do Leandro) e podem ser exportados/importados em JSON.
-
-Basta abrir `jobs.html` no navegador — não precisa instalar nada.
-
 ## Privacidade
 
 Tudo roda no seu navegador. O app não envia seus dados para nenhum servidor próprio. Mesmo publicado no GitHub Pages, o que outras pessoas eventualmente acessarem pelo link é a **ferramenta vazia** — os dados ficam no localStorage de cada navegador, não no código do repositório.
 
 > Não versione backups com dados reais (arquivos `.json` exportados) no repositório se não quiser que fiquem públicos.
+
+## Jobs de Marketing · Clientes
+
+Arquivo `jobs.html` — ferramenta separada para acompanhar os jobs/projetos de clientes. Cada **job** tem um número de registro único (`JOB-2026-001`) e pode conter **várias linhas de veículo de mídia** (Google Ads, Meta Ads, TV/Rádio, etc.) — cada linha avança pelas suas próprias fases **Recebido → Em desenvolvimento → Entregue → Fechado** (ou **Declinado**, a qualquer momento antes de fechar), independente das outras linhas do mesmo job. Isso permite ver facilmente qual veículo fechou, qual foi declinado e qual ainda está em andamento, dentro do mesmo cliente/job.
+
+Cada job também tem praça (CAM/RIB/SCA/VAR/CE), origem (Cliente/EP Labs), analista, executivo de conta, prioridade, situação, data de recebimento, prazo previsto, último contato e próximos passos. Cada linha de veículo tem valor orçado, valor fechado, data de entrega/fechamento e motivo (quando declinada). **% de conclusão**, **dias em aberto** e **alerta de prazo** são calculados automaticamente por linha.
+
+- **Aba Jobs**: quadro kanban com uma coluna por fase — cada card representa uma linha de veículo (com o número do job e o cliente destacados), com botões "▶ Avançar" e "✕ Declinar" para atualizar o status daquela linha com um clique. Filtros por status (em andamento/fechado/declinado/atrasado/aguardando cliente), praça, analista, executivo, veículo, cliente e período.
+- **Aba Dashboard**: KPIs (total de linhas, em andamento, fechadas, declinadas, atrasadas + valor orçado/fechado/jobs distintos), funil por fase, e quebras por praça, situação, origem, prioridade, veículo, analista e executivo de conta — incluindo "Valor fechado por veículo" para comparar o desempenho de cada canal de mídia.
+- **⚙ Cadastros**: tela para cadastrar os nomes de analistas, executivos de conta e veículos de mídia (viram sugestão nos campos do job; um nome novo digitado ali já entra automaticamente no cadastro).
