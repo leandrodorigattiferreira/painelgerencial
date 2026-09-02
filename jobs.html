@@ -143,7 +143,7 @@
   .kpi.k-andamento .icon{background:var(--noprazo-bg);color:var(--noprazo)}
   .kpi.k-concluido .icon{background:var(--concluido-bg);color:var(--concluido)}
   .kpi.k-atrasado .icon{background:var(--atrasado-bg);color:var(--atrasado)}
-  .kpi.k-declinado .icon{background:var(--cancelado-bg);color:var(--cancelado)}
+  .kpi.k-aguardando .icon{background:var(--aguardando-bg);color:var(--aguardando)}
   .kpi.k-total .icon{background:var(--brand-bg);color:var(--brand)}
   .kpi.k-alert{border-color:var(--atrasado);background:var(--atrasado-bg)}
   .kpi.k-alert .l{color:var(--atrasado)}
@@ -154,10 +154,9 @@
   .kpis.secondary .kpi .v{font-size:19px}
 
   /* ===== kanban board ===== */
-  .board{display:grid;grid-auto-flow:column;grid-auto-columns:272px;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start}
+  .board{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start}
   .col{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;max-height:calc(100vh - 210px)}
-  .col[data-fase="Fechado"]{background:var(--concluido-bg)}
-  .col[data-fase="Declinado"]{background:var(--cancelado-bg)}
+  .col[data-fase="Concluído"]{background:var(--concluido-bg)}
   .col h3{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;padding:0 2px}
   .col h3 .cnt{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:11px;color:var(--muted);font-weight:700}
   .colstack{display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-right:2px}
@@ -167,7 +166,6 @@
   .mcard:hover{border-color:var(--line-strong)}
   .mcard .jobnum{font-family:"JetBrains Mono",monospace;font-size:9px;font-weight:700;color:var(--faint);letter-spacing:.03em;margin-bottom:2px}
   .mcard .cliente{font-weight:800;font-size:13.5px;font-family:"Bricolage Grotesque";color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .mcard .veic{font-size:11px;color:var(--ink-soft);font-weight:600;margin-bottom:2px}
   .mcard .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
   .mcard .tag-sm{font-size:9.5px;font-weight:700;padding:1.5px 7px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft);white-space:nowrap}
   .mcard .situ-sm{font-size:9.5px;font-weight:700;padding:1.5px 7px;border-radius:99px;white-space:nowrap}
@@ -177,10 +175,22 @@
   .mcard .foot .late{color:var(--atrasado);font-weight:700}
   .mcard .advance{border:0;background:var(--brand-bg);color:var(--brand);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto}
   .mcard .advance:hover{filter:brightness(.95)}
-  .mcard .decline{border:0;background:var(--cancelado-bg);color:var(--cancelado);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;flex:0 0 auto}
-  .mcard .decline:hover{filter:brightness(.95)}
   .mcard .valorline{margin-top:6px;font-size:10.5px;color:var(--muted)}
   .mcard .valorline b{color:var(--ink)}
+
+  /* linhas de veículo mini-lista dentro do card */
+  .linhaslist{margin-top:7px;display:flex;flex-direction:column;gap:3px;border-top:1px dashed var(--line-strong);padding-top:6px}
+  .mcard .linhamini{display:flex;align-items:center;gap:5px;font-size:10px}
+  .mcard .lm-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-soft);font-weight:600}
+  .mcard .lm-pill{font-size:8.5px;font-weight:700;padding:1.5px 6px;border-radius:99px;white-space:nowrap;flex:0 0 auto}
+  .mcard .lm-pill.aberto{background:var(--accent-bg);color:var(--muted)}
+  .mcard .lm-pill.fechado{background:var(--concluido-bg);color:var(--concluido)}
+  .mcard .lm-pill.declinado{background:var(--cancelado-bg);color:var(--cancelado)}
+  .mcard .lm-val{font-size:9.5px;font-weight:700;color:var(--ink);white-space:nowrap;flex:0 0 auto}
+  .mcard .lm-btns{display:flex;gap:3px;flex:0 0 auto}
+  .mcard .lm-btn{border:0;width:15px;height:15px;border-radius:50%;font-size:8.5px;display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
+  .mcard .lm-btn.ok{background:var(--brand-bg);color:var(--brand)}
+  .mcard .lm-btn.no{background:var(--cancelado-bg);color:var(--cancelado)}
 
   /* status pill */
   .status{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
@@ -215,6 +225,22 @@
   .donut-legend .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
   .donut-legend .li b{margin-left:auto;font-weight:700;font-feature-settings:"tnum"}
 
+  /* ===== objetivos estratégicos ===== */
+  .obj-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:14px}
+  @media (max-width:1100px){.obj-grid{grid-template-columns:repeat(2,1fr)}}
+  .obj-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;box-shadow:var(--sh);display:flex;flex-direction:column;gap:6px}
+  .obj-card .obj-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--brand)}
+  .obj-card .obj-value{font-family:"Bricolage Grotesque";font-weight:800;font-size:26px;letter-spacing:-.01em}
+  .obj-card .obj-desc{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+  /* ===== evolução mensal (mini gráfico de barras) ===== */
+  .tschart{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:6px}
+  .tsbar{display:flex;flex-direction:column;align-items:center;flex:1;height:100%;justify-content:flex-end}
+  .tsbar-col{width:100%;max-width:32px;height:96px;display:flex;align-items:flex-end;background:var(--track);border-radius:6px 6px 0 0;overflow:hidden}
+  .tsbar-fill{width:100%;background:linear-gradient(180deg,var(--brand-2),var(--brand));border-radius:6px 6px 0 0;min-height:2px}
+  .tsbar-val{font-size:10px;font-weight:700;color:var(--ink-soft);margin-top:5px;white-space:nowrap}
+  .tsbar-label{font-size:9.5px;color:var(--muted);margin-top:2px;text-transform:uppercase}
+
   /* cadastros (settings) */
   .cfgsection+.cfgsection{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
   .cfgsection h4{margin:0;font-size:13px;font-weight:700;color:var(--ink-soft)}
@@ -239,6 +265,9 @@
   .field label{display:block;font-size:12px;font-weight:700;color:var(--ink-soft);margin-bottom:5px}
   .field input,.field select,.field textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px;background:var(--surface-2)}
   .field textarea{resize:vertical;min-height:56px}
+  .checkfield{display:flex;align-items:center}
+  .checkfield label{display:flex;align-items:center;gap:8px;font-size:13.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;margin:0}
+  .checkfield input[type=checkbox]{width:16px;height:16px;accent-color:var(--brand)}
   .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   @media (max-width:480px){.row2{grid-template-columns:1fr}}
   .save{width:100%;border:0;background:var(--inverse);color:var(--inverse-text);border-radius:11px;padding:12px;font-weight:700;font-size:14.5px;margin-top:4px}
@@ -325,8 +354,7 @@
       <div class="seg" id="segStatus">
         <button data-v="todos" class="on">Todos</button>
         <button data-v="andamento">Em andamento</button>
-        <button data-v="fechado">Fechados</button>
-        <button data-v="declinado">Declinados</button>
+        <button data-v="concluido">Concluídos</button>
         <button data-v="atrasado">Atrasados</button>
         <button data-v="aguardando">Aguardando cliente</button>
       </div>
@@ -350,13 +378,14 @@ let editId=null;
 let mainView="jobs";
 
 const PRACAS=["CAM","RIB","SCA","VAR","CE"];
-const ORIGENS=["Cliente","EP Labs"];
+const ORIGENS=["Solicitação interna","EP Labs","Proativo"];
 const PRIORIDADES=["Alta","Média","Baixa"];
-const FASES=["Recebido","Em desenvolvimento","Entregue","Fechado","Declinado"];
-const FASE_PCT={"Recebido":.1,"Em desenvolvimento":.5,"Entregue":.85,"Fechado":1,"Declinado":0};
-const FASE_ORDEM=["Recebido","Em desenvolvimento","Entregue","Fechado"];
-const FASE_AVANCO_DATA={"Em desenvolvimento":null,"Entregue":"dataEntrega","Fechado":"dataFechamento"};
-const FASE_COLOR={"Recebido":"var(--noprazo)","Em desenvolvimento":"var(--brand)","Entregue":"var(--aguardando)","Fechado":"var(--concluido)","Declinado":"var(--cancelado)"};
+const FASES=["Recebido","Em desenvolvimento","Entregue","Concluído"];
+const FASE_PCT={"Recebido":.15,"Em desenvolvimento":.5,"Entregue":.85,"Concluído":1};
+const FASE_ORDEM=["Recebido","Em desenvolvimento","Entregue","Concluído"];
+const FASE_AVANCO_DATA={"Em desenvolvimento":null,"Entregue":"dataEntrega","Concluído":"dataConclusao"};
+const FASE_COLOR={"Recebido":"var(--noprazo)","Em desenvolvimento":"var(--brand)","Entregue":"var(--aguardando)","Concluído":"var(--concluido)"};
+const STATUS_LINHA=["Em aberto","Fechado","Declinado"];
 const SITUACOES=["No prazo","Aguardando cliente","Atrasado","Pausado"];
 const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu","Outro"];
 const VEICULOS_PADRAO=["Google Ads","Meta Ads","TV / Rádio / Mídia tradicional","Influenciadores / Outros digitais","LinkedIn Ads","TikTok Ads","Outro"];
@@ -389,17 +418,35 @@ function migrateJob(j){
     j.linhas=[{
       id:uid(),
       veiculo:j.veiculo||"",
-      faseAtual:j.faseAtual||"Recebido",
+      status:j.faseAtual==="Fechado"?"Fechado":j.faseAtual==="Declinado"?"Declinado":"Em aberto",
       valorOrcado:Number(j.valorOrcado)||0,
       valorFechado:Number(j.valorFechado)||0,
-      dataEntrega:j.dataEntrega||"",
       dataFechamento:j.dataFechamento||"",
       motivoPerda:j.motivoPerda||"",
       updatedAt:j.updatedAt||Date.now()
     }];
-    delete j.veiculo;delete j.valorOrcado;delete j.valorFechado;delete j.faseAtual;
-    delete j.dataEntrega;delete j.dataFechamento;delete j.motivoPerda;
+    delete j.veiculo;delete j.valorOrcado;delete j.valorFechado;
   }
+  // fases antigas (por linha) mapeadas para o quanto o desenvolvimento do job já avançou
+  const oldDevRank={"Briefing":0,"Recebido":0,"Desenvolvimento":1,"Em desenvolvimento":1,"Validação Interna":2,"Entregue":2,"Aprovação Cliente":2,"Concluído":2,"Pausado":1,"Cancelado":2,"Fechado":2,"Declinado":2};
+  let minRank=null;
+  j.linhas.forEach(l=>{
+    const r=oldDevRank[l.faseAtual];
+    if(r!=null&&(minRank===null||r<minRank))minRank=r;
+  });
+  j.linhas=j.linhas.map(l=>{
+    if(!l.status){
+      l.status=l.faseAtual==="Fechado"?"Fechado":l.faseAtual==="Declinado"?"Declinado":"Em aberto";
+    }
+    delete l.faseAtual;delete l.dataEntrega;
+    l.valorOrcado=Number(l.valorOrcado)||0;
+    l.valorFechado=Number(l.valorFechado)||0;
+    return l;
+  });
+  if(!j.faseAtual||!FASES.includes(j.faseAtual)){
+    j.faseAtual=minRank!=null?["Recebido","Em desenvolvimento","Entregue"][minRank]:"Recebido";
+  }
+  j.contaEspecial=!!j.contaEspecial;
   if(!j.numero)j.numero=nextNumero();
   return j;
 }
@@ -434,25 +481,23 @@ function toast(msg){
   setTimeout(()=>{t.classList.remove("show");setTimeout(()=>t.remove(),320);},2600);
 }
 
-/* ============ campos calculados (por linha de veículo) ============ */
-function isTerminal(fase){return fase==="Fechado"||fase==="Declinado";}
-function pctConcl(linha){return FASE_PCT[linha.faseAtual]||0;}
-function diasEmAberto(job,linha){
+/* ============ campos calculados ============ */
+function isTerminal(fase){return fase==="Concluído";}
+function pctConcl(job){return FASE_PCT[job.faseAtual]||0;}
+function diasEmAberto(job){
   const start=pd(job.dataRecebimento);if(!start)return null;
-  const end=(isTerminal(linha.faseAtual)&&linha.dataFechamento)?pd(linha.dataFechamento):d0();
+  const end=(isTerminal(job.faseAtual)&&job.dataConclusao)?pd(job.dataConclusao):d0();
   if(!end)return null;
   return Math.round((end-start)/86400000);
 }
-function alertaPrazo(job,linha){
-  if(isTerminal(linha.faseAtual))return "—";
+function alertaPrazo(job){
+  if(isTerminal(job.faseAtual))return "—";
   const prazo=pd(job.prazoPrevisto);if(!prazo)return "";
   const diff=Math.round((prazo-d0())/86400000);
   if(diff<0)return "Atrasado";
   if(diff<=5)return "Vence em breve";
   return "No prazo";
 }
-
-/* ============ numeração de jobs ============ */
 function nextNumero(){
   const ano=new Date().getFullYear();
   const prefix="JOB-"+ano+"-";
@@ -460,43 +505,41 @@ function nextNumero(){
   const seq=(nums.length?Math.max(...nums):0)+1;
   return prefix+String(seq).padStart(3,"0");
 }
-
-/* ============ linhas de veículo (achatamento job+linha) ============ */
-function allPairs(){
+function pairsFor(jobs){
   const out=[];
-  data.jobs.forEach(job=>(job.linhas||[]).forEach(linha=>out.push({job,linha})));
+  jobs.forEach(job=>(job.linhas||[]).forEach(linha=>out.push({job,linha})));
   return out;
 }
 
 /* ============ filtro ============ */
 function filtered(){
-  return allPairs().filter(({job,linha})=>{
-    if(filters.seg==="andamento"&&!["Recebido","Em desenvolvimento","Entregue"].includes(linha.faseAtual))return false;
-    if(filters.seg==="fechado"&&linha.faseAtual!=="Fechado")return false;
-    if(filters.seg==="declinado"&&linha.faseAtual!=="Declinado")return false;
-    if(filters.seg==="atrasado"&&alertaPrazo(job,linha)!=="Atrasado")return false;
+  return data.jobs.filter(job=>{
+    if(filters.seg==="andamento"&&!["Recebido","Em desenvolvimento","Entregue"].includes(job.faseAtual))return false;
+    if(filters.seg==="concluido"&&job.faseAtual!=="Concluído")return false;
+    if(filters.seg==="atrasado"&&alertaPrazo(job)!=="Atrasado")return false;
     if(filters.seg==="aguardando"&&job.situacao!=="Aguardando cliente")return false;
     if(filters.praca!=="todos"&&job.praca!==filters.praca)return false;
     if(filters.analista!=="todos"&&job.analista!==filters.analista)return false;
     if(filters.executivo!=="todos"&&job.executivo!==filters.executivo)return false;
-    if(filters.veiculo!=="todos"&&linha.veiculo!==filters.veiculo)return false;
+    if(filters.veiculo!=="todos"&&!(job.linhas||[]).some(l=>l.veiculo===filters.veiculo))return false;
     if(filters.q&&!job.cliente.toLowerCase().includes(filters.q.toLowerCase()))return false;
     if(filters.de&&job.dataRecebimento&&job.dataRecebimento<filters.de)return false;
     if(filters.ate&&job.dataRecebimento&&job.dataRecebimento>filters.ate)return false;
     return true;
-  }).sort((a,b)=>(b.job.dataRecebimento||"").localeCompare(a.job.dataRecebimento||""));
+  }).sort((a,b)=>(b.dataRecebimento||"").localeCompare(a.dataRecebimento||""));
 }
 
 /* ============ render ============ */
 function render(){
   renderFPraca();renderFAnalista();renderFExecutivo();renderFVeiculo();
-  const list=filtered();
-  renderKpis(list);
+  const jobs=filtered();
+  const pairs=pairsFor(jobs);
+  renderKpis(jobs,pairs);
   document.getElementById("pageTitle").textContent=mainView==="jobs"?"Jobs":"Dashboard";
   document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
   document.getElementById("viewDashboard").style.display=mainView==="dashboard"?"block":"none";
-  if(mainView==="jobs")renderBoard(list);
-  else renderDashboard(list);
+  if(mainView==="jobs")renderBoard(jobs);
+  else renderDashboard(jobs,pairs);
 }
 function fillFilterSelect(id,label,values,cur){
   const sel=document.getElementById(id);
@@ -526,34 +569,34 @@ const KPI_ICONS={
   total:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
   andamento:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>',
   concluido:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.3 2.3L16 10"/></svg>',
-  declinado:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5l5 5M14.5 9.5l-5 5"/></svg>',
   atrasado:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5 21 19H3z"/><path d="M12 10v4"/><circle cx="12" cy="17" r=".6" fill="currentColor" stroke="none"/></svg>',
   aguardando:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v11H8l-4 4z"/></svg>',
 };
-function renderKpis(pairs){
-  const total=pairs.length;
-  const andamento=pairs.filter(p=>["Recebido","Em desenvolvimento","Entregue"].includes(p.linha.faseAtual)).length;
-  const fechados=pairs.filter(p=>p.linha.faseAtual==="Fechado").length;
-  const declinados=pairs.filter(p=>p.linha.faseAtual==="Declinado").length;
-  const atrasados=pairs.filter(p=>alertaPrazo(p.job,p.linha)==="Atrasado").length;
+function renderKpis(jobs,pairs){
+  const total=jobs.length;
+  const andamento=jobs.filter(j=>["Recebido","Em desenvolvimento","Entregue"].includes(j.faseAtual)).length;
+  const concluidos=jobs.filter(j=>j.faseAtual==="Concluído").length;
+  const atrasados=jobs.filter(j=>alertaPrazo(j)==="Atrasado").length;
+  const aguardando=jobs.filter(j=>j.situacao==="Aguardando cliente").length;
   const kpi=(cls,icon,label,value)=>`<div class="kpi ${cls}"><div class="icon">${icon}</div><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
   document.getElementById("kpis").innerHTML=
-    kpi("k-total",KPI_ICONS.total,"Total de linhas",total)
+    kpi("k-total",KPI_ICONS.total,"Total de jobs",total)
     +kpi("k-andamento",KPI_ICONS.andamento,"Em andamento",andamento)
-    +kpi("k-concluido",KPI_ICONS.concluido,"Fechadas",fechados)
-    +kpi("k-declinado",KPI_ICONS.declinado,"Declinadas",declinados)
-    +kpi("k-atrasado"+(atrasados>0?" k-alert":""),KPI_ICONS.atrasado,"Atrasadas",atrasados);
+    +kpi("k-concluido",KPI_ICONS.concluido,"Concluídos",concluidos)
+    +kpi("k-atrasado"+(atrasados>0?" k-alert":""),KPI_ICONS.atrasado,"Atrasados",atrasados)
+    +kpi("k-aguardando",KPI_ICONS.aguardando,"Aguardando cliente",aguardando);
   const valorOrcado=pairs.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0);
-  const valorFechado=pairs.reduce((s,p)=>s+(Number(p.linha.valorFechado)||0),0);
-  const jobsUnicos=new Set(pairs.map(p=>p.job.id)).size;
+  const valorFechado=pairs.reduce((s,p)=>s+(p.linha.status==="Fechado"?Number(p.linha.valorFechado)||0:0),0);
+  const decididas=pairs.filter(p=>p.linha.status!=="Em aberto").length;
+  const fechadas=pairs.filter(p=>p.linha.status==="Fechado").length;
   const aprovPct=valorOrcado>0?Math.round(valorFechado/valorOrcado*100):0;
   const kpi2=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
   document.getElementById("kpisComercial").innerHTML=
     kpi2("Valor orçado",fmtMoney(valorOrcado))
     +kpi2("Valor fechado",fmtMoney(valorFechado))
     +kpi2("% aprovado do orçado",`${aprovPct}<small>%</small>`)
-    +kpi2("Jobs distintos",jobsUnicos)
-    +kpi2("Ticket médio fechado",fmtMoney(fechados>0?valorFechado/fechados:0));
+    +kpi2("Linhas fechadas",`${fechadas}<small>de ${decididas} decididas</small>`)
+    +kpi2("Ticket médio fechado",fmtMoney(fechadas>0?valorFechado/fechadas:0));
 }
 
 /* ============ dashboard ============ */
@@ -573,8 +616,8 @@ function groupValor(pairs,keyFn){
   pairs.forEach(p=>{
     const k=keyFn(p)||"Não informado";
     map[k]=map[k]||{concluido:0,decidido:0,valor:0};
-    if(isTerminal(p.linha.faseAtual))map[k].decidido++;
-    if(p.linha.faseAtual==="Fechado"){map[k].concluido++;map[k].valor+=Number(p.linha.valorFechado)||0;}
+    if(p.linha.status!=="Em aberto")map[k].decidido++;
+    if(p.linha.status==="Fechado"){map[k].concluido++;map[k].valor+=Number(p.linha.valorFechado)||0;}
   });
   return map;
 }
@@ -610,18 +653,70 @@ function donutHtml(list){
     <div class="donut-legend">${legend}</div>
   </div>`;
 }
-function renderDashboard(pairs){
-  if(!pairs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
-  const jobsUnicos=[...new Map(pairs.map(p=>[p.job.id,p.job])).values()];
+function objetivosHtml(jobs,pairs){
+  const epLabsRealizados=jobs.filter(j=>j.origem==="EP Labs"&&j.faseAtual==="Concluído").length;
+  const contasVarejoMulti=jobs.filter(j=>j.contaEspecial&&j.praca==="VAR"&&(j.linhas||[]).length>1);
+  const somaFechadoVarejo=contasVarejoMulti.reduce((s,j)=>s+(j.linhas||[]).reduce((s2,l)=>s2+(l.status==="Fechado"?Number(l.valorFechado)||0:0),0),0);
+  const ticketMedioVarejo=contasVarejoMulti.length?somaFechadoVarejo/contasVarejoMulti.length:0;
+  const pairsEstrategicos=pairs.filter(p=>p.job.contaEspecial);
+  const decididasEstr=pairsEstrategicos.filter(p=>p.linha.status!=="Em aberto").length;
+  const fechadasEstr=pairsEstrategicos.filter(p=>p.linha.status==="Fechado").length;
+  const conversaoEstr=decididasEstr>0?Math.round(fechadasEstr/decididasEstr*100):0;
+  const totalLinhas=pairs.length;
+  const multicanalidade=jobs.length?(totalLinhas/jobs.length):0;
+  const obj=(n,label,value,desc)=>`<div class="obj-card"><div class="obj-label">${n}. ${esc(label)}</div><div class="obj-value">${value}</div><div class="obj-desc">${esc(desc)}</div></div>`;
+  return `<div class="obj-grid">`
+    + obj(1,"EP Labs",epLabsRealizados,"Quantidade de EP Labs realizados até o momento")
+    + obj(2,"Segmentação",contasVarejoMulti.length?fmtMoney(ticketMedioVarejo):"—","Ticket médio de contas especiais no varejo com projetos multimeios")
+    + obj(3,"Conversão",`${conversaoEstr}%`,`Assertividade das propostas estratégicas (${fechadasEstr} de ${decididasEstr} decididas)`)
+    + obj(4,"Multicanalidade",multicanalidade.toFixed(1),"Quantidade média de veículos utilizados em cada proposta")
+    + `</div>`;
+}
+function last6Months(){
+  const out=[];
+  const now=new Date();
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+    const label=d.toLocaleDateString("pt-BR",{month:"short"}).replace(".","");
+    out.push({key,label});
+  }
+  return out;
+}
+function timeSeriesHtml(title,months,valuesByKey,fmt){
+  const vals=months.map(m=>valuesByKey[m.key]||0);
+  const max=Math.max(1,...vals);
+  const bars=months.map((m,i)=>{
+    const v=vals[i];
+    const h=Math.round(v/max*100);
+    return `<div class="tsbar"><div class="tsbar-col"><div class="tsbar-fill" style="height:${h}%"></div></div><div class="tsbar-val">${fmt(v)}</div><div class="tsbar-label">${esc(m.label)}</div></div>`;
+  }).join("");
+  return `<div class="breakdown"><h3>${title}</h3><div class="tschart">${bars}</div></div>`;
+}
+function evolucaoHtml(jobs,pairs){
+  const months=last6Months();
+  const recebidosPorMes={};
+  jobs.forEach(j=>{ const k=(j.dataRecebimento||"").slice(0,7); if(k)recebidosPorMes[k]=(recebidosPorMes[k]||0)+1; });
+  const fechadoPorMes={};
+  pairs.forEach(p=>{ if(p.linha.status==="Fechado"){ const k=(p.linha.dataFechamento||"").slice(0,7); if(k)fechadoPorMes[k]=(fechadoPorMes[k]||0)+(Number(p.linha.valorFechado)||0); } });
+  return `<div class="dash-grid">`
+    + timeSeriesHtml("Jobs recebidos por mês",months,recebidosPorMes,v=>String(v))
+    + timeSeriesHtml("Valor fechado por mês",months,fechadoPorMes,v=>fmtMoney(v))
+    + `</div>`;
+}
+function renderDashboard(jobs,pairs){
+  if(!jobs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const html=
-    `<div class="dash-top">`
-    + donutHtml(jobsUnicos)
-    + countBreakdownHtml("Funil por fase (linhas de veículo)",FASES,pairs,p=>p.linha.faseAtual)
+    objetivosHtml(jobs,pairs)
+    + evolucaoHtml(jobs,pairs)
+    + `<div class="dash-top">`
+    + donutHtml(jobs)
+    + countBreakdownHtml("Funil por fase",FASES,jobs,j=>j.faseAtual)
     + `</div>`
     +`<div class="dash-grid">`
-    + countBreakdownHtml("Jobs por praça",PRACAS,jobsUnicos,j=>j.praca)
-    + countBreakdownHtml("Jobs por origem",ORIGENS,jobsUnicos,j=>j.origem)
-    + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobsUnicos,j=>j.prioridade)
+    + countBreakdownHtml("Jobs por praça",PRACAS,jobs,j=>j.praca)
+    + countBreakdownHtml("Jobs por origem",ORIGENS,jobs,j=>j.origem)
+    + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobs,j=>j.prioridade)
     + valorBreakdownHtml("Valor fechado por veículo",groupValor(pairs,p=>p.linha.veiculo),"share")
     + valorBreakdownHtml("Conclusão e valor por analista",groupValor(pairs,p=>p.job.analista),"conv")
     + valorBreakdownHtml("Conclusão e valor por executivo de conta",groupValor(pairs,p=>p.job.executivo),"conv")
@@ -630,43 +725,51 @@ function renderDashboard(pairs){
 }
 
 /* ============ quadro kanban ============ */
-function mcardHtml(p){
-  const job=p.job,linha=p.linha;
-  const alerta=alertaPrazo(job,linha);
-  const pct=Math.round(pctConcl(linha)*100);
-  const podeAvancar=FASE_ORDEM.includes(linha.faseAtual)&&!isTerminal(linha.faseAtual);
-  const proxFase=podeAvancar?FASE_ORDEM[FASE_ORDEM.indexOf(linha.faseAtual)+1]:null;
-  const podeDeclinar=!isTerminal(linha.faseAtual);
-  const accent=FASE_COLOR[linha.faseAtual]||"var(--line-strong)";
-  const temValor=linha.valorOrcado||linha.valorFechado;
+function linhaMiniHtml(job,l){
+  const cls=l.status==="Fechado"?"fechado":l.status==="Declinado"?"declinado":"aberto";
+  const valorTxt=l.status==="Fechado"?fmtMoney(l.valorFechado):(l.valorOrcado?fmtMoney(l.valorOrcado):"");
+  return `<div class="linhamini">
+    <span class="lm-name">${esc(l.veiculo||"Sem veículo")}</span>
+    <span class="lm-pill ${cls}">${l.status}</span>
+    ${valorTxt?`<span class="lm-val">${valorTxt}</span>`:""}
+    ${l.status==="Em aberto"?`<span class="lm-btns">
+      <button class="lm-btn ok" data-act="linha-fechar" data-id="${job.id}" data-linha="${l.id}" title="Marcar como fechado">✓</button>
+      <button class="lm-btn no" data-act="linha-declinar" data-id="${job.id}" data-linha="${l.id}" title="Marcar como declinado">✕</button>
+    </span>`:""}
+  </div>`;
+}
+function mcardHtml(job){
+  const alerta=alertaPrazo(job);
+  const pct=Math.round(pctConcl(job)*100);
+  const podeAvancar=FASE_ORDEM.includes(job.faseAtual)&&!isTerminal(job.faseAtual);
+  const proxFase=podeAvancar?FASE_ORDEM[FASE_ORDEM.indexOf(job.faseAtual)+1]:null;
+  const accent=FASE_COLOR[job.faseAtual]||"var(--line-strong)";
+  const linhas=job.linhas||[];
+  const totalOrcado=linhas.reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  const totalFechado=linhas.reduce((s,l)=>s+(l.status==="Fechado"?Number(l.valorFechado)||0:0),0);
   return `<div class="mcard" style="--card-accent:${accent}" data-act="edit" data-id="${job.id}">
     <div class="jobnum">${esc(job.numero||"")}</div>
     <div class="cliente">${esc(job.cliente)}</div>
-    <div class="veic">${esc(linha.veiculo||"Sem veículo definido")}</div>
     <div class="tags">
       <span class="tag-sm">${esc(job.praca)}</span>
       <span class="tag-sm">${esc(job.prioridade)}</span>
-      ${!isTerminal(linha.faseAtual)?`<span class="${situClass(job.situacao).replace('status','situ-sm')}" style="background:${SITU_COLOR[job.situacao]}22;color:${SITU_COLOR[job.situacao]}">${esc(job.situacao)}</span>`:""}
+      ${!isTerminal(job.faseAtual)?`<span class="${situClass(job.situacao).replace('status','situ-sm')}" style="background:${SITU_COLOR[job.situacao]}22;color:${SITU_COLOR[job.situacao]}">${esc(job.situacao)}</span>`:""}
     </div>
     <div class="pbar"><i style="width:${pct}%"></i></div>
-    ${temValor?`<div class="valorline">${linha.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(linha.faseAtual==="Fechado"?linha.valorFechado:linha.valorOrcado)}</b></div>`:""}
+    <div class="linhaslist">${linhas.map(l=>linhaMiniHtml(job,l)).join("")}</div>
+    ${(totalFechado||totalOrcado)?`<div class="valorline">${totalFechado?"Fechado":"Orçado"}: <b>${fmtMoney(totalFechado||totalOrcado)}</b></div>`:""}
     <div class="foot">
       <span>${esc(job.analista||"—")}</span>
       <span class="${alerta==='Atrasado'?'late':''}">${alerta==='Atrasado'?'Atrasado':fmtDate(job.prazoPrevisto)}</span>
-      <span style="display:flex;gap:4px">
-        ${podeDeclinar?`<button class="decline" data-act="declinar" data-id="${job.id}" data-linha="${linha.id}" title="Declinar linha">✕</button>`:""}
-        ${proxFase?`<button class="advance" data-act="avancar" data-id="${job.id}" data-linha="${linha.id}" title="Avançar para ${esc(proxFase)}">▶</button>`:""}
-      </span>
+      ${proxFase?`<button class="advance" data-act="avancar" data-id="${job.id}" title="Avançar para ${esc(proxFase)}">▶</button>`:""}
     </div>
   </div>`;
 }
-function renderBoard(pairs){
+function renderBoard(jobs){
   const el=document.getElementById("board");
-  if(!pairs.length){el.innerHTML=`<div class="empty">Nenhuma linha de veículo por aqui ainda.<br>Clique em <b>＋ Novo job</b> assim que receber o primeiro.</div>`;return;}
-  const all=allPairs();
+  if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum job por aqui ainda.<br>Clique em <b>＋ Novo job</b> assim que receber o primeiro.</div>`;return;}
   el.innerHTML=`<div class="board">`+FASES.map(fase=>{
-    const items=pairs.filter(p=>p.linha.faseAtual===fase);
-    if(fase==="Declinado"&&!all.some(p=>p.linha.faseAtual===fase))return "";
+    const items=jobs.filter(j=>j.faseAtual===fase);
     return `<div class="col" data-fase="${esc(fase)}">
       <h3>${esc(fase)}<span class="cnt">${items.length}</span></h3>
       <div class="colstack">${items.length?items.map(mcardHtml).join(""):`<div class="colempty">Vazio</div>`}</div>
@@ -685,7 +788,7 @@ function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o==
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
 
 function linhaRowHtml(l,idx){
-  l=l||{id:uid(),veiculo:"",faseAtual:"Recebido",valorOrcado:0,valorFechado:0,dataEntrega:"",dataFechamento:"",motivoPerda:""};
+  l=l||{id:uid(),veiculo:"",status:"Em aberto",valorOrcado:0,valorFechado:0,dataFechamento:"",motivoPerda:""};
   return `<div class="linharow" data-linha-id="${l.id}">
     <div class="linharow-head">
       <span class="linharow-n">Linha ${idx+1}</span>
@@ -693,17 +796,14 @@ function linhaRowHtml(l,idx){
     </div>
     <div class="row2">
       <div class="field"><label>Veículo</label><select class="li-veiculo"><option value="">Selecione...</option>${optionsHtml(data.config.veiculos,l.veiculo)}</select></div>
-      <div class="field"><label>Fase da linha</label><select class="li-fase">${optionsHtml(FASES,l.faseAtual||"Recebido")}</select></div>
+      <div class="field"><label>Status</label><select class="li-status">${optionsHtml(STATUS_LINHA,l.status||"Em aberto")}</select></div>
     </div>
-    <div class="field li-motivo-wrap" style="display:${l.faseAtual==='Declinado'?'block':'none'}"><label>Motivo (declínio)</label><select class="li-motivo">${optionsHtml(MOTIVOS,l.motivoPerda)}</select></div>
+    <div class="field li-motivo-wrap" style="display:${l.status==='Declinado'?'block':'none'}"><label>Motivo (declínio)</label><select class="li-motivo">${optionsHtml(MOTIVOS,l.motivoPerda)}</select></div>
     <div class="row2">
       <div class="field"><label>Valor orçado</label><input class="li-valorOrcado" type="number" step="0.01" min="0" value="${l.valorOrcado||""}" placeholder="0,00"></div>
       <div class="field"><label>Valor fechado</label><input class="li-valorFechado" type="number" step="0.01" min="0" value="${l.valorFechado||""}" placeholder="0,00"></div>
     </div>
-    <div class="row2">
-      <div class="field"><label>Data de entrega</label><input class="li-dataEntrega" type="date" value="${l.dataEntrega||""}"></div>
-      <div class="field"><label>Data de fechamento</label><input class="li-dataFechamento" type="date" value="${l.dataFechamento||""}"></div>
-    </div>
+    <div class="field"><label>Data de fechamento</label><input class="li-dataFechamento" type="date" value="${l.dataFechamento||""}"></div>
   </div>`;
 }
 function jobForm(j){
@@ -715,7 +815,7 @@ function jobForm(j){
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
       <div class="row2">
         <div class="field"><label>Praça</label><select id="f_praca">${optionsHtml(PRACAS,j.praca||"CAM")}</select></div>
-        <div class="field"><label>Origem</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem||"Cliente")}</select></div>
+        <div class="field"><label>Origem</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem||ORIGENS[0])}</select></div>
       </div>
       <div class="row2">
         <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",data.config.analistas)}</div>
@@ -729,7 +829,12 @@ function jobForm(j){
         <div class="field"><label>Prazo previsto</label><input id="f_prazo" type="date" value="${j.prazoPrevisto||""}"></div>
         <div class="field"><label>Data de recebimento</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
       </div>
+      <div class="row2">
+        <div class="field"><label>Data de entrega</label><input id="f_entrega" type="date" value="${j.dataEntrega||""}"></div>
+        <div class="field"><label>Data de conclusão</label><input id="f_conclusao" type="date" value="${j.dataConclusao||""}"></div>
+      </div>
       <div class="field"><label>Último contato</label><input id="f_ultimoContato" type="date" value="${j.ultimoContato||""}"></div>
+      <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
       <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
 
       <div class="linhas-section">
@@ -752,20 +857,19 @@ function saveJobForm(){
   const rows=[...document.querySelectorAll("#linhasWrap .linharow")];
   if(!rows.length){toast("Adicione pelo menos uma linha de veículo.");return;}
   const linhas=rows.map(row=>{
-    const faseAtual=row.querySelector(".li-fase").value;
+    const status=row.querySelector(".li-status").value;
     const l={
       id:row.dataset.linhaId,
       veiculo:row.querySelector(".li-veiculo").value,
-      faseAtual,
+      status,
       valorOrcado:Number(row.querySelector(".li-valorOrcado").value)||0,
       valorFechado:Number(row.querySelector(".li-valorFechado").value)||0,
-      dataEntrega:row.querySelector(".li-dataEntrega").value,
       dataFechamento:row.querySelector(".li-dataFechamento").value,
-      motivoPerda:faseAtual==="Declinado"?row.querySelector(".li-motivo").value:"",
+      motivoPerda:status==="Declinado"?row.querySelector(".li-motivo").value:"",
       updatedAt:Date.now()
     };
-    if(faseAtual==="Entregue"&&!l.dataEntrega)l.dataEntrega=today();
-    if((faseAtual==="Fechado"||faseAtual==="Declinado")&&!l.dataFechamento)l.dataFechamento=today();
+    if(status!=="Em aberto"&&!l.dataFechamento)l.dataFechamento=today();
+    if(status==="Fechado"&&!l.valorFechado)l.valorFechado=l.valorOrcado;
     return l;
   });
   const analista=document.getElementById("f_analista").value.trim();
@@ -781,9 +885,13 @@ function saveJobForm(){
     executivo,
     prioridade:document.getElementById("f_prioridade").value,
     situacao:document.getElementById("f_situacao").value,
+    faseAtual:existing?existing.faseAtual:"Recebido",
     prazoPrevisto:document.getElementById("f_prazo").value,
     dataRecebimento:document.getElementById("f_recebimento").value||today(),
+    dataEntrega:document.getElementById("f_entrega").value,
+    dataConclusao:document.getElementById("f_conclusao").value,
     ultimoContato:document.getElementById("f_ultimoContato").value,
+    contaEspecial:document.getElementById("f_contaEspecial").checked,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
     linhas,
     updatedAt:Date.now()
@@ -796,24 +904,34 @@ function saveJobForm(){
   save();closeModal();render();
   toast("Job salvo ✓");
 }
-function avancarLinha(jobId,linhaId){
-  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
-  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
-  const idx=FASE_ORDEM.indexOf(linha.faseAtual);if(idx<0||idx>=FASE_ORDEM.length-1)return;
+function avancarJob(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  const idx=FASE_ORDEM.indexOf(job.faseAtual);if(idx<0||idx>=FASE_ORDEM.length-1)return;
   const proxima=FASE_ORDEM[idx+1];
   const campoData=FASE_AVANCO_DATA[proxima];
-  if(campoData)linha[campoData]=today();
-  linha.faseAtual=proxima;
-  linha.updatedAt=Date.now();
+  if(campoData)job[campoData]=today();
+  job.faseAtual=proxima;
   job.updatedAt=Date.now();
   save();render();
   toast(`Avançou para ${proxima} ✓`);
 }
+function fecharLinha(jobId,linhaId){
+  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
+  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
+  if(linha.status!=="Em aberto")return;
+  linha.status="Fechado";
+  linha.dataFechamento=today();
+  if(!linha.valorFechado)linha.valorFechado=linha.valorOrcado;
+  linha.updatedAt=Date.now();
+  job.updatedAt=Date.now();
+  save();render();
+  toast("Linha marcada como fechada ✓");
+}
 function declinarLinha(jobId,linhaId){
   const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
   const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
-  if(isTerminal(linha.faseAtual))return;
-  linha.faseAtual="Declinado";
+  if(linha.status!=="Em aberto")return;
+  linha.status="Declinado";
   linha.dataFechamento=today();
   linha.updatedAt=Date.now();
   job.updatedAt=Date.now();
@@ -899,7 +1017,7 @@ document.getElementById("fDe").addEventListener("change",e=>{filters.de=e.target
 document.getElementById("fAte").addEventListener("change",e=>{filters.ate=e.target.value;render();});
 document.getElementById("fileImport").addEventListener("change",e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value="";});
 document.body.addEventListener("change",e=>{
-  if(e.target.classList.contains("li-fase")){
+  if(e.target.classList.contains("li-status")){
     const row=e.target.closest(".linharow");
     row.querySelector(".li-motivo-wrap").style.display=e.target.value==="Declinado"?"block":"none";
   }
@@ -917,8 +1035,9 @@ document.body.addEventListener("click",e=>{
   const act=b.dataset.act,id=b.dataset.id;
   if(act==="new")openNewJobModal();
   else if(act==="edit")openEditJobModal(id);
-  else if(act==="avancar")avancarLinha(id,b.dataset.linha);
-  else if(act==="declinar")declinarLinha(id,b.dataset.linha);
+  else if(act==="avancar")avancarJob(id);
+  else if(act==="linha-fechar")fecharLinha(id,b.dataset.linha);
+  else if(act==="linha-declinar")declinarLinha(id,b.dataset.linha);
   else if(act==="save-job")saveJobForm();
   else if(act==="linha-add"){
     const wrap=document.getElementById("linhasWrap");
