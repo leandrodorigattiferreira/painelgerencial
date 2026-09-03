@@ -352,12 +352,12 @@
       </div>
     </div>
 
-    <nav class="navlist" id="mainTabs">
+    <nav class="navlist" id="mainTabs" data-hide-executivo>
       <button data-v="jobs" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>Jobs</button>
       <button data-v="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>Dashboard</button>
     </nav>
 
-    <div class="side-section">
+    <div class="side-section" data-hide-executivo>
       <div class="side-label">Filtros</div>
       <select id="fPraca"><option value="todos">Todas as praças</option></select>
       <select id="fAnalista"><option value="todos">Todas as analistas</option></select>
@@ -368,7 +368,7 @@
       <input id="fAte" type="date" title="Data de recebimento até">
     </div>
 
-    <div class="side-actions">
+    <div class="side-actions" data-hide-executivo>
       <button class="sbtn primary" data-act="new" data-writeonly>＋ Novo job</button>
       <button class="sbtn" data-act="settings" data-writeonly>⚙ Cadastros</button>
       <button class="sbtn" data-act="export">⬇ Exportar</button>
@@ -385,7 +385,7 @@
     <div class="mainhead">
       <h2 id="pageTitle">Jobs</h2>
       <span class="headerscope" id="scopeBadge"></span>
-      <div class="seg" id="segStatus">
+      <div class="seg" id="segStatus" data-hide-executivo>
         <button data-v="todos" class="on">Todos</button>
         <button data-v="andamento">Em andamento</button>
         <button data-v="concluido">Fechados</button>
@@ -394,11 +394,12 @@
       </div>
     </div>
 
-    <div class="kpis" id="kpis"></div>
-    <div class="kpis secondary" id="kpisComercial"></div>
+    <div class="kpis" id="kpis" data-hide-executivo></div>
+    <div class="kpis secondary" id="kpisComercial" data-hide-executivo></div>
 
     <div id="viewJobs"><div id="board"></div></div>
     <div id="viewDashboard" style="display:none"><div id="dashboard"></div></div>
+    <div id="viewExecutivo" style="display:none"></div>
   </main>
 </div>
 
@@ -443,6 +444,7 @@ function scopePickerHtml(){
     <div class="form">
       <p>Isso só filtra o que aparece pra você neste navegador — não é uma trava de segurança, os dados continuam os mesmos para todo mundo.</p>
       <button class="save" data-act="scope-pick" data-scope-mode="todos">👁 Ver tudo (gestão)</button>
+      <button class="save" style="background:var(--brand)" data-act="scope-pick" data-scope-mode="executivo">📝 Sou executivo (criar briefing)</button>
       <div class="scope-pracas">${PRACAS.map(p=>`<button class="scope-praca-btn" data-act="scope-pick" data-scope-mode="praca" data-scope-praca="${esc(p)}">Praça ${esc(p)}</button>`).join("")}</div>
     </div>`;
 }
@@ -453,8 +455,183 @@ function openScopePicker(){
 function closeScopePicker(){document.getElementById("scopeBackdrop").classList.remove("open");}
 function renderScopeBadge(){
   const el=document.getElementById("scopeBadge");if(!el)return;
-  const label=viewerScope&&viewerScope.mode==="praca"?`Praça ${esc(viewerScope.praca)}`:"Visão geral";
+  const label=viewerScope&&viewerScope.mode==="praca"?`Praça ${esc(viewerScope.praca)}`:viewerScope&&viewerScope.mode==="executivo"?"Executivo":"Visão geral";
   el.innerHTML=`👤 ${label} <button data-act="scope-change">trocar</button>`;
+}
+let sampleApi=null;
+async function initSample(){
+  if(!window.claude||!window.claude.use)return;
+  try{ sampleApi=await window.claude.use("sample"); }catch(e){ sampleApi=null; }
+}
+
+/* ============ visão do executivo: só cria o briefing ============ */
+function executivoFormHtml(){
+  return `<div style="max-width:640px">
+    <h2 style="font-family:'Bricolage Grotesque';font-weight:800;font-size:22px;margin:0 0 4px">Novo briefing</h2>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 18px">Preencha o briefing do job. Assim que enviar, ele aparece pronto pra um analista assumir.</p>
+    <div class="field"><label>Cliente</label><input id="ex_cliente" placeholder="Nome do cliente"></div>
+    <div class="row2">
+      <div class="field"><label>Praça</label><select id="ex_praca">${optionsHtml(PRACAS,"CAM")}</select></div>
+      <div class="field"><label>Origem</label><select id="ex_origem">${optionsHtml(ORIGENS,ORIGENS[0])}</select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Prioridade</label><select id="ex_prioridade">${optionsHtml(PRIORIDADES,"Média")}</select></div>
+      <div class="field"><label>Data do prazo</label><input id="ex_prazo" type="date"></div>
+    </div>
+    <div class="field"><label>Seu nome (executivo)</label><input id="ex_executivo" list="dl_executivos_exec" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos_exec",data.config.executivos)}</div>
+    <div class="field"><label>Briefing</label><textarea id="ex_briefing" style="min-height:160px" placeholder="Cole aqui o briefing completo: o que o cliente pediu, contexto, verba se souber, prazo, tudo que o analista precisa saber..."></textarea></div>
+    <button class="save" data-act="exec-submit">Enviar briefing</button>
+    <div id="execFeedback" style="margin-top:12px"></div>
+  </div>`;
+}
+function submitExecutivoBriefing(){
+  const cliente=document.getElementById("ex_cliente").value.trim();
+  const briefing=document.getElementById("ex_briefing").value.trim();
+  if(!cliente){toast("Informe o cliente.");return;}
+  if(!briefing){toast("Cole o briefing.");return;}
+  const executivo=document.getElementById("ex_executivo").value.trim();
+  const j={
+    id:uid(),
+    numero:nextNumero(cliente),
+    cliente,
+    praca:document.getElementById("ex_praca").value,
+    origem:document.getElementById("ex_origem").value,
+    analista:"",
+    executivo,
+    prioridade:document.getElementById("ex_prioridade").value,
+    situacao:"No prazo",
+    faseAtual:"Recebido",
+    prazoPrevisto:document.getElementById("ex_prazo").value,
+    dataRecebimento:today(),
+    dataEntrega:"",
+    contaEspecial:false,
+    briefing,
+    checklist:[],
+    proximosPassos:"",
+    planoMidia:"",
+    planilhas:[],
+    linhas:[],
+    ultimoContatoEm:Date.now(),
+    valorFechado:0,
+    motivoPerda:"",
+    dataFechamento:"",
+    recuperavel:false,
+    declinioAutomatico:false,
+    faseAntesFechamento:null,
+    createdAt:Date.now(),
+    updatedAt:Date.now()
+  };
+  if(executivo&&!data.config.executivos.includes(executivo))data.config.executivos.push(executivo);
+  data.jobs.push(j);
+  save();
+  document.getElementById("execFeedback").innerHTML=`<div style="background:var(--brand-bg);color:var(--brand);padding:12px 14px;border-radius:10px;font-weight:700;font-size:13.5px">Briefing enviado ✓ Número do job: ${esc(j.numero)}. Um analista vai assumir a partir daqui.</div>`;
+  document.getElementById("ex_cliente").value="";
+  document.getElementById("ex_briefing").value="";
+  document.getElementById("ex_prazo").value="";
+  toast("Briefing enviado ✓");
+}
+
+/* ============ iniciativas de IA (capacidade "sample" do artifact) ============ */
+async function gerarChecklistIA(){
+  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  const briefing=document.getElementById("f_briefing").value.trim();
+  if(!briefing){toast("Preencha o briefing primeiro.");return;}
+  const btn=document.querySelector('[data-act="ai-checklist"]');
+  if(btn){btn.disabled=true;btn.textContent="Gerando...";}
+  try{
+    const out=await sampleApi.json(
+      `Leia este briefing de um job de marketing e extraia uma lista curta e prática de tarefas que o analista precisa fazer para atender esse pedido. Responda em português, no formato {"tasks":["tarefa 1","tarefa 2"]}, com no máximo 8 itens, cada um curto e acionável.\n\nBriefing:\n${briefing}`,
+      {modelTier:"quick"}
+    );
+    const tasks=(out&&Array.isArray(out.tasks))?out.tasks.filter(Boolean):[];
+    if(!tasks.length){toast("Não consegui extrair tarefas desse briefing.");return;}
+    const wrap=document.getElementById("checklistWrap");
+    if(wrap.children.length===1&&!wrap.children[0].dataset.checklistId)wrap.innerHTML="";
+    tasks.forEach(t=>{
+      const div=document.createElement("div");
+      div.innerHTML=checklistItemHtml({id:uid(),texto:t,feito:false});
+      wrap.appendChild(div.firstElementChild);
+    });
+    toast(`${tasks.length} tarefa(s) geradas ✓`);
+  }catch(e){
+    toast(e&&e.code==="not_granted"?"Permissão de IA não concedida.":"Não consegui gerar o checklist.");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="✨ Gerar do briefing";}
+  }
+}
+async function sugerirVeiculosIA(){
+  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  const praca=document.getElementById("f_praca").value;
+  const origem=document.getElementById("f_origem").value;
+  const atuais=[...document.querySelectorAll("#linhasWrap .li-veiculo")].map(s=>s.value).filter(Boolean);
+  const historico=[...new Set(data.jobs.filter(j=>j.faseAtual==="Fechado"&&j.praca===praca).flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))];
+  const btn=document.querySelector('[data-act="ai-sugerir-veiculos"]');
+  if(btn){btn.disabled=true;btn.textContent="Pensando...";}
+  try{
+    const out=await sampleApi.json(
+      `Sugira até 3 veículos de mídia complementares para este job, considerando o que já foi usado com sucesso em jobs fechados parecidos. Praça: ${praca}. Origem: ${origem}. Veículos já adicionados neste job: ${atuais.join(", ")||"nenhum"}. Veículos usados em jobs fechados dessa praça: ${historico.join(", ")||"sem histórico"}. Responda em português no formato {"sugestoes":["veiculo1","veiculo2"]}, sem repetir os já adicionados.`,
+      {modelTier:"quick"}
+    );
+    const sugestoes=(out&&Array.isArray(out.sugestoes))?out.sugestoes.filter(s=>s&&!atuais.includes(s)):[];
+    const wrap=document.getElementById("veiculoSugestoes");
+    wrap.innerHTML=sugestoes.length
+      ?sugestoes.map(s=>`<button type="button" class="scope-praca-btn" style="padding:6px 12px;font-size:12.5px" data-act="ai-add-veiculo" data-veiculo="${esc(s)}">+ ${esc(s)}</button>`).join("")
+      :`<span style="color:var(--muted);font-size:12px">Sem sugestões novas.</span>`;
+  }catch(e){
+    toast("Não consegui sugerir agora.");
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="💡 Sugerir";}
+  }
+}
+async function analisarRiscosIA(){
+  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  const jobs=filtered().filter(j=>!isTerminal(j.faseAtual)&&(j.proximosPassos||j.briefing));
+  const el=document.getElementById("riscoResultado");
+  if(!jobs.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum job em aberto com texto pra analisar.</div>`;return;}
+  const btn=document.querySelector('[data-act="ai-risco"]');
+  if(btn){btn.disabled=true;btn.textContent="Analisando...";}
+  const resumo=jobs.slice(0,30).map(j=>`- ${j.cliente} (${j.numero}): ${(j.proximosPassos||j.briefing||"").slice(0,400)}`).join("\n");
+  try{
+    const out=await sampleApi.json(
+      `Analise estas anotações de jobs de marketing em aberto e aponte quais parecem estar em risco de não fechar (cliente sumiu, objeção de preço, mencionou concorrente, sinal de desistência etc). Responda em português no formato {"riscos":[{"cliente":"...","motivo":"..."}]}, só com os jobs que realmente têm sinal de risco (pode ser lista vazia).\n\n${resumo}`,
+      {modelTier:"default"}
+    );
+    const riscos=(out&&Array.isArray(out.riscos))?out.riscos:[];
+    el.innerHTML=riscos.length
+      ?riscos.map(r=>`<div style="display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px"><b style="min-width:120px;flex:0 0 auto">${esc(r.cliente||"")}</b><span style="color:var(--ink-soft)">${esc(r.motivo||"")}</span></div>`).join("")
+      :`<div style="color:var(--muted);font-size:13px">Nenhum sinal de risco encontrado ✓</div>`;
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui analisar agora. Tente de novo.</div>`;
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="🔎 Analisar riscos agora";}
+  }
+}
+async function gerarResumoIA(){
+  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  const jobs=filtered();
+  const semanaAtras=new Date();semanaAtras.setDate(semanaAtras.getDate()-7);
+  const recebidos=jobs.filter(j=>j.dataRecebimento&&pd(j.dataRecebimento)>=semanaAtras);
+  const fechados=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento&&pd(j.dataFechamento)>=semanaAtras);
+  const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
+  const valorFechadoSemana=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const dadosTexto=`Jobs recebidos nos últimos 7 dias: ${recebidos.length}.\nJobs fechados nos últimos 7 dias: ${fechados.length}, somando ${fmtMoney(valorFechadoSemana)}.\nJobs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de jobs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
+  const btn=document.querySelector('[data-act="ai-resumo"]');
+  if(btn){btn.disabled=true;btn.textContent="Gerando...";}
+  const el=document.getElementById("resumoResultado");
+  try{
+    const out=await sampleApi(
+      `Escreva um resumo curto (3-5 frases, tom direto, em português) desses números da semana de um time de marketing de clientes, pronto pra colar num Slack ou e-mail. Não invente números, use só os que eu passar.\n\n${dadosTexto}`,
+      {modelTier:"quick"}
+    );
+    const texto=(out&&out.text)||"";
+    el.innerHTML=texto
+      ?`<textarea id="resumoTexto" style="width:100%;min-height:110px;border:1px solid var(--line-strong);border-radius:10px;padding:10px;background:var(--surface-2)">${esc(texto)}</textarea><button type="button" class="linha-add-btn" style="margin-top:8px" data-act="copiar-resumo">📋 Copiar</button>`
+      :`<div style="color:var(--muted);font-size:13px">Não consegui gerar agora.</div>`;
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora. Tente de novo.</div>`;
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="📋 Gerar resumo";}
+  }
 }
 
 /* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
@@ -517,12 +694,12 @@ function migrateJob(j){
     const declinadas=linhasComStatus.filter(l=>l.status==="Declinado");
     if(fechadas.length){
       j.faseAtual="Fechado";
-      j.valorFechado=fechadas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
       j.dataFechamento=fechadas.map(l=>l.dataFechamento).filter(Boolean).sort().pop()||today();
     }else if(declinadas.length){
       j.faseAtual="Declinado";
       j.motivoPerda=declinadas[0].motivoPerda||"";
       j.dataFechamento=declinadas.map(l=>l.dataFechamento).filter(Boolean).sort().pop()||today();
+      j.linhas.forEach(l=>{l.valorFechado=0;});
     }else{
       j.faseAtual=(j.faseAtual==="Concluído"||!j.faseAtual)?devFaseAntes:j.faseAtual;
     }
@@ -535,12 +712,14 @@ function migrateJob(j){
   j.linhas=j.linhas.map(l=>({
     id:l.id||uid(),
     veiculo:l.veiculo||"",
-    valorOrcado:Number(l.valorOrcado)||0
+    valorOrcado:Number(l.valorOrcado)||0,
+    valorFechado:Number(l.valorFechado)||0
   }));
   if(!j.faseAtual||!FASES.includes(j.faseAtual)){
     j.faseAtual=j.faseAtual==="Concluído"?"Entregue":devFaseAntes;
   }
-  j.valorFechado=Number(j.valorFechado)||0;
+  // valor fechado do job é sempre a soma do valor fechado de cada veículo (data é a única coisa única do job)
+  j.valorFechado=j.linhas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   j.motivoPerda=j.motivoPerda||"";
   j.dataFechamento=j.dataFechamento||"";
   j.recuperavel=!!j.recuperavel;
@@ -551,6 +730,7 @@ function migrateJob(j){
   j.contaEspecial=!!j.contaEspecial;
   if(!j.numero)j.numero=nextNumero(j.cliente);
   j.briefing=j.briefing||"";
+  j.checklist=(j.checklist||[]).map(c=>({id:c.id||uid(),texto:c.texto||"",feito:!!c.feito}));
   if(j.linkCanva!==undefined){ j.planoMidia=j.linkCanva; delete j.linkCanva; }
   j.planoMidia=j.planoMidia||"";
   if(!j.planilhas){
@@ -692,6 +872,16 @@ function filtered(){
 /* ============ render ============ */
 function render(){
   renderScopeBadge();
+  const isExec=viewerScope&&viewerScope.mode==="executivo";
+  document.querySelectorAll("[data-hide-executivo]").forEach(el=>{ el.style.display=isExec?"none":""; });
+  document.getElementById("viewExecutivo").style.display=isExec?"block":"none";
+  if(isExec){
+    document.getElementById("viewJobs").style.display="none";
+    document.getElementById("viewDashboard").style.display="none";
+    document.getElementById("pageTitle").textContent="Novo briefing";
+    if(!document.getElementById("execFeedback"))document.getElementById("viewExecutivo").innerHTML=executivoFormHtml();
+    return;
+  }
   const fPracaEl=document.getElementById("fPraca");
   fPracaEl.style.display=(viewerScope&&viewerScope.mode==="praca")?"none":"";
   renderFPraca();renderFAnalista();renderFExecutivo();renderFVeiculo();
@@ -759,7 +949,7 @@ function renderKpis(jobs,pairs){
     kpi2("Valor orçado",fmtMoney(valorOrcado))
     +kpi2("Valor fechado",fmtMoney(valorFechado))
     +kpi2("% fechado (por valor ofertado)",`${pctValor}<small>%</small>`)
-    +kpi2("% fechado (por qtd. de jobs)",`${pctQtd}<small>de ${decididas} decididos</small>`)
+    +kpi2("% fechado (por qtd. de jobs)",`${pctQtd}<small>%</small>`)
     +kpi2("Ticket médio fechado",fmtMoney(fechadas>0?valorFechado/fechadas:0));
 }
 
@@ -788,15 +978,13 @@ function groupValorPorJob(jobs,keyFn){
 function valorPorVeiculoMap(jobs){
   const map={};
   jobs.forEach(job=>{
-    const totalOrc=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
     (job.linhas||[]).forEach(l=>{
       const k=l.veiculo||"Não informado";
       map[k]=map[k]||{concluido:0,decidido:0,valor:0};
       if(isTerminal(job.faseAtual))map[k].decidido++;
       if(job.faseAtual==="Fechado"){
         map[k].concluido++;
-        const share=totalOrc>0?(Number(l.valorOrcado)||0)/totalOrc:0;
-        map[k].valor+=(Number(job.valorFechado)||0)*share;
+        map[k].valor+=Number(l.valorFechado)||0;
       }
     });
   });
@@ -951,12 +1139,29 @@ function dinheiroMesaHtml(jobs){
   }).join("");
   return `<div class="breakdown"><h3>Dinheiro na mesa — jobs parados</h3>${html}</div>`;
 }
+function riscoHtml(){
+  return `<div class="breakdown">
+    <h3>Radar de risco (IA)</h3>
+    <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px">Lê o texto de "próximos passos"/briefing dos jobs em aberto e sinaliza possíveis riscos (cliente sumiu, objeção de preço, concorrência etc).</p>
+    <button class="linha-add-btn" data-act="ai-risco" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>🔎 Analisar riscos agora</button>
+    <div id="riscoResultado" style="margin-top:12px"></div>
+  </div>`;
+}
+function resumoSemanalHtml(){
+  return `<div class="breakdown">
+    <h3>Resumo da semana (IA)</h3>
+    <button class="linha-add-btn" data-act="ai-resumo" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>📋 Gerar resumo</button>
+    <div id="resumoResultado" style="margin-top:12px"></div>
+  </div>`;
+}
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const html=
     objetivosHtml(jobs,pairs)
     + dinheiroMesaHtml(jobs)
+    + riscoHtml()
     + evolucaoHtml(jobs,pairs)
+    + resumoSemanalHtml()
     + comparativoAnualHtml(jobs,pairs)
     + `<div class="dash-top">`
     + donutHtml(jobs)
@@ -974,10 +1179,11 @@ function renderDashboard(jobs,pairs){
 }
 
 /* ============ quadro kanban ============ */
-function linhaMiniHtml(l){
+function linhaMiniHtml(l,fechado){
+  const valor=fechado?l.valorFechado:l.valorOrcado;
   return `<div class="linhamini">
     <span class="lm-name">${esc(l.veiculo||"Sem veículo")}</span>
-    ${l.valorOrcado?`<span class="lm-val">${fmtMoney(l.valorOrcado)}</span>`:""}
+    ${valor?`<span class="lm-val">${fmtMoney(valor)}</span>`:""}
   </div>`;
 }
 function mcardHtml(job){
@@ -1001,8 +1207,8 @@ function mcardHtml(job){
       ${lembrete?`<span class="tag-sm warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
     </div>
     <div class="pbar"><i style="width:${pct}%"></i></div>
-    ${linhas.length?`<div class="linhaslist">${linhas.map(linhaMiniHtml).join("")}</div>`:""}
-    <div class="valorline">${job.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(job.faseAtual==="Fechado"?(job.valorFechado||totalOrcado):totalOrcado)}</b></div>
+    ${linhas.length?`<div class="linhaslist">${linhas.map(l=>linhaMiniHtml(l,job.faseAtual==="Fechado")).join("")}</div>`:""}
+    ${linhas.length?`<div class="valorline">${job.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(job.faseAtual==="Fechado"?(job.valorFechado||totalOrcado):totalOrcado)}</b></div>`:""}
     ${(job.planoMidia||(job.planilhas&&job.planilhas.length))?`<div class="joblinks">
       ${job.planoMidia?`<a class="joblink" href="${esc(job.planoMidia)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🖼 Plano de Mídia</a>`:""}
       ${(job.planilhas||[]).filter(p=>p.url).map((p,i)=>`<a class="joblink" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📊 ${esc(p.nome||("Planilha "+(i+1)))}</a>`).join("")}
@@ -1043,8 +1249,8 @@ function closeModal(){document.getElementById("backdrop").classList.remove("open
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
 
-function linhaRowHtml(l,idx){
-  l=l||{id:uid(),veiculo:"",valorOrcado:0};
+function linhaRowHtml(l,idx,mostrarFechado){
+  l=l||{id:uid(),veiculo:"",valorOrcado:0,valorFechado:0};
   return `<div class="linharow" data-linha-id="${l.id}">
     <div class="linharow-head">
       <span class="linharow-n">Veículo ${idx+1}</span>
@@ -1054,6 +1260,7 @@ function linhaRowHtml(l,idx){
       <div class="field"><label>Veículo</label><select class="li-veiculo"><option value="">Selecione...</option>${optionsHtml(data.config.veiculos,l.veiculo)}</select></div>
       <div class="field"><label>Valor orçado</label><input class="li-valorOrcado" type="number" step="0.01" min="0" value="${l.valorOrcado||""}" placeholder="0,00"></div>
     </div>
+    ${mostrarFechado?`<div class="field"><label>Valor fechado</label><input class="li-valorFechado" type="number" step="0.01" min="0" value="${l.valorFechado||""}" placeholder="0,00"></div>`:""}
   </div>`;
 }
 function planilhaRowHtml(p,idx){
@@ -1095,6 +1302,13 @@ function jobForm(j){
       <div class="field"><label>Data da entrega</label><input id="f_entrega" type="date" value="${j.dataEntrega||""}"></div>
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
       <div class="field"><label>Briefing recebido</label><textarea id="f_briefing" placeholder="Cole aqui o briefing que foi enviado para o analista...">${esc(j.briefing||"")}</textarea></div>
+
+      <div class="linhas-section">
+        <div class="linhas-head"><label>Checklist</label><button type="button" class="linha-add-btn" data-act="ai-checklist" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>✨ Gerar do briefing</button></div>
+        <div id="checklistWrap">${(j.checklist&&j.checklist.length)?j.checklist.map(checklistItemHtml).join(""):`<div style="color:var(--muted);font-size:12.5px">Nenhum item ainda.</div>`}</div>
+        <div class="addrow"><input id="checklistNovoInput" placeholder="Adicionar item manualmente..."><button type="button" data-act="checklist-add">Adicionar</button></div>
+      </div>
+
       <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
       <div class="field"><label>Plano de Mídia</label><input id="f_planoMidia" type="url" value="${esc(j.planoMidia||"")}" placeholder="https://www.canva.com/design/..."></div>
 
@@ -1104,21 +1318,27 @@ function jobForm(j){
       </div>
 
       <div class="linhas-section">
-        <div class="linhas-head"><label>Veículos e valor orçado</label><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar veículo</button></div>
-        <div id="linhasWrap">${linhas.map((l,i)=>linhaRowHtml(l,i)).join("")}</div>
+        <div class="linhas-head"><label>Veículos e valor orçado</label><div style="display:flex;gap:6px"><button type="button" class="linha-add-btn" data-act="ai-sugerir-veiculos" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>💡 Sugerir</button><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar veículo</button></div></div>
+        <div id="linhasWrap">${linhas.map((l,i)=>linhaRowHtml(l,i,j.faseAtual==="Fechado")).join("")}</div>
+        <div id="veiculoSugestoes" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
       </div>
 
       ${j.id&&isTerminal(j.faseAtual)?`
       <div class="linhas-section">
         <div class="linhas-head"><label>${j.faseAtual==="Fechado"?"Job fechado":"Job declinado"}</label></div>
-        ${j.faseAtual==="Fechado"?`<div class="field"><label>Valor fechado</label><input id="f_valorFechado" type="number" step="0.01" min="0" value="${j.valorFechado||""}"></div>`:""}
-        ${j.faseAtual==="Declinado"?`<div class="field"><label>Motivo</label><select id="f_motivoPerda">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>`:""}
+        ${j.faseAtual==="Declinado"?`<div class="field"><label>Motivo</label><select id="f_motivoPerda">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>`:`<p style="margin:0 0 8px;color:var(--muted);font-size:12.5px">O valor fechado é editado por veículo, acima. A data de fechamento é única para o job.</p>`}
         <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento" type="date" value="${j.dataFechamento||""}"></div>
       </div>`:""}
 
       <button class="save" data-act="save-job">Salvar</button>
       ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
     </div>`;
+}
+function checklistItemHtml(c){
+  return `<div class="checkfield" data-checklist-id="${c.id}" style="justify-content:space-between;padding:4px 0">
+    <label style="flex:1;margin:0"><input type="checkbox" class="cl-feito" ${c.feito?"checked":""}> <span style="${c.feito?"text-decoration:line-through;color:var(--muted)":""}">${esc(c.texto)}</span></label>
+    <button type="button" class="linharow-del" data-act="checklist-del" style="margin-left:8px">✕</button>
+  </div>`;
 }
 function openNewJobModal(){editId=null;openModal(jobForm({}));}
 function openEditJobModal(id){
@@ -1131,16 +1351,25 @@ function saveJobForm(){
   if(!cliente){toast("Informe o cliente.");return;}
   const rows=[...document.querySelectorAll("#linhasWrap .linharow")];
   if(!rows.length){toast("Adicione pelo menos um veículo.");return;}
-  const linhas=rows.map(row=>({
-    id:row.dataset.linhaId,
-    veiculo:row.querySelector(".li-veiculo").value,
-    valorOrcado:Number(row.querySelector(".li-valorOrcado").value)||0
-  }));
+  const linhas=rows.map(row=>{
+    const fEl=row.querySelector(".li-valorFechado");
+    return {
+      id:row.dataset.linhaId,
+      veiculo:row.querySelector(".li-veiculo").value,
+      valorOrcado:Number(row.querySelector(".li-valorOrcado").value)||0,
+      valorFechado:fEl?Number(fEl.value)||0:0
+    };
+  });
   const planilhas=[...document.querySelectorAll("#planilhasWrap .linharow")].map(row=>({
     id:row.dataset.planilhaId,
     nome:row.querySelector(".pl-nome").value.trim(),
     url:row.querySelector(".pl-url").value.trim()
   })).filter(p=>p.url);
+  const checklist=[...document.querySelectorAll("#checklistWrap [data-checklist-id]")].map(row=>({
+    id:row.dataset.checklistId,
+    texto:row.querySelector("span").textContent,
+    feito:row.querySelector(".cl-feito").checked
+  }));
   const analista=document.getElementById("f_analista").value.trim();
   const executivo=document.getElementById("f_executivo").value.trim();
   const existing=editId?data.jobs.find(x=>x.id===editId):null;
@@ -1160,6 +1389,7 @@ function saveJobForm(){
     dataEntrega:document.getElementById("f_entrega").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
     briefing:document.getElementById("f_briefing").value.trim(),
+    checklist,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
     planoMidia:document.getElementById("f_planoMidia").value.trim(),
     planilhas,
@@ -1173,8 +1403,7 @@ function saveJobForm(){
     faseAntesFechamento:existing?existing.faseAntesFechamento:null,
     updatedAt:Date.now()
   };
-  const fValorFechado=document.getElementById("f_valorFechado");
-  if(fValorFechado)j.valorFechado=Number(fValorFechado.value)||0;
+  if(j.faseAtual==="Fechado")j.valorFechado=linhas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   const fMotivo=document.getElementById("f_motivoPerda");
   if(fMotivo)j.motivoPerda=fMotivo.value;
   const fDataFechamento=document.getElementById("f_dataFechamento");
@@ -1205,7 +1434,8 @@ function fecharJob(id){
   job.faseAntesFechamento=job.faseAtual;
   job.faseAtual="Fechado";
   job.dataFechamento=today();
-  if(!job.valorFechado)job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  (job.linhas||[]).forEach(l=>{ if(!l.valorFechado)l.valorFechado=l.valorOrcado; });
+  job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
   save();render();
@@ -1300,6 +1530,13 @@ document.getElementById("fBusca").addEventListener("input",e=>{filters.q=e.targe
 document.getElementById("fDe").addEventListener("change",e=>{filters.de=e.target.value;render();});
 document.getElementById("fAte").addEventListener("change",e=>{filters.ate=e.target.value;render();});
 document.getElementById("fileImport").addEventListener("change",e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value="";});
+document.body.addEventListener("change",e=>{
+  if(e.target.classList.contains("cl-feito")){
+    const span=e.target.closest("label").querySelector("span");
+    span.style.textDecoration=e.target.checked?"line-through":"";
+    span.style.color=e.target.checked?"var(--muted)":"";
+  }
+});
 document.body.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&e.target.matches("[data-cfg-input]")){
     e.preventDefault();
@@ -1321,8 +1558,9 @@ document.body.addEventListener("click",e=>{
   else if(act==="save-job")saveJobForm();
   else if(act==="linha-add"){
     const wrap=document.getElementById("linhasWrap");
+    const job=editId?data.jobs.find(x=>x.id===editId):null;
     const div=document.createElement("div");
-    div.innerHTML=linhaRowHtml(null,wrap.children.length);
+    div.innerHTML=linhaRowHtml(null,wrap.children.length,job&&job.faseAtual==="Fechado");
     wrap.appendChild(div.firstElementChild);
   }
   else if(act==="linha-del"){
@@ -1337,9 +1575,41 @@ document.body.addEventListener("click",e=>{
   else if(act==="planilha-del"){
     b.closest(".linharow").remove();
   }
+  else if(act==="checklist-add"){
+    const input=document.getElementById("checklistNovoInput");
+    const v=input.value.trim();if(!v)return;
+    const wrap=document.getElementById("checklistWrap");
+    if(wrap.children.length===1&&wrap.children[0].tagName==="DIV"&&!wrap.children[0].dataset.checklistId)wrap.innerHTML="";
+    const div=document.createElement("div");
+    div.innerHTML=checklistItemHtml({id:uid(),texto:v,feito:false});
+    wrap.appendChild(div.firstElementChild);
+    input.value="";
+  }
+  else if(act==="checklist-del"){
+    b.closest("[data-checklist-id]").remove();
+  }
+  else if(act==="ai-checklist")gerarChecklistIA();
+  else if(act==="ai-sugerir-veiculos")sugerirVeiculosIA();
+  else if(act==="ai-add-veiculo"){
+    const v=b.dataset.veiculo;
+    if(v&&!data.config.veiculos.includes(v))data.config.veiculos.push(v);
+    const wrap=document.getElementById("linhasWrap");
+    const job=editId?data.jobs.find(x=>x.id===editId):null;
+    const div=document.createElement("div");
+    div.innerHTML=linhaRowHtml({id:uid(),veiculo:v,valorOrcado:0},wrap.children.length,job&&job.faseAtual==="Fechado");
+    wrap.appendChild(div.firstElementChild);
+    b.remove();
+  }
+  else if(act==="ai-risco")analisarRiscosIA();
+  else if(act==="ai-resumo")gerarResumoIA();
+  else if(act==="copiar-resumo"){
+    const el=document.getElementById("resumoTexto");
+    if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
+  }
+  else if(act==="exec-submit")submitExecutivoBriefing();
   else if(act==="scope-pick"){
     const mode=b.dataset.scopeMode;
-    saveScope(mode==="praca"?{mode:"praca",praca:b.dataset.scopePraca}:{mode:"todos"});
+    saveScope(mode==="praca"?{mode:"praca",praca:b.dataset.scopePraca}:{mode});
     closeScopePicker();render();
   }
   else if(act==="scope-change")openScopePicker();
@@ -1371,7 +1641,7 @@ document.body.addEventListener("click",e=>{
 document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
 
 /* ============ boot ============ */
-(async function(){loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();})();
+(async function(){loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();await initSample();render();})();
 </script>
 </body>
 </html>
