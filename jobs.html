@@ -1024,6 +1024,7 @@ function migrateJob(j){
   }
   delete j.linkPlanilha;
   j.planilhas=j.planilhas.map(p=>({id:p.id||uid(),nome:p.nome||"",url:p.url||""}));
+  j.posVenda=j.faseAtual==="Fechado"?(j.posVenda||{status:"pendente",data:"",observacao:""}):(j.posVenda||null);
   return j;
 }
 function diasParadoJob(job){
@@ -1447,6 +1448,39 @@ function dinheiroMesaHtml(jobs){
   }).join("");
   return `<div class="breakdown"><h3>Dinheiro na mesa — jobs parados</h3>${html}</div>`;
 }
+function posVendaHtml(jobs){
+  const fechados=jobs.filter(j=>j.faseAtual==="Fechado"&&j.posVenda);
+  const pendentes=fechados.filter(j=>j.posVenda.status==="pendente");
+  const feitos=fechados.filter(j=>j.posVenda.status==="feito").length;
+  const naoVai=fechados.filter(j=>j.posVenda.status==="nao_vai_fazer").length;
+  const pct=fechados.length?Math.round(feitos/fechados.length*100):0;
+  const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
+  const kpis=`<div class="kpis" style="margin-bottom:12px">${item("Pendentes",pendentes.length)+item("Feito",feitos)+item("Não vai fazer",naoVai)+item("% pós-venda feito",pct+"%")}</div>`;
+  if(!pendentes.length)return `<div class="breakdown"><h3>Pós-venda</h3>${kpis}<div style="color:var(--muted);font-size:13px">Nenhum pós-venda pendente no momento ✓</div></div>`;
+  pendentes.sort((a,b)=>(b.dataFechamento||"").localeCompare(a.dataFechamento||""));
+  const rows=pendentes.map(j=>{
+    const dias=j.dataFechamento?Math.floor((Date.now()-pd(j.dataFechamento))/86400000):null;
+    return `<div class="moneyrow">
+      <div><div class="nm">${esc(j.cliente)}</div><div class="sub">${esc(j.numero||"")}</div></div>
+      <div class="sub">${esc(j.praca||"—")}</div>
+      <div class="val">${fmtMoney(j.valorFechado)}</div>
+      <span class="dbadge warn">${dias!=null?dias+"d fechado":""}</span>
+      <div style="display:flex;gap:5px">
+        <button class="mbtn" data-act="posvenda-feito" data-id="${j.id}">✓ Feito</button>
+        <button class="mbtn" style="background:var(--cancelado-bg);color:var(--cancelado)" data-act="posvenda-naovai" data-id="${j.id}">✕ Não vai</button>
+      </div>
+    </div>`;
+  }).join("");
+  return `<div class="breakdown"><h3>Pós-venda</h3>${kpis}${rows}</div>`;
+}
+function marcarPosVenda(id,status){
+  const job=data.jobs.find(x=>x.id===id);if(!job||!job.posVenda)return;
+  job.posVenda.status=status;
+  job.posVenda.data=today();
+  job.updatedAt=Date.now();
+  save();render();
+  toast(status==="feito"?"Pós-venda marcado ✓":"Marcado como não vai fazer");
+}
 function riscoHtml(){
   return `<div class="breakdown">
     <h3>Radar de risco (IA)</h3>
@@ -1522,6 +1556,7 @@ function renderDashboard(jobs,pairs){
     + heatmapMetaHtml(jobs)
     + heatmapVerbaHtml(jobs)
     + dinheiroMesaHtml(jobs)
+    + posVendaHtml(jobs)
     + riscoHtml()
     + evolucaoHtml(jobs,pairs)
     + resumoSemanalHtml()
@@ -1828,6 +1863,7 @@ function fecharJob(id){
   (job.linhas||[]).forEach(l=>{ if(!l.valorFechado)l.valorFechado=l.valorOrcado; });
   job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   job.recuperavel=false;job.declinioAutomatico=false;
+  job.posVenda={status:"pendente",data:"",observacao:""};
   job.updatedAt=Date.now();
   save();render();
   toast(`Job fechado ✓ — ${fmtMoney(job.valorFechado)}`);
@@ -2058,6 +2094,8 @@ document.body.addEventListener("click",e=>{
   else if(act==="confirmar-fechamento")confirmarFechamento(id);
   else if(act==="job-declinar")declinarJob(id);
   else if(act==="job-contato")marcarContatoJob(id);
+  else if(act==="posvenda-feito")marcarPosVenda(id,"feito");
+  else if(act==="posvenda-naovai")marcarPosVenda(id,"nao_vai_fazer");
   else if(act==="job-reabrir")reabrirJob(id);
   else if(act==="save-job")saveJobForm();
   else if(act==="linha-add"){
