@@ -1014,6 +1014,7 @@ function migrateJob(j){
   delete j.dataConclusao;delete j.ultimoContato;
   if(j.origem==="EP Labs")j.origem="Solicitação interna";
   j.contaEspecial=!!j.contaEspecial;
+  j.fechamentoDireto=!!j.fechamentoDireto;
   if(!j.numero)j.numero=nextNumero(j.cliente);
   j.briefing=j.briefing||"";
   j.checklist=(j.checklist||[]).map(c=>({id:c.id||uid(),texto:c.texto||"",feito:!!c.feito}));
@@ -1227,10 +1228,12 @@ function renderKpis(jobs,pairs){
     +kpi("k-concluido",KPI_ICONS.concluido,"Fechados",fechados)
     +kpi("k-atrasado"+(atrasados>0?" k-alert":""),KPI_ICONS.atrasado,"Atrasados",atrasados)
     +kpi("k-aguardando",KPI_ICONS.aguardando,"Aguardando cliente",aguardando);
-  const valorOrcado=pairs.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0);
-  const valorFechado=jobs.reduce((s,j)=>s+(j.faseAtual==="Fechado"?Number(j.valorFechado)||0:0),0);
-  const decididas=jobs.filter(j=>isTerminal(j.faseAtual)).length;
-  const fechadas=fechados;
+  const jobsM=jobs.filter(j=>!j.fechamentoDireto);
+  const pairsM=pairsFor(jobsM);
+  const valorOrcado=pairsM.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0);
+  const valorFechado=jobsM.reduce((s,j)=>s+(j.faseAtual==="Fechado"?Number(j.valorFechado)||0:0),0);
+  const decididas=jobsM.filter(j=>isTerminal(j.faseAtual)).length;
+  const fechadas=jobsM.filter(j=>j.faseAtual==="Fechado").length;
   const pctValor=valorOrcado>0?Math.round(valorFechado/valorOrcado*100):0;
   const pctQtd=decididas>0?Math.round(fechadas/decididas*100):0;
   const kpi2=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
@@ -1544,36 +1547,52 @@ function funilHtml(jobs){
     ${declinados?`<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--cancelado)">✕ ${declinados} declinado(s) fora do funil</div>`:""}
   </div>`;
 }
+function fechamentosDiretosHtml(diretos){
+  if(!diretos.length)return "";
+  const fechados=diretos.filter(j=>j.faseAtual==="Fechado");
+  const valorTotal=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const ticket=fechados.length?valorTotal/fechados.length:0;
+  const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
+  return `<div class="breakdown">
+    <h3>Fechamentos diretos (sem proposta customizada)</h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Jobs de mídia fechada direto, sem passar por uma proposta customizada da marketing — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.</p>
+    <div class="kpis">${item("Quantidade",diretos.length)+item("Fechados",fechados.length)+item("Valor fechado",fmtMoney(valorTotal))+item("Ticket médio",fmtMoney(ticket))}</div>
+  </div>`;
+}
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||viewerScope.mode==="contas-especiais");
+  const jobsM=jobs.filter(j=>!j.fechamentoDireto);
+  const pairsM=pairsFor(jobsM);
+  const diretos=jobs.filter(j=>j.fechamentoDireto);
   const html=
-    objetivosHtml(jobs,pairs)
+    objetivosHtml(jobsM,pairsM)
     + (isPracaOuCE?resumoDoDiaHtml(jobs):"")
-    + (isCE?desempenhoPorClienteHtml(jobs)+clienteVeiculoHtml(jobs):"")
-    + metasHtml(jobs)
-    + heatmapMetaHtml(jobs)
-    + heatmapVerbaHtml(jobs)
+    + (isCE?desempenhoPorClienteHtml(jobsM)+clienteVeiculoHtml(jobsM):"")
+    + metasHtml(jobsM)
+    + heatmapMetaHtml(jobsM)
+    + heatmapVerbaHtml(jobsM)
     + dinheiroMesaHtml(jobs)
     + posVendaHtml(jobs)
+    + fechamentosDiretosHtml(diretos)
     + riscoHtml()
-    + evolucaoHtml(jobs,pairs)
+    + evolucaoHtml(jobsM,pairsM)
     + resumoSemanalHtml()
-    + segmentacaoMensalHtml(jobs)
-    + comparativoAnualHtml(jobs,pairs)
+    + segmentacaoMensalHtml(jobsM)
+    + comparativoAnualHtml(jobsM,pairsM)
     + `<div class="dash-top">`
-    + donutHtml(jobs)
-    + funilHtml(jobs)
+    + donutHtml(jobsM)
+    + funilHtml(jobsM)
     + `</div>`
     +`<div class="dash-grid">`
-    + countBreakdownHtml("Jobs por praça",PRACAS,jobs,j=>j.praca)
-    + countBreakdownHtml("Jobs por origem",ORIGENS,jobs,j=>j.origem)
-    + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobs,j=>j.prioridade)
-    + countBreakdownHtml("Jobs por papel (analista/estagiária)",["Analista","Estagiária"],jobs,j=>analistaPapel(j.analista)||null)
-    + valorBreakdownHtml("Valor fechado por veículo",valorPorVeiculoMap(jobs),"share")
-    + conversaoDuplaHtml("Conversão e valor por analista",groupValorPorJob(jobs,j=>j.analista))
-    + conversaoDuplaHtml("Conversão e valor por executivo de conta",groupValorPorJob(jobs,j=>j.executivo))
+    + countBreakdownHtml("Jobs por praça",PRACAS,jobsM,j=>j.praca)
+    + countBreakdownHtml("Jobs por origem",ORIGENS,jobsM,j=>j.origem)
+    + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobsM,j=>j.prioridade)
+    + countBreakdownHtml("Jobs por papel (analista/estagiária)",["Analista","Estagiária"],jobsM,j=>analistaPapel(j.analista)||null)
+    + valorBreakdownHtml("Valor fechado por veículo",valorPorVeiculoMap(jobsM),"share")
+    + conversaoDuplaHtml("Conversão e valor por analista",groupValorPorJob(jobsM,j=>j.analista))
+    + conversaoDuplaHtml("Conversão e valor por executivo de conta",groupValorPorJob(jobsM,j=>j.executivo))
     + `</div>`;
   document.getElementById("dashboard").innerHTML=html;
 }
@@ -1702,6 +1721,7 @@ function jobForm(j){
       </div>
       <div class="field"><label>Data da entrega</label><input id="f_entrega" type="date" value="${j.dataEntrega||""}"></div>
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
+      <div class="field checkfield"><label><input type="checkbox" id="f_fechamentoDireto" ${j.fechamentoDireto?"checked":""}> Fechamento direto (sem proposta customizada da marketing)</label></div>
       <div class="field"><label>Briefing recebido</label><textarea id="f_briefing" placeholder="Cole aqui o briefing que foi enviado para o analista...">${esc(j.briefing||"")}</textarea></div>
 
       <div class="linhas-section">
@@ -1789,6 +1809,7 @@ function saveJobForm(){
     dataRecebimento:document.getElementById("f_recebimento").value||today(),
     dataEntrega:document.getElementById("f_entrega").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
+    fechamentoDireto:document.getElementById("f_fechamentoDireto").checked,
     briefing:document.getElementById("f_briefing").value.trim(),
     checklist,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
@@ -1995,13 +2016,13 @@ function downloadCsv(filename,rows){
 }
 function exportCsv(){
   try{
-    const header=["Número","Cliente","Praça","Origem","Analista","Papel da analista","Executivo","Prioridade","Fase","Conta especial","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
+    const header=["Número","Cliente","Praça","Origem","Analista","Papel da analista","Executivo","Prioridade","Fase","Conta especial","Fechamento direto (sem proposta)","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
     const rows=[header];
     data.jobs.forEach(j=>{
       const linhas=(j.linhas&&j.linhas.length)?j.linhas:[{veiculo:"",valorOrcado:j.valorOrcado||0,valorFechado:j.valorFechado||0}];
       linhas.forEach(l=>{
         rows.push([
-          j.numero||"",j.cliente||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",
+          j.numero||"",j.cliente||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",j.fechamentoDireto?"Sim":"Não",
           j.dataRecebimento||"",j.prazoPrevisto||"",j.dataEntrega||"",j.dataFechamento||"",
           l.veiculo||"",Number(l.valorOrcado)||0,Number(l.valorFechado)||0,j.motivoPerda||""
         ]);
