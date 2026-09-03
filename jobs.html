@@ -409,7 +409,6 @@
     <div id="viewJobs"><div id="board"></div></div>
     <div id="viewDashboard" style="display:none"><div id="dashboard"></div></div>
     <div id="viewExecutivo" style="display:none"></div>
-    <div id="viewContasEspeciais" style="display:none"></div>
   </main>
 </div>
 
@@ -543,39 +542,103 @@ function submitExecutivoBriefing(){
 }
 
 /* ============ visão de contas especiais (poucos clientes, acompanhamento individual) ============ */
-function contasEspeciaisHtml(){
-  const jobsEspeciais=data.jobs.filter(j=>j.praca==="CE");
-  if(!jobsEspeciais.length)return `<div class="empty">Nenhum job de conta especial ainda. Selecione a praça "CE" no job pra ele aparecer aqui.</div>`;
-  const clientes=[...new Set(jobsEspeciais.map(j=>j.cliente))].sort();
-  const curYear=new Date().getFullYear(),prevYear=curYear-1;
-  return `<p style="color:var(--muted);font-size:13px;margin:0 0 16px">Acompanhamento individual das contas especiais — ${clientes.length} cliente(s), demandados por Tayra Rodrigues.</p>` + clientes.map(cliente=>{
-    const jobs=jobsEspeciais.filter(j=>j.cliente===cliente).sort((a,b)=>(b.dataRecebimento||"").localeCompare(a.dataRecebimento||""));
-    const totalOrcado=jobs.flatMap(j=>j.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
-    const fechados=jobs.filter(j=>j.faseAtual==="Fechado");
-    const valorAno=jobs.reduce((s,j)=>s+(j.faseAtual==="Fechado"&&(j.dataFechamento||"").startsWith(String(curYear))?Number(j.valorFechado)||0:0),0);
-    const valorAnoAnterior=jobs.reduce((s,j)=>s+(j.faseAtual==="Fechado"&&(j.dataFechamento||"").startsWith(String(prevYear))?Number(j.valorFechado)||0:0),0);
-    const crescimento=valorAnoAnterior>0?Math.round((valorAno-valorAnoAnterior)/valorAnoAnterior*100):(valorAno>0?100:0);
-    const jobRows=jobs.map(j=>{
-      const veiculos=(j.linhas||[]).map(l=>l.veiculo).filter(Boolean).join(", ")||"—";
-      const valor=j.faseAtual==="Fechado"?j.valorFechado:(j.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
-      return `<div data-act="edit" data-id="${j.id}" style="display:flex;align-items:center;gap:10px;padding:7px 0;border-top:1px solid var(--line);font-size:12.5px;cursor:pointer">
-        <div style="flex:1;min-width:0"><b>${esc(j.numero||"")}</b> <span style="color:var(--muted)">${esc(veiculos)}</span></div>
-        <span class="tag-sm" style="background:${FASE_COLOR[j.faseAtual]}22;color:${FASE_COLOR[j.faseAtual]}">${esc(j.faseAtual)}</span>
-        <div style="width:90px;text-align:right;font-weight:700">${fmtMoney(valor)}</div>
-        <div style="width:70px;text-align:right;color:var(--muted)">${fmtDate(j.dataEntrega||j.prazoPrevisto)}</div>
-      </div>`;
-    }).join("");
-    return `<div class="breakdown">
-      <h3>${esc(cliente)}</h3>
-      <div style="display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;font-size:12.5px;color:var(--ink-soft)">
-        <span><b>${jobs.length}</b> job(s)</span>
-        <span><b>${fechados.length}</b> fechado(s)</span>
-        <span>Orçado total: <b>${fmtMoney(totalOrcado)}</b></span>
-        <span>${curYear}: <b>${fmtMoney(valorAno)}</b> <span style="color:${crescimento>=0?"var(--concluido)":"var(--cancelado)"}">(${crescimento>=0?"+":""}${crescimento}% vs ${prevYear})</span></span>
-      </div>
-      ${jobRows||`<div style="color:var(--muted);font-size:12.5px">Nenhum job ainda.</div>`}
+function renderBoardPorCliente(jobs){
+  const el=document.getElementById("board");
+  if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum job de conta especial ainda.<br>Selecione a praça "CE (Contas Especiais)" num job pra ele aparecer aqui.</div>`;return;}
+  const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
+  el.innerHTML=clientes.map(cliente=>{
+    const jobsCliente=jobs.filter(j=>j.cliente===cliente);
+    return `<div style="margin-bottom:22px">
+      <h3 style="font-family:'Bricolage Grotesque';font-weight:800;font-size:15px;margin:0 0 10px;color:var(--ink)">${esc(cliente)}</h3>
+      <div class="board">${FASES.map(fase=>{
+        const items=jobsCliente.filter(j=>j.faseAtual===fase);
+        return `<div class="col" data-fase="${esc(fase)}">
+          <h3>${esc(fase)}<span class="cnt">${items.length}</span></h3>
+          <div class="colstack">${items.length?items.map(mcardHtml).join(""):`<div class="colempty">Vazio</div>`}</div>
+        </div>`;
+      }).join("")}</div>
     </div>`;
   }).join("");
+}
+function desempenhoPorClienteHtml(jobs){
+  const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
+  if(!clientes.length)return `<div class="breakdown"><h3>Desempenho por cliente</h3><div style="color:var(--muted);font-size:13px">Nenhum cliente ainda.</div></div>`;
+  const rows=clientes.map(cliente=>{
+    const jc=jobs.filter(j=>j.cliente===cliente);
+    const fechados=jc.filter(j=>j.faseAtual==="Fechado");
+    const decididos=jc.filter(j=>isTerminal(j.faseAtual));
+    const valorOrcado=jc.flatMap(j=>j.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+    const valorFechado=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+    const conv=decididos.length?Math.round(fechados.length/decididos.length*100):0;
+    return `<tr>
+      <td>${esc(cliente)}</td>
+      <td style="text-align:center">${jc.length}</td>
+      <td style="text-align:center">${fechados.length}</td>
+      <td style="text-align:right">${fmtMoney(valorOrcado)}</td>
+      <td style="text-align:right">${fmtMoney(valorFechado)}</td>
+      <td style="text-align:right">${fmtMoney(fechados.length?valorFechado/fechados.length:0)}</td>
+      <td style="text-align:center">${conv}%</td>
+    </tr>`;
+  }).join("");
+  return `<div class="breakdown">
+    <h3>Desempenho por cliente</h3>
+    <div style="overflow-x:auto"><table class="yr-table">
+      <tr><th>Cliente</th><th>Jobs</th><th>Fechados</th><th>Orçado</th><th>Fechado</th><th>Ticket médio</th><th>Conversão</th></tr>
+      ${rows}
+    </table></div>
+  </div>`;
+}
+function metaCEHtml(jobs){
+  const curYear=new Date().getFullYear(),prevYear=curYear-1;
+  const meta=Number(data.config.metaCEMensal)||0;
+  const meses=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+  const valoresAno={[prevYear]:Array(12).fill(0),[curYear]:Array(12).fill(0)};
+  jobs.forEach(j=>{
+    if(j.faseAtual!=="Fechado"||!j.dataFechamento)return;
+    const ano=Number(j.dataFechamento.slice(0,4)),mes=Number(j.dataFechamento.slice(5,7))-1;
+    if(valoresAno[ano])valoresAno[ano][mes]+=Number(j.valorFechado)||0;
+  });
+  const rows=meses.map((m,i)=>{
+    const v25=valoresAno[prevYear][i],v26=valoresAno[curYear][i];
+    const deltaAno=v25>0?Math.round((v26-v25)/v25*100):(v26>0?100:0);
+    const atingimento=meta>0?Math.round(v26/meta*100):null;
+    return `<tr>
+      <td>${m}</td>
+      <td style="text-align:right">${fmtMoney(v26)}</td>
+      <td style="text-align:right;color:${(v25||v26)?(deltaAno>=0?"var(--concluido)":"var(--cancelado)"):"var(--faint)"}">${(v25||v26)?(deltaAno>=0?"+":"")+deltaAno+"%":"—"}</td>
+      <td style="text-align:right">${atingimento!=null?atingimento+"%":"—"}</td>
+    </tr>`;
+  }).join("");
+  return `<div class="breakdown">
+    <h3>Meta de Contas Especiais — mês a mês</h3>
+    ${meta>0?`<p style="color:var(--muted);font-size:12px;margin:0 0 10px">Meta mensal: <b>${fmtMoney(meta)}</b> (ajustável em ⚙ Cadastros)</p>`:`<p style="color:var(--warn);font-size:12px;margin:0 0 10px">Nenhuma meta mensal definida ainda — configure em ⚙ Cadastros pra ver o % de atingimento.</p>`}
+    <div style="overflow-x:auto"><table class="yr-table">
+      <tr><th>Mês</th><th>${curYear}</th><th>vs ${prevYear}</th><th>Atingimento</th></tr>
+      ${rows}
+    </table></div>
+  </div>`;
+}
+function clienteVeiculoHtml(jobs){
+  const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
+  const veiculos=[...new Set(jobs.flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))].sort();
+  if(!clientes.length||!veiculos.length)return `<div class="breakdown"><h3>Cliente × veículo (fechado)</h3><div style="color:var(--muted);font-size:13px">Sem dados suficientes ainda.</div></div>`;
+  const map={};
+  jobs.forEach(j=>{
+    if(j.faseAtual!=="Fechado")return;
+    (j.linhas||[]).forEach(l=>{
+      if(!l.veiculo)return;
+      map[j.cliente]=map[j.cliente]||{};
+      map[j.cliente][l.veiculo]=(map[j.cliente][l.veiculo]||0)+(Number(l.valorFechado)||0);
+    });
+  });
+  const rows=clientes.map(c=>{
+    const cells=veiculos.map(v=>`<td style="text-align:right">${(map[c]&&map[c][v])?fmtMoney(map[c][v]):"—"}</td>`).join("");
+    return `<tr><td>${esc(c)}</td>${cells}</tr>`;
+  }).join("");
+  return `<div class="breakdown">
+    <h3>Cliente × veículo (fechado)</h3>
+    <div style="overflow-x:auto"><table class="yr-table"><tr><th>Cliente</th>${veiculos.map(v=>`<th>${esc(v)}</th>`).join("")}</tr>${rows}</table></div>
+  </div>`;
 }
 
 /* ============ iniciativas de IA (capacidade "sample" do artifact) ============ */
@@ -698,6 +761,7 @@ async function load(){
   data.config.analistas=data.config.analistas||[];
   data.config.executivos=data.config.executivos||[];
   data.config.veiculos=(data.config.veiculos&&data.config.veiculos.length)?data.config.veiculos:VEICULOS_PADRAO.slice();
+  data.config.metaCEMensal=Number(data.config.metaCEMensal)||0;
   data.jobs=data.jobs.map(migrateJob);
   data.jobs.forEach(j=>{
     if(j.analista&&!data.config.analistas.includes(j.analista))data.config.analistas.push(j.analista);
@@ -903,6 +967,7 @@ function pairsFor(jobs){
 function filtered(){
   return data.jobs.filter(job=>{
     if(viewerScope&&viewerScope.mode==="praca"&&job.praca!==viewerScope.praca)return false;
+    if(viewerScope&&viewerScope.mode==="contas-especiais"&&job.praca!=="CE")return false;
     if(filters.seg==="andamento"&&!["Recebido","Em desenvolvimento","Entregue"].includes(job.faseAtual))return false;
     if(filters.seg==="concluido"&&job.faseAtual!=="Fechado")return false;
     if(filters.seg==="atrasado"&&alertaPrazo(job)!=="Atrasado")return false;
@@ -922,11 +987,8 @@ function filtered(){
 function render(){
   renderScopeBadge();
   const isExec=viewerScope&&viewerScope.mode==="executivo";
-  const isContasEsp=viewerScope&&viewerScope.mode==="contas-especiais";
-  const isAltView=isExec||isContasEsp;
-  document.querySelectorAll("[data-hide-executivo]").forEach(el=>{ el.style.display=isAltView?"none":""; });
+  document.querySelectorAll("[data-hide-executivo]").forEach(el=>{ el.style.display=isExec?"none":""; });
   document.getElementById("viewExecutivo").style.display=isExec?"block":"none";
-  document.getElementById("viewContasEspeciais").style.display=isContasEsp?"block":"none";
   if(isExec){
     document.getElementById("viewJobs").style.display="none";
     document.getElementById("viewDashboard").style.display="none";
@@ -934,15 +996,9 @@ function render(){
     if(!document.getElementById("execFeedback"))document.getElementById("viewExecutivo").innerHTML=executivoFormHtml();
     return;
   }
-  if(isContasEsp){
-    document.getElementById("viewJobs").style.display="none";
-    document.getElementById("viewDashboard").style.display="none";
-    document.getElementById("pageTitle").textContent="Contas especiais";
-    document.getElementById("viewContasEspeciais").innerHTML=contasEspeciaisHtml();
-    return;
-  }
+  const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const fPracaEl=document.getElementById("fPraca");
-  fPracaEl.style.display=(viewerScope&&viewerScope.mode==="praca")?"none":"";
+  fPracaEl.style.display=(viewerScope&&(viewerScope.mode==="praca"||isCE))?"none":"";
   renderFPraca();renderFAnalista();renderFExecutivo();renderFVeiculo();
   const jobs=filtered();
   const pairs=pairsFor(jobs);
@@ -950,7 +1006,7 @@ function render(){
   document.getElementById("pageTitle").textContent=mainView==="jobs"?"Jobs":"Dashboard";
   document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
   document.getElementById("viewDashboard").style.display=mainView==="dashboard"?"block":"none";
-  if(mainView==="jobs")renderBoard(jobs);
+  if(mainView==="jobs"){ if(isCE)renderBoardPorCliente(jobs); else renderBoard(jobs); }
   else renderDashboard(jobs,pairs);
 }
 function fillFilterSelect(id,label,values,cur){
@@ -1283,8 +1339,10 @@ function funilHtml(jobs){
 }
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
+  const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const html=
     objetivosHtml(jobs,pairs)
+    + (isCE?desempenhoPorClienteHtml(jobs)+metaCEHtml(jobs)+clienteVeiculoHtml(jobs):"")
     + dinheiroMesaHtml(jobs)
     + riscoHtml()
     + evolucaoHtml(jobs,pairs)
@@ -1596,6 +1654,11 @@ function settingsHtml(){
       ${sec("Analistas","analistas","Nome da analista")}
       ${sec("Executivos de conta","executivos","Nome do executivo")}
       ${sec("Veículos de mídia","veiculos","Nome do veículo")}
+      <div class="cfgsection">
+        <h4>Meta mensal de Contas Especiais (CE)</h4>
+        <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Usada pra calcular o % de atingimento no Dashboard da visão de Contas especiais.</p>
+        <div class="addrow"><input id="cfg_metaCE" type="number" step="0.01" min="0" value="${data.config.metaCEMensal||""}" placeholder="Ex: 50000"><button data-act="cfg-meta-ce">Salvar</button></div>
+      </div>
     </div>`;
 }
 function openSettings(){openModal(settingsHtml());}
@@ -1803,6 +1866,11 @@ document.body.addEventListener("click",e=>{
     data.config[key]=data.config[key]||[];
     if(!data.config[key].includes(v))data.config[key].push(v);
     save();openModal(settingsHtml());render();
+  }
+  else if(act==="cfg-meta-ce"){
+    data.config.metaCEMensal=Number(document.getElementById("cfg_metaCE").value)||0;
+    save();openModal(settingsHtml());render();
+    toast("Meta salva ✓");
   }
   else if(act==="cfg-del"){
     data.config[b.dataset.key]=(data.config[b.dataset.key]||[]).filter(n=>n!==b.dataset.name);
