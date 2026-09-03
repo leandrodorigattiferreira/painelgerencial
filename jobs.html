@@ -181,6 +181,18 @@
   .mcard .joblink{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft);text-decoration:none;white-space:nowrap}
   .mcard .joblink:hover{background:var(--line-strong)}
 
+  /* header: seletor de visão (praça / gestão) */
+  .headerscope{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;box-shadow:var(--sh)}
+  .headerscope button{border:0;background:var(--accent-bg);color:var(--ink-soft);border-radius:99px;padding:4px 10px;font-weight:700;font-size:11px}
+  .headerscope button:hover{background:var(--line-strong)}
+
+  /* seletor de visão: tela inicial */
+  .scopepick p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}
+  .scopepick .save{margin-top:0}
+  .scope-pracas{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+  .scope-praca-btn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink);border-radius:11px;padding:11px;font-weight:700;font-size:13.5px}
+  .scope-praca-btn:hover{background:var(--line)}
+
   /* linhas de veículo mini-lista dentro do card */
   .linhaslist{margin-top:7px;display:flex;flex-direction:column;gap:3px;border-top:1px dashed var(--line-strong);padding-top:6px}
   .mcard .linhamini{display:flex;align-items:center;gap:5px;font-size:10px}
@@ -189,11 +201,13 @@
   .mcard .lm-pill.aberto{background:var(--accent-bg);color:var(--muted)}
   .mcard .lm-pill.fechado{background:var(--concluido-bg);color:var(--concluido)}
   .mcard .lm-pill.declinado{background:var(--cancelado-bg);color:var(--cancelado)}
+  .mcard .lm-pill.warn{background:var(--warn-bg);color:var(--warn)}
   .mcard .lm-val{font-size:9.5px;font-weight:700;color:var(--ink);white-space:nowrap;flex:0 0 auto}
   .mcard .lm-btns{display:flex;gap:3px;flex:0 0 auto}
   .mcard .lm-btn{border:0;width:15px;height:15px;border-radius:50%;font-size:8.5px;display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
   .mcard .lm-btn.ok{background:var(--brand-bg);color:var(--brand)}
   .mcard .lm-btn.no{background:var(--cancelado-bg);color:var(--cancelado)}
+  .mcard .lm-btn.warn{background:var(--warn-bg);color:var(--warn)}
 
   /* status pill */
   .status{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
@@ -235,6 +249,25 @@
   .obj-card .obj-label{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--brand)}
   .obj-card .obj-value{font-family:"Bricolage Grotesque";font-weight:800;font-size:26px;letter-spacing:-.01em}
   .obj-card .obj-desc{font-size:11.5px;color:var(--muted);line-height:1.4}
+
+  /* ===== comparativo anual ===== */
+  .yr-table{width:100%;border-collapse:collapse;font-size:13px}
+  .yr-table th,.yr-table td{padding:8px 6px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+  .yr-table th:first-child,.yr-table td:first-child{text-align:left;font-weight:700;color:var(--ink)}
+  .yr-table th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);font-weight:700}
+  .yr-table tr:last-child td{border-bottom:0}
+
+  /* ===== dinheiro na mesa ===== */
+  .moneyrow{display:grid;grid-template-columns:1fr 120px 90px 70px auto;align-items:center;gap:10px;padding:8px 0;font-size:12.5px}
+  .moneyrow+.moneyrow{border-top:1px solid var(--line)}
+  .moneyrow .nm{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .moneyrow .sub{color:var(--muted);font-size:11px}
+  .moneyrow .val{text-align:right;color:var(--ink-soft);font-weight:700}
+  .moneyrow .dbadge{font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap;justify-self:end}
+  .moneyrow .dbadge.warn{background:var(--warn-bg);color:var(--warn)}
+  .moneyrow .dbadge.rec{background:var(--aguardando-bg);color:var(--aguardando)}
+  .moneyrow .mbtn{border:0;background:var(--brand-bg);color:var(--brand);border-radius:8px;padding:5px 9px;font-weight:700;font-size:11px;white-space:nowrap}
+  @media (max-width:700px){.moneyrow{grid-template-columns:1fr auto}.moneyrow .val,.moneyrow .sub{display:none}}
 
   /* ===== evolução mensal (mini gráfico de barras) ===== */
   .tschart{display:flex;align-items:flex-end;gap:10px;height:150px;padding-top:6px}
@@ -354,6 +387,7 @@
   <main class="main">
     <div class="mainhead">
       <h2 id="pageTitle">Jobs</h2>
+      <span class="headerscope" id="scopeBadge"></span>
       <div class="seg" id="segStatus">
         <button data-v="todos" class="on">Todos</button>
         <button data-v="andamento">Em andamento</button>
@@ -372,6 +406,7 @@
 </div>
 
 <div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+<div class="backdrop" id="scopeBackdrop"><div class="modal scopepick" id="scopeModal" style="max-width:420px"></div></div>
 
 <script>
 const KEY="jobs-marketing-v2";
@@ -390,9 +425,41 @@ const FASE_AVANCO_DATA={"Em desenvolvimento":null,"Entregue":"dataEntrega","Conc
 const FASE_COLOR={"Recebido":"var(--noprazo)","Em desenvolvimento":"var(--brand)","Entregue":"var(--aguardando)","Concluído":"var(--concluido)"};
 const STATUS_LINHA=["Em aberto","Fechado","Declinado"];
 const SITUACOES=["No prazo","Aguardando cliente","Atrasado","Pausado"];
-const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu","Outro"];
+const MOTIVO_SEM_RETORNO="Sem retorno (automático)";
+const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu",MOTIVO_SEM_RETORNO,"Outro"];
 const VEICULOS_PADRAO=["Google Ads","Meta Ads","TV / Rádio / Mídia tradicional","Influenciadores / Outros digitais","LinkedIn Ads","TikTok Ads","Outro"];
+const DIAS_LEMBRETE=7;
+const DIAS_AUTO_DECLINIO=21;
 function situClass(s){return "status "+(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^a-z]/g,"");}
+
+/* ============ visão por praça (convenção de navegação, não é segurança) ============ */
+const SCOPE_KEY="jobs-viewer-scope-v1";
+let viewerScope=null;
+function loadScope(){
+  try{ const v=localStorage.getItem(SCOPE_KEY); if(v)viewerScope=JSON.parse(v); }catch(e){}
+}
+function saveScope(s){
+  viewerScope=s;
+  try{ localStorage.setItem(SCOPE_KEY,JSON.stringify(s)); }catch(e){}
+}
+function scopePickerHtml(){
+  return `<header><h3>Quem está vendo?</h3></header>
+    <div class="form">
+      <p>Isso só filtra o que aparece pra você neste navegador — não é uma trava de segurança, os dados continuam os mesmos para todo mundo.</p>
+      <button class="save" data-act="scope-pick" data-scope-mode="todos">👁 Ver tudo (gestão)</button>
+      <div class="scope-pracas">${PRACAS.map(p=>`<button class="scope-praca-btn" data-act="scope-pick" data-scope-mode="praca" data-scope-praca="${esc(p)}">Praça ${esc(p)}</button>`).join("")}</div>
+    </div>`;
+}
+function openScopePicker(){
+  document.getElementById("scopeModal").innerHTML=scopePickerHtml();
+  document.getElementById("scopeBackdrop").classList.add("open");
+}
+function closeScopePicker(){document.getElementById("scopeBackdrop").classList.remove("open");}
+function renderScopeBadge(){
+  const el=document.getElementById("scopeBadge");if(!el)return;
+  const label=viewerScope&&viewerScope.mode==="praca"?`Praça ${esc(viewerScope.praca)}`:"Visão geral";
+  el.innerHTML=`👤 ${label} <button data-act="scope-change">trocar</button>`;
+}
 
 /* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
 async function load(){
@@ -415,6 +482,7 @@ async function load(){
     if(j.analista&&!data.config.analistas.includes(j.analista))data.config.analistas.push(j.analista);
     if(j.executivo&&!data.config.executivos.includes(j.executivo))data.config.executivos.push(j.executivo);
   });
+  if(applyAgingRules())save();
 }
 function migrateJob(j){
   if(!j.linhas){
@@ -448,6 +516,9 @@ function migrateJob(j){
     delete l.faseAtual;delete l.dataEntrega;
     l.valorOrcado=Number(l.valorOrcado)||0;
     l.valorFechado=Number(l.valorFechado)||0;
+    l.ultimoContatoEm=l.ultimoContatoEm||l.updatedAt||Date.now();
+    l.recuperavel=!!l.recuperavel;
+    l.declinioAutomatico=!!l.declinioAutomatico;
     return l;
   });
   if(!j.faseAtual||!FASES.includes(j.faseAtual)){
@@ -455,7 +526,65 @@ function migrateJob(j){
   }
   j.contaEspecial=!!j.contaEspecial;
   if(!j.numero)j.numero=nextNumero();
+  j.briefing=j.briefing||"";
+  if(j.linkCanva!==undefined){ j.planoMidia=j.linkCanva; delete j.linkCanva; }
+  j.planoMidia=j.planoMidia||"";
+  if(!j.planilhas){
+    j.planilhas=j.linkPlanilha?[{id:uid(),nome:"Planilha",url:j.linkPlanilha}]:[];
+  }
+  delete j.linkPlanilha;
+  j.planilhas=j.planilhas.map(p=>({id:p.id||uid(),nome:p.nome||"",url:p.url||""}));
   return j;
+}
+function diasParadoLinha(l){
+  if(l.status!=="Em aberto")return null;
+  return Math.floor((Date.now()-(l.ultimoContatoEm||Date.now()))/86400000);
+}
+function precisaLembrete(l){
+  const d=diasParadoLinha(l);
+  return d!=null&&d>=DIAS_LEMBRETE;
+}
+function applyAgingRules(){
+  let changed=false;
+  data.jobs.forEach(job=>{
+    (job.linhas||[]).forEach(l=>{
+      if(l.status==="Em aberto"){
+        const dias=diasParadoLinha(l);
+        if(dias!=null&&dias>=DIAS_AUTO_DECLINIO){
+          l.status="Declinado";
+          l.motivoPerda=MOTIVO_SEM_RETORNO;
+          l.dataFechamento=today();
+          l.recuperavel=true;
+          l.declinioAutomatico=true;
+          l.updatedAt=Date.now();
+          job.updatedAt=Date.now();
+          changed=true;
+        }
+      }
+    });
+  });
+  return changed;
+}
+function marcarContatoLinha(jobId,linhaId){
+  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
+  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
+  linha.ultimoContatoEm=Date.now();
+  linha.updatedAt=Date.now();
+  save();render();
+  toast("Contato registrado ✓");
+}
+function recuperarLinha(jobId,linhaId){
+  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
+  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
+  linha.status="Em aberto";
+  linha.recuperavel=false;
+  linha.declinioAutomatico=false;
+  linha.motivoPerda="";
+  linha.ultimoContatoEm=Date.now();
+  linha.updatedAt=Date.now();
+  job.updatedAt=Date.now();
+  save();render();
+  toast("Proposta recuperada ✓");
 }
 async function save(){
   try{
@@ -521,6 +650,7 @@ function pairsFor(jobs){
 /* ============ filtro ============ */
 function filtered(){
   return data.jobs.filter(job=>{
+    if(viewerScope&&viewerScope.mode==="praca"&&job.praca!==viewerScope.praca)return false;
     if(filters.seg==="andamento"&&!["Recebido","Em desenvolvimento","Entregue"].includes(job.faseAtual))return false;
     if(filters.seg==="concluido"&&job.faseAtual!=="Concluído")return false;
     if(filters.seg==="atrasado"&&alertaPrazo(job)!=="Atrasado")return false;
@@ -538,6 +668,9 @@ function filtered(){
 
 /* ============ render ============ */
 function render(){
+  renderScopeBadge();
+  const fPracaEl=document.getElementById("fPraca");
+  fPracaEl.style.display=(viewerScope&&viewerScope.mode==="praca")?"none":"";
   renderFPraca();renderFAnalista();renderFExecutivo();renderFVeiculo();
   const jobs=filtered();
   const pairs=pairsFor(jobs);
@@ -596,13 +729,14 @@ function renderKpis(jobs,pairs){
   const valorFechado=pairs.reduce((s,p)=>s+(p.linha.status==="Fechado"?Number(p.linha.valorFechado)||0:0),0);
   const decididas=pairs.filter(p=>p.linha.status!=="Em aberto").length;
   const fechadas=pairs.filter(p=>p.linha.status==="Fechado").length;
-  const aprovPct=valorOrcado>0?Math.round(valorFechado/valorOrcado*100):0;
+  const pctValor=valorOrcado>0?Math.round(valorFechado/valorOrcado*100):0;
+  const pctQtd=decididas>0?Math.round(fechadas/decididas*100):0;
   const kpi2=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
   document.getElementById("kpisComercial").innerHTML=
     kpi2("Valor orçado",fmtMoney(valorOrcado))
     +kpi2("Valor fechado",fmtMoney(valorFechado))
-    +kpi2("% aprovado do orçado",`${aprovPct}<small>%</small>`)
-    +kpi2("Linhas fechadas",`${fechadas}<small>de ${decididas} decididas</small>`)
+    +kpi2("% fechado (por valor ofertado)",`${pctValor}<small>%</small>`)
+    +kpi2("% fechado (por qtd. de propostas)",`${pctQtd}<small>de ${decididas} decididas</small>`)
     +kpi2("Ticket médio fechado",fmtMoney(fechadas>0?valorFechado/fechadas:0));
 }
 
@@ -711,11 +845,79 @@ function evolucaoHtml(jobs,pairs){
     + timeSeriesHtml("Valor fechado por mês",months,fechadoPorMes,v=>fmtMoney(v))
     + `</div>`;
 }
+function yearOf(job){
+  const s=job.dataRecebimento;
+  if(s&&s.length>=4)return s.slice(0,4);
+  if(job.createdAt)return String(new Date(job.createdAt).getFullYear());
+  return String(new Date().getFullYear());
+}
+function comparativoAnualHtml(jobs,pairs){
+  const curYear=new Date().getFullYear();
+  const years=new Set([String(curYear-1),String(curYear)]);
+  jobs.forEach(j=>years.add(yearOf(j)));
+  const yearsSorted=[...years].sort();
+  const byYear={};
+  yearsSorted.forEach(y=>byYear[y]={jobs:0,valorOrcado:0,valorFechado:0,decididas:0,fechadas:0,epLabs:0});
+  jobs.forEach(j=>{
+    const y=yearOf(j);
+    byYear[y].jobs++;
+    if(j.origem==="EP Labs"&&j.faseAtual==="Concluído")byYear[y].epLabs++;
+  });
+  pairs.forEach(p=>{
+    const y=yearOf(p.job);
+    if(!byYear[y])return;
+    byYear[y].valorOrcado+=Number(p.linha.valorOrcado)||0;
+    if(p.linha.status!=="Em aberto")byYear[y].decididas++;
+    if(p.linha.status==="Fechado"){byYear[y].fechadas++;byYear[y].valorFechado+=Number(p.linha.valorFechado)||0;}
+  });
+  const metricRow=(label,fn)=>`<tr><td>${label}</td>${yearsSorted.map(y=>`<td>${fn(byYear[y])}</td>`).join("")}</tr>`;
+  return `<div class="breakdown"><h3>Comparativo anual</h3>
+    <div style="overflow-x:auto"><table class="yr-table">
+      <tr><th>Métrica</th>${yearsSorted.map(y=>`<th>${y}</th>`).join("")}</tr>
+      ${metricRow("Jobs recebidos",d=>d.jobs)}
+      ${metricRow("Valor orçado",d=>fmtMoney(d.valorOrcado))}
+      ${metricRow("Valor fechado",d=>fmtMoney(d.valorFechado))}
+      ${metricRow("% fechado (valor)",d=>(d.valorOrcado>0?Math.round(d.valorFechado/d.valorOrcado*100):0)+"%")}
+      ${metricRow("% fechado (qtd.)",d=>(d.decididas>0?Math.round(d.fechadas/d.decididas*100):0)+"%")}
+      ${metricRow("EP Labs realizados",d=>d.epLabs)}
+    </table></div>
+  </div>`;
+}
+function dinheiroMesaHtml(jobs){
+  const rows=[];
+  jobs.forEach(job=>(job.linhas||[]).forEach(l=>{
+    if(l.status==="Em aberto"){
+      const dias=diasParadoLinha(l);
+      if(dias!=null&&dias>=DIAS_LEMBRETE)rows.push({job,l,dias,recuperavel:false});
+    }else if(l.status==="Declinado"&&l.recuperavel){
+      rows.push({job,l,dias:null,recuperavel:true});
+    }
+  }));
+  if(!rows.length)return `<div class="breakdown"><h3>Dinheiro na mesa</h3><div style="color:var(--muted);font-size:13px">Nenhuma proposta parada no momento ✓</div></div>`;
+  rows.sort((a,b)=>(b.dias??999)-(a.dias??999));
+  const html=rows.map(r=>{
+    const valor=r.l.valorOrcado||0;
+    const badge=r.recuperavel?`<span class="dbadge rec">declinado auto.</span>`:`<span class="dbadge warn">${r.dias}d parado</span>`;
+    const btn=r.recuperavel
+      ?`<button class="mbtn" data-act="linha-recuperar" data-id="${r.job.id}" data-linha="${r.l.id}">↺ Recuperar</button>`
+      :`<button class="mbtn" data-act="linha-contato" data-id="${r.job.id}" data-linha="${r.l.id}">🔔 Marcar contato</button>`;
+    return `<div class="moneyrow">
+      <div><div class="nm">${esc(r.job.cliente)}</div><div class="sub">${esc(r.job.numero||"")} · ${esc(r.l.veiculo||"—")}</div></div>
+      <div class="sub">${esc(r.job.executivo||"—")}</div>
+      <div class="val">${fmtMoney(valor)}</div>
+      ${badge}
+      ${btn}
+    </div>`;
+  }).join("");
+  return `<div class="breakdown"><h3>Dinheiro na mesa — propostas paradas</h3>${html}</div>`;
+}
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const html=
     objetivosHtml(jobs,pairs)
+    + dinheiroMesaHtml(jobs)
     + evolucaoHtml(jobs,pairs)
+    + comparativoAnualHtml(jobs,pairs)
     + `<div class="dash-top">`
     + donutHtml(jobs)
     + countBreakdownHtml("Funil por fase",FASES,jobs,j=>j.faseAtual)
@@ -735,14 +937,20 @@ function renderDashboard(jobs,pairs){
 function linhaMiniHtml(job,l){
   const cls=l.status==="Fechado"?"fechado":l.status==="Declinado"?"declinado":"aberto";
   const valorTxt=l.status==="Fechado"?fmtMoney(l.valorFechado):(l.valorOrcado?fmtMoney(l.valorOrcado):"");
+  const dias=diasParadoLinha(l);
+  const lembrete=precisaLembrete(l);
+  const podeRecuperar=l.status==="Declinado"&&l.recuperavel;
   return `<div class="linhamini">
     <span class="lm-name">${esc(l.veiculo||"Sem veículo")}</span>
     <span class="lm-pill ${cls}">${l.status}</span>
+    ${lembrete?`<span class="lm-pill warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
     ${valorTxt?`<span class="lm-val">${valorTxt}</span>`:""}
     ${l.status==="Em aberto"?`<span class="lm-btns">
+      ${lembrete?`<button class="lm-btn warn" data-act="linha-contato" data-id="${job.id}" data-linha="${l.id}" title="Marcar contato feito hoje">🔔</button>`:""}
       <button class="lm-btn ok" data-act="linha-fechar" data-id="${job.id}" data-linha="${l.id}" title="Marcar como fechado">✓</button>
       <button class="lm-btn no" data-act="linha-declinar" data-id="${job.id}" data-linha="${l.id}" title="Marcar como declinado">✕</button>
     </span>`:""}
+    ${podeRecuperar?`<span class="lm-btns"><button class="lm-btn ok" data-act="linha-recuperar" data-id="${job.id}" data-linha="${l.id}" title="Recuperar proposta">↺</button></span>`:""}
   </div>`;
 }
 function mcardHtml(job){
@@ -765,9 +973,9 @@ function mcardHtml(job){
     <div class="pbar"><i style="width:${pct}%"></i></div>
     <div class="linhaslist">${linhas.map(l=>linhaMiniHtml(job,l)).join("")}</div>
     ${(totalFechado||totalOrcado)?`<div class="valorline">${totalFechado?"Fechado":"Orçado"}: <b>${fmtMoney(totalFechado||totalOrcado)}</b></div>`:""}
-    ${(job.linkCanva||job.linkPlanilha)?`<div class="joblinks">
-      ${job.linkCanva?`<a class="joblink" href="${esc(job.linkCanva)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🎨 Canva</a>`:""}
-      ${job.linkPlanilha?`<a class="joblink" href="${esc(job.linkPlanilha)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📊 Planilha</a>`:""}
+    ${(job.planoMidia||(job.planilhas&&job.planilhas.length))?`<div class="joblinks">
+      ${job.planoMidia?`<a class="joblink" href="${esc(job.planoMidia)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🖼 Plano de Mídia</a>`:""}
+      ${(job.planilhas||[]).filter(p=>p.url).map((p,i)=>`<a class="joblink" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📊 ${esc(p.nome||("Planilha "+(i+1)))}</a>`).join("")}
     </div>`:""}
     <div class="foot">
       <span>${esc(job.analista||"—")}</span>
@@ -817,6 +1025,19 @@ function linhaRowHtml(l,idx){
     <div class="field"><label>Data de fechamento</label><input class="li-dataFechamento" type="date" value="${l.dataFechamento||""}"></div>
   </div>`;
 }
+function planilhaRowHtml(p,idx){
+  p=p||{id:uid(),nome:"",url:""};
+  return `<div class="linharow" data-planilha-id="${p.id}">
+    <div class="linharow-head">
+      <span class="linharow-n">Planilha ${idx+1}</span>
+      <button type="button" class="linharow-del" data-act="planilha-del">✕ Remover</button>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Nome</label><input class="pl-nome" value="${esc(p.nome||"")}" placeholder="Ex: Orçamento, Mídia Kit..."></div>
+      <div class="field"><label>Link</label><input class="pl-url" type="url" value="${esc(p.url||"")}" placeholder="https://docs.google.com/spreadsheets/..."></div>
+    </div>
+  </div>`;
+}
 function jobForm(j){
   const linhas=(j.linhas&&j.linhas.length)?j.linhas:[null];
   return `
@@ -846,10 +1067,13 @@ function jobForm(j){
       </div>
       <div class="field"><label>Último contato</label><input id="f_ultimoContato" type="date" value="${j.ultimoContato||""}"></div>
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
+      <div class="field"><label>Briefing recebido</label><textarea id="f_briefing" placeholder="Cole aqui o briefing que foi enviado para o analista...">${esc(j.briefing||"")}</textarea></div>
       <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
-      <div class="row2">
-        <div class="field"><label>Link do Canva</label><input id="f_linkCanva" type="url" value="${esc(j.linkCanva||"")}" placeholder="https://www.canva.com/design/..."></div>
-        <div class="field"><label>Link da planilha</label><input id="f_linkPlanilha" type="url" value="${esc(j.linkPlanilha||"")}" placeholder="https://docs.google.com/spreadsheets/..."></div>
+      <div class="field"><label>Plano de Mídia</label><input id="f_planoMidia" type="url" value="${esc(j.planoMidia||"")}" placeholder="https://www.canva.com/design/..."></div>
+
+      <div class="linhas-section">
+        <div class="linhas-head"><label>Planilhas</label><button type="button" class="linha-add-btn" data-act="planilha-add">+ Adicionar planilha</button></div>
+        <div id="planilhasWrap">${((j.planilhas&&j.planilhas.length)?j.planilhas:[null]).map((p,i)=>planilhaRowHtml(p,i)).join("")}</div>
       </div>
 
       <div class="linhas-section">
@@ -861,10 +1085,14 @@ function jobForm(j){
       ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
     </div>`;
 }
-function openNewJobModal(){editId=null;openModal(jobForm({}));}
+let editingLinhasMap={};
+function openNewJobModal(){editId=null;editingLinhasMap={};openModal(jobForm({}));}
 function openEditJobModal(id){
   const j=data.jobs.find(x=>x.id===id);if(!j)return;
-  editId=id;openModal(jobForm(j));
+  editId=id;
+  editingLinhasMap={};
+  (j.linhas||[]).forEach(l=>editingLinhasMap[l.id]=l);
+  openModal(jobForm(j));
 }
 function saveJobForm(){
   const cliente=document.getElementById("f_cliente").value.trim();
@@ -873,6 +1101,8 @@ function saveJobForm(){
   if(!rows.length){toast("Adicione pelo menos uma linha de veículo.");return;}
   const linhas=rows.map(row=>{
     const status=row.querySelector(".li-status").value;
+    const prev=editingLinhasMap[row.dataset.linhaId];
+    const statusMudou=!prev||prev.status!==status;
     const l={
       id:row.dataset.linhaId,
       veiculo:row.querySelector(".li-veiculo").value,
@@ -881,12 +1111,20 @@ function saveJobForm(){
       valorFechado:Number(row.querySelector(".li-valorFechado").value)||0,
       dataFechamento:row.querySelector(".li-dataFechamento").value,
       motivoPerda:status==="Declinado"?row.querySelector(".li-motivo").value:"",
+      ultimoContatoEm:(prev&&!statusMudou)?prev.ultimoContatoEm:Date.now(),
+      recuperavel:statusMudou?false:!!(prev&&prev.recuperavel),
+      declinioAutomatico:statusMudou?false:!!(prev&&prev.declinioAutomatico),
       updatedAt:Date.now()
     };
     if(status!=="Em aberto"&&!l.dataFechamento)l.dataFechamento=today();
     if(status==="Fechado"&&!l.valorFechado)l.valorFechado=l.valorOrcado;
     return l;
   });
+  const planilhas=[...document.querySelectorAll("#planilhasWrap .linharow")].map(row=>({
+    id:row.dataset.planilhaId,
+    nome:row.querySelector(".pl-nome").value.trim(),
+    url:row.querySelector(".pl-url").value.trim()
+  })).filter(p=>p.url);
   const analista=document.getElementById("f_analista").value.trim();
   const executivo=document.getElementById("f_executivo").value.trim();
   const existing=editId?data.jobs.find(x=>x.id===editId):null;
@@ -907,9 +1145,10 @@ function saveJobForm(){
     dataConclusao:document.getElementById("f_conclusao").value,
     ultimoContato:document.getElementById("f_ultimoContato").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
+    briefing:document.getElementById("f_briefing").value.trim(),
     proximosPassos:document.getElementById("f_proximos").value.trim(),
-    linkCanva:document.getElementById("f_linkCanva").value.trim(),
-    linkPlanilha:document.getElementById("f_linkPlanilha").value.trim(),
+    planoMidia:document.getElementById("f_planoMidia").value.trim(),
+    planilhas,
     linhas,
     updatedAt:Date.now()
   };
@@ -939,6 +1178,7 @@ function fecharLinha(jobId,linhaId){
   linha.status="Fechado";
   linha.dataFechamento=today();
   if(!linha.valorFechado)linha.valorFechado=linha.valorOrcado;
+  linha.recuperavel=false;linha.declinioAutomatico=false;
   linha.updatedAt=Date.now();
   job.updatedAt=Date.now();
   save();render();
@@ -950,6 +1190,7 @@ function declinarLinha(jobId,linhaId){
   if(linha.status!=="Em aberto")return;
   linha.status="Declinado";
   linha.dataFechamento=today();
+  linha.recuperavel=false;linha.declinioAutomatico=false;
   linha.updatedAt=Date.now();
   job.updatedAt=Date.now();
   save();render();
@@ -1055,6 +1296,8 @@ document.body.addEventListener("click",e=>{
   else if(act==="avancar")avancarJob(id);
   else if(act==="linha-fechar")fecharLinha(id,b.dataset.linha);
   else if(act==="linha-declinar")declinarLinha(id,b.dataset.linha);
+  else if(act==="linha-contato")marcarContatoLinha(id,b.dataset.linha);
+  else if(act==="linha-recuperar")recuperarLinha(id,b.dataset.linha);
   else if(act==="save-job")saveJobForm();
   else if(act==="linha-add"){
     const wrap=document.getElementById("linhasWrap");
@@ -1065,6 +1308,21 @@ document.body.addEventListener("click",e=>{
   else if(act==="linha-del"){
     b.closest(".linharow").remove();
   }
+  else if(act==="planilha-add"){
+    const wrap=document.getElementById("planilhasWrap");
+    const div=document.createElement("div");
+    div.innerHTML=planilhaRowHtml(null,wrap.children.length);
+    wrap.appendChild(div.firstElementChild);
+  }
+  else if(act==="planilha-del"){
+    b.closest(".linharow").remove();
+  }
+  else if(act==="scope-pick"){
+    const mode=b.dataset.scopeMode;
+    saveScope(mode==="praca"?{mode:"praca",praca:b.dataset.scopePraca}:{mode:"todos"});
+    closeScopePicker();render();
+  }
+  else if(act==="scope-change")openScopePicker();
   else if(act==="del"){
     if(confirm("Excluir este job? Essa ação não pode ser desfeita.")){
       data.jobs=data.jobs.filter(j=>j.id!==id);
@@ -1093,7 +1351,7 @@ document.body.addEventListener("click",e=>{
 document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
 
 /* ============ boot ============ */
-(async function(){await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));})();
+(async function(){loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();})();
 </script>
 </body>
 </html>
