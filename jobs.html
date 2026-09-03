@@ -456,7 +456,7 @@ function scopePickerHtml(){
       <button class="save" data-act="scope-pick" data-scope-mode="todos">👁 Ver tudo (gestão)</button>
       <button class="save" style="background:var(--brand)" data-act="scope-pick" data-scope-mode="executivo">📝 Sou executivo (criar briefing)</button>
       <button class="save" style="background:var(--aguardando)" data-act="scope-pick" data-scope-mode="contas-especiais">⭐ Contas especiais</button>
-      <div class="scope-pracas">${PRACAS.map(p=>`<button class="scope-praca-btn" data-act="scope-pick" data-scope-mode="praca" data-scope-praca="${esc(p)}">Praça ${esc(p)}</button>`).join("")}</div>
+      <div class="scope-pracas">${PRACAS.filter(p=>p!=="CE").map(p=>`<button class="scope-praca-btn" data-act="scope-pick" data-scope-mode="praca" data-scope-praca="${esc(p)}">Praça ${esc(p)}</button>`).join("")}</div>
     </div>`;
 }
 function openScopePicker(){
@@ -482,7 +482,7 @@ function executivoFormHtml(){
     <p style="color:var(--muted);font-size:13.5px;margin:0 0 18px">Preencha o briefing do job. Assim que enviar, ele aparece pronto pra um analista assumir.</p>
     <div class="field"><label>Cliente</label><input id="ex_cliente" placeholder="Nome do cliente"></div>
     <div class="row2">
-      <div class="field"><label>Praça</label><select id="ex_praca">${optionsHtml(PRACAS,"CAM")}</select></div>
+      <div class="field"><label>Praça</label><select id="ex_praca">${pracaOptionsHtml("CAM")}</select></div>
       <div class="field"><label>Origem</label><select id="ex_origem">${optionsHtml(ORIGENS,ORIGENS[0])}</select></div>
     </div>
     <div class="row2">
@@ -544,8 +544,8 @@ function submitExecutivoBriefing(){
 
 /* ============ visão de contas especiais (poucos clientes, acompanhamento individual) ============ */
 function contasEspeciaisHtml(){
-  const jobsEspeciais=data.jobs.filter(j=>j.contaEspecial);
-  if(!jobsEspeciais.length)return `<div class="empty">Nenhuma conta especial marcada ainda. Marque "Conta especial (estratégica)" no job pra ela aparecer aqui.</div>`;
+  const jobsEspeciais=data.jobs.filter(j=>j.praca==="CE");
+  if(!jobsEspeciais.length)return `<div class="empty">Nenhum job de conta especial ainda. Selecione a praça "CE" no job pra ele aparecer aqui.</div>`;
   const clientes=[...new Set(jobsEspeciais.map(j=>j.cliente))].sort();
   const curYear=new Date().getFullYear(),prevYear=curYear-1;
   return `<p style="color:var(--muted);font-size:13px;margin:0 0 16px">Acompanhamento individual das contas especiais — ${clientes.length} cliente(s), demandados por Tayra Rodrigues.</p>` + clientes.map(cliente=>{
@@ -1375,6 +1375,7 @@ function openModal(html){
 function closeModal(){document.getElementById("backdrop").classList.remove("open");editId=null;}
 
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
+function pracaOptionsHtml(val){return PRACAS.map(p=>`<option value="${esc(p)}" ${p===val?"selected":""}>${esc(p==="CE"?"CE (Contas Especiais)":p)}</option>`).join("");}
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
 
 function linhaRowHtml(l,idx,mostrarFechado){
@@ -1412,7 +1413,7 @@ function jobForm(j){
       ${!j.id?`<div class="field"><label>Nº do job</label><input value="Gerado automaticamente ao salvar" disabled style="color:var(--muted)"></div>`:""}
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
       <div class="row2">
-        <div class="field"><label>Praça</label><select id="f_praca">${optionsHtml(PRACAS,j.praca||"CAM")}</select></div>
+        <div class="field"><label>Praça</label><select id="f_praca">${pracaOptionsHtml(j.praca||"CAM")}</select></div>
         <div class="field"><label>Origem</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem||ORIGENS[0])}</select></div>
       </div>
       <div class="row2">
