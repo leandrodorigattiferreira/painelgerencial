@@ -156,7 +156,8 @@
   /* ===== kanban board ===== */
   .board{display:grid;grid-auto-flow:column;grid-auto-columns:280px;gap:14px;overflow-x:auto;padding-bottom:10px;align-items:start}
   .col{background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;max-height:calc(100vh - 210px)}
-  .col[data-fase="Concluído"]{background:var(--concluido-bg)}
+  .col[data-fase="Fechado"]{background:var(--concluido-bg)}
+  .col[data-fase="Declinado"]{background:var(--cancelado-bg)}
   .col h3{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;padding:0 2px}
   .col h3 .cnt{background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:1px 8px;font-size:11px;color:var(--muted);font-weight:700}
   .colstack{display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-right:2px}
@@ -168,6 +169,7 @@
   .mcard .cliente{font-weight:800;font-size:13.5px;font-family:"Bricolage Grotesque";color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mcard .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
   .mcard .tag-sm{font-size:9.5px;font-weight:700;padding:1.5px 7px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft);white-space:nowrap}
+  .mcard .tag-sm.warn{background:var(--warn-bg);color:var(--warn)}
   .mcard .situ-sm{font-size:9.5px;font-weight:700;padding:1.5px 7px;border-radius:99px;white-space:nowrap}
   .mcard .pbar{height:5px;border-radius:99px;background:var(--track);overflow:hidden;margin-top:8px}
   .mcard .pbar>i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--brand),var(--brand-2))}
@@ -180,6 +182,11 @@
   .mcard .joblinks{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
   .mcard .joblink{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--accent-bg);color:var(--ink-soft);text-decoration:none;white-space:nowrap}
   .mcard .joblink:hover{background:var(--line-strong)}
+  .mcard .cardactions{display:flex;gap:5px;margin-top:8px;justify-content:flex-end;align-items:center}
+  .mcard .cbtn{border:0;width:22px;height:22px;border-radius:50%;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
+  .mcard .cbtn.ok{background:var(--brand-bg);color:var(--brand)}
+  .mcard .cbtn.no{background:var(--cancelado-bg);color:var(--cancelado)}
+  .mcard .cbtn.warn{background:var(--warn-bg);color:var(--warn)}
 
   /* header: seletor de visão (praça / gestão) */
   .headerscope{display:flex;align-items:center;gap:8px;font-size:11.5px;font-weight:700;color:var(--ink-soft);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;box-shadow:var(--sh)}
@@ -193,21 +200,11 @@
   .scope-praca-btn{border:1px solid var(--line-strong);background:var(--surface-2);color:var(--ink);border-radius:11px;padding:11px;font-weight:700;font-size:13.5px}
   .scope-praca-btn:hover{background:var(--line)}
 
-  /* linhas de veículo mini-lista dentro do card */
+  /* linhas de veículo mini-lista dentro do card (só leitura: nome + valor orçado) */
   .linhaslist{margin-top:7px;display:flex;flex-direction:column;gap:3px;border-top:1px dashed var(--line-strong);padding-top:6px}
   .mcard .linhamini{display:flex;align-items:center;gap:5px;font-size:10px}
   .mcard .lm-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-soft);font-weight:600}
-  .mcard .lm-pill{font-size:8.5px;font-weight:700;padding:1.5px 6px;border-radius:99px;white-space:nowrap;flex:0 0 auto}
-  .mcard .lm-pill.aberto{background:var(--accent-bg);color:var(--muted)}
-  .mcard .lm-pill.fechado{background:var(--concluido-bg);color:var(--concluido)}
-  .mcard .lm-pill.declinado{background:var(--cancelado-bg);color:var(--cancelado)}
-  .mcard .lm-pill.warn{background:var(--warn-bg);color:var(--warn)}
   .mcard .lm-val{font-size:9.5px;font-weight:700;color:var(--ink);white-space:nowrap;flex:0 0 auto}
-  .mcard .lm-btns{display:flex;gap:3px;flex:0 0 auto}
-  .mcard .lm-btn{border:0;width:15px;height:15px;border-radius:50%;font-size:8.5px;display:flex;align-items:center;justify-content:center;padding:0;flex:0 0 auto}
-  .mcard .lm-btn.ok{background:var(--brand-bg);color:var(--brand)}
-  .mcard .lm-btn.no{background:var(--cancelado-bg);color:var(--cancelado)}
-  .mcard .lm-btn.warn{background:var(--warn-bg);color:var(--warn)}
 
   /* status pill */
   .status{font-size:11.5px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
@@ -391,7 +388,7 @@
       <div class="seg" id="segStatus">
         <button data-v="todos" class="on">Todos</button>
         <button data-v="andamento">Em andamento</button>
-        <button data-v="concluido">Concluídos</button>
+        <button data-v="concluido">Fechados</button>
         <button data-v="atrasado">Atrasados</button>
         <button data-v="aguardando">Aguardando cliente</button>
       </div>
@@ -418,12 +415,11 @@ let mainView="jobs";
 const PRACAS=["CAM","RIB","SCA","VAR","CE"];
 const ORIGENS=["Solicitação interna","EP Labs","Proativo"];
 const PRIORIDADES=["Alta","Média","Baixa"];
-const FASES=["Recebido","Em desenvolvimento","Entregue","Concluído"];
-const FASE_PCT={"Recebido":.15,"Em desenvolvimento":.5,"Entregue":.85,"Concluído":1};
-const FASE_ORDEM=["Recebido","Em desenvolvimento","Entregue","Concluído"];
-const FASE_AVANCO_DATA={"Em desenvolvimento":null,"Entregue":"dataEntrega","Concluído":"dataConclusao"};
-const FASE_COLOR={"Recebido":"var(--noprazo)","Em desenvolvimento":"var(--brand)","Entregue":"var(--aguardando)","Concluído":"var(--concluido)"};
-const STATUS_LINHA=["Em aberto","Fechado","Declinado"];
+const FASES=["Recebido","Em desenvolvimento","Entregue","Fechado","Declinado"];
+const FASE_PCT={"Recebido":.15,"Em desenvolvimento":.5,"Entregue":.85,"Fechado":1,"Declinado":1};
+const FASE_ORDEM=["Recebido","Em desenvolvimento","Entregue"];
+const FASE_AVANCO_DATA={"Em desenvolvimento":null,"Entregue":"dataEntrega"};
+const FASE_COLOR={"Recebido":"var(--noprazo)","Em desenvolvimento":"var(--brand)","Entregue":"var(--aguardando)","Fechado":"var(--concluido)","Declinado":"var(--cancelado)"};
 const SITUACOES=["No prazo","Aguardando cliente","Atrasado","Pausado"];
 const MOTIVO_SEM_RETORNO="Sem retorno (automático)";
 const MOTIVOS=["Preço","Prazo / timing","Concorrência","Cliente desistiu",MOTIVO_SEM_RETORNO,"Outro"];
@@ -509,23 +505,51 @@ function migrateJob(j){
     const datasEntrega=j.linhas.map(l=>l.dataEntrega).filter(Boolean).sort();
     if(datasEntrega.length)j.dataEntrega=datasEntrega[datasEntrega.length-1];
   }
-  j.linhas=j.linhas.map(l=>{
-    if(!l.status){
-      l.status=l.faseAtual==="Fechado"?"Fechado":l.faseAtual==="Declinado"?"Declinado":"Em aberto";
+  const devFaseAntes=["Recebido","Em desenvolvimento","Entregue"].includes(j.faseAtual)
+    ?j.faseAtual
+    :(minRank!=null?["Recebido","Em desenvolvimento","Entregue"][minRank]:"Recebido");
+  // fechamento por linha (modelo antigo): vira uma decisão única do job — se qualquer linha
+  // fechou, o job inteiro é considerado fechado (com a soma do que foi fechado); senão, se
+  // alguma foi declinada, o job é declinado; sem nenhuma decisão, o job segue em desenvolvimento.
+  const linhasComStatus=j.linhas.filter(l=>l.status!==undefined);
+  if(linhasComStatus.length){
+    const fechadas=linhasComStatus.filter(l=>l.status==="Fechado");
+    const declinadas=linhasComStatus.filter(l=>l.status==="Declinado");
+    if(fechadas.length){
+      j.faseAtual="Fechado";
+      j.valorFechado=fechadas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
+      j.dataFechamento=fechadas.map(l=>l.dataFechamento).filter(Boolean).sort().pop()||today();
+    }else if(declinadas.length){
+      j.faseAtual="Declinado";
+      j.motivoPerda=declinadas[0].motivoPerda||"";
+      j.dataFechamento=declinadas.map(l=>l.dataFechamento).filter(Boolean).sort().pop()||today();
+    }else{
+      j.faseAtual=(j.faseAtual==="Concluído"||!j.faseAtual)?devFaseAntes:j.faseAtual;
     }
-    delete l.faseAtual;delete l.dataEntrega;
-    l.valorOrcado=Number(l.valorOrcado)||0;
-    l.valorFechado=Number(l.valorFechado)||0;
-    l.ultimoContatoEm=l.ultimoContatoEm||l.updatedAt||Date.now();
-    l.recuperavel=!!l.recuperavel;
-    l.declinioAutomatico=!!l.declinioAutomatico;
-    return l;
-  });
-  if(!j.faseAtual||!FASES.includes(j.faseAtual)){
-    j.faseAtual=minRank!=null?["Recebido","Em desenvolvimento","Entregue"][minRank]:"Recebido";
+    j.recuperavel=!!linhasComStatus.some(l=>l.recuperavel);
+    j.declinioAutomatico=!!linhasComStatus.some(l=>l.declinioAutomatico);
+    const contatos=linhasComStatus.map(l=>l.ultimoContatoEm).filter(Boolean);
+    j.ultimoContatoEm=contatos.length?Math.max(...contatos):(j.updatedAt||Date.now());
+    j.faseAntesFechamento=devFaseAntes;
   }
+  j.linhas=j.linhas.map(l=>({
+    id:l.id||uid(),
+    veiculo:l.veiculo||"",
+    valorOrcado:Number(l.valorOrcado)||0
+  }));
+  if(!j.faseAtual||!FASES.includes(j.faseAtual)){
+    j.faseAtual=j.faseAtual==="Concluído"?"Entregue":devFaseAntes;
+  }
+  j.valorFechado=Number(j.valorFechado)||0;
+  j.motivoPerda=j.motivoPerda||"";
+  j.dataFechamento=j.dataFechamento||"";
+  j.recuperavel=!!j.recuperavel;
+  j.declinioAutomatico=!!j.declinioAutomatico;
+  j.ultimoContatoEm=j.ultimoContatoEm||j.updatedAt||Date.now();
+  j.faseAntesFechamento=j.faseAntesFechamento||(FASE_ORDEM.includes(j.faseAtual)?j.faseAtual:"Entregue");
+  delete j.dataConclusao;delete j.ultimoContato;
   j.contaEspecial=!!j.contaEspecial;
-  if(!j.numero)j.numero=nextNumero();
+  if(!j.numero)j.numero=nextNumero(j.cliente);
   j.briefing=j.briefing||"";
   if(j.linkCanva!==undefined){ j.planoMidia=j.linkCanva; delete j.linkCanva; }
   j.planoMidia=j.planoMidia||"";
@@ -536,55 +560,51 @@ function migrateJob(j){
   j.planilhas=j.planilhas.map(p=>({id:p.id||uid(),nome:p.nome||"",url:p.url||""}));
   return j;
 }
-function diasParadoLinha(l){
-  if(l.status!=="Em aberto")return null;
-  return Math.floor((Date.now()-(l.ultimoContatoEm||Date.now()))/86400000);
+function diasParadoJob(job){
+  if(isTerminal(job.faseAtual))return null;
+  return Math.floor((Date.now()-(job.ultimoContatoEm||Date.now()))/86400000);
 }
-function precisaLembrete(l){
-  const d=diasParadoLinha(l);
+function precisaLembreteJob(job){
+  const d=diasParadoJob(job);
   return d!=null&&d>=DIAS_LEMBRETE;
 }
 function applyAgingRules(){
   let changed=false;
   data.jobs.forEach(job=>{
-    (job.linhas||[]).forEach(l=>{
-      if(l.status==="Em aberto"){
-        const dias=diasParadoLinha(l);
-        if(dias!=null&&dias>=DIAS_AUTO_DECLINIO){
-          l.status="Declinado";
-          l.motivoPerda=MOTIVO_SEM_RETORNO;
-          l.dataFechamento=today();
-          l.recuperavel=true;
-          l.declinioAutomatico=true;
-          l.updatedAt=Date.now();
-          job.updatedAt=Date.now();
-          changed=true;
-        }
+    if(!isTerminal(job.faseAtual)){
+      const dias=diasParadoJob(job);
+      if(dias!=null&&dias>=DIAS_AUTO_DECLINIO){
+        job.faseAntesFechamento=job.faseAtual;
+        job.faseAtual="Declinado";
+        job.motivoPerda=MOTIVO_SEM_RETORNO;
+        job.dataFechamento=today();
+        job.recuperavel=true;
+        job.declinioAutomatico=true;
+        job.updatedAt=Date.now();
+        changed=true;
       }
-    });
+    }
   });
   return changed;
 }
-function marcarContatoLinha(jobId,linhaId){
-  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
-  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
-  linha.ultimoContatoEm=Date.now();
-  linha.updatedAt=Date.now();
+function marcarContatoJob(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  job.ultimoContatoEm=Date.now();
+  job.updatedAt=Date.now();
   save();render();
   toast("Contato registrado ✓");
 }
-function recuperarLinha(jobId,linhaId){
-  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
-  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
-  linha.status="Em aberto";
-  linha.recuperavel=false;
-  linha.declinioAutomatico=false;
-  linha.motivoPerda="";
-  linha.ultimoContatoEm=Date.now();
-  linha.updatedAt=Date.now();
+function reabrirJob(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(!isTerminal(job.faseAtual))return;
+  job.faseAtual=job.faseAntesFechamento||"Entregue";
+  job.recuperavel=false;
+  job.declinioAutomatico=false;
+  job.motivoPerda="";
+  job.ultimoContatoEm=Date.now();
   job.updatedAt=Date.now();
   save();render();
-  toast("Proposta recuperada ✓");
+  toast("Job reaberto ✓");
 }
 async function save(){
   try{
@@ -618,11 +638,11 @@ function toast(msg){
 }
 
 /* ============ campos calculados ============ */
-function isTerminal(fase){return fase==="Concluído";}
+function isTerminal(fase){return fase==="Fechado"||fase==="Declinado";}
 function pctConcl(job){return FASE_PCT[job.faseAtual]||0;}
 function diasEmAberto(job){
   const start=pd(job.dataRecebimento);if(!start)return null;
-  const end=(isTerminal(job.faseAtual)&&job.dataConclusao)?pd(job.dataConclusao):d0();
+  const end=(isTerminal(job.faseAtual)&&job.dataFechamento)?pd(job.dataFechamento):d0();
   if(!end)return null;
   return Math.round((end-start)/86400000);
 }
@@ -634,12 +654,15 @@ function alertaPrazo(job){
   if(diff<=5)return "Vence em breve";
   return "No prazo";
 }
-function nextNumero(){
-  const ano=new Date().getFullYear();
-  const prefix="JOB-"+ano+"-";
-  const nums=data.jobs.filter(j=>j.numero&&j.numero.startsWith(prefix)).map(j=>parseInt(j.numero.slice(prefix.length),10)||0);
-  const seq=(nums.length?Math.max(...nums):0)+1;
-  return prefix+String(seq).padStart(3,"0");
+function inicialesCliente(cliente){
+  const letras=(cliente||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z]/g,"").toUpperCase();
+  return letras.slice(0,3)||"JOB";
+}
+function nextNumero(cliente){
+  const ini=inicialesCliente(cliente);
+  const seqCliente=data.jobs.filter(j=>inicialesCliente(j.cliente)===ini).length+1;
+  const seqGlobal=data.jobs.length+1;
+  return `${ini}_${String(seqCliente).padStart(3,"0")}_${String(seqGlobal).padStart(2,"0")}`;
 }
 function pairsFor(jobs){
   const out=[];
@@ -652,7 +675,7 @@ function filtered(){
   return data.jobs.filter(job=>{
     if(viewerScope&&viewerScope.mode==="praca"&&job.praca!==viewerScope.praca)return false;
     if(filters.seg==="andamento"&&!["Recebido","Em desenvolvimento","Entregue"].includes(job.faseAtual))return false;
-    if(filters.seg==="concluido"&&job.faseAtual!=="Concluído")return false;
+    if(filters.seg==="concluido"&&job.faseAtual!=="Fechado")return false;
     if(filters.seg==="atrasado"&&alertaPrazo(job)!=="Atrasado")return false;
     if(filters.seg==="aguardando"&&job.situacao!=="Aguardando cliente")return false;
     if(filters.praca!=="todos"&&job.praca!==filters.praca)return false;
@@ -715,20 +738,20 @@ const KPI_ICONS={
 function renderKpis(jobs,pairs){
   const total=jobs.length;
   const andamento=jobs.filter(j=>["Recebido","Em desenvolvimento","Entregue"].includes(j.faseAtual)).length;
-  const concluidos=jobs.filter(j=>j.faseAtual==="Concluído").length;
+  const fechados=jobs.filter(j=>j.faseAtual==="Fechado").length;
   const atrasados=jobs.filter(j=>alertaPrazo(j)==="Atrasado").length;
   const aguardando=jobs.filter(j=>j.situacao==="Aguardando cliente").length;
   const kpi=(cls,icon,label,value)=>`<div class="kpi ${cls}"><div class="icon">${icon}</div><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
   document.getElementById("kpis").innerHTML=
     kpi("k-total",KPI_ICONS.total,"Total de jobs",total)
     +kpi("k-andamento",KPI_ICONS.andamento,"Em andamento",andamento)
-    +kpi("k-concluido",KPI_ICONS.concluido,"Concluídos",concluidos)
+    +kpi("k-concluido",KPI_ICONS.concluido,"Fechados",fechados)
     +kpi("k-atrasado"+(atrasados>0?" k-alert":""),KPI_ICONS.atrasado,"Atrasados",atrasados)
     +kpi("k-aguardando",KPI_ICONS.aguardando,"Aguardando cliente",aguardando);
   const valorOrcado=pairs.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0);
-  const valorFechado=pairs.reduce((s,p)=>s+(p.linha.status==="Fechado"?Number(p.linha.valorFechado)||0:0),0);
-  const decididas=pairs.filter(p=>p.linha.status!=="Em aberto").length;
-  const fechadas=pairs.filter(p=>p.linha.status==="Fechado").length;
+  const valorFechado=jobs.reduce((s,j)=>s+(j.faseAtual==="Fechado"?Number(j.valorFechado)||0:0),0);
+  const decididas=jobs.filter(j=>isTerminal(j.faseAtual)).length;
+  const fechadas=fechados;
   const pctValor=valorOrcado>0?Math.round(valorFechado/valorOrcado*100):0;
   const pctQtd=decididas>0?Math.round(fechadas/decididas*100):0;
   const kpi2=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
@@ -736,7 +759,7 @@ function renderKpis(jobs,pairs){
     kpi2("Valor orçado",fmtMoney(valorOrcado))
     +kpi2("Valor fechado",fmtMoney(valorFechado))
     +kpi2("% fechado (por valor ofertado)",`${pctValor}<small>%</small>`)
-    +kpi2("% fechado (por qtd. de propostas)",`${pctQtd}<small>de ${decididas} decididas</small>`)
+    +kpi2("% fechado (por qtd. de jobs)",`${pctQtd}<small>de ${decididas} decididos</small>`)
     +kpi2("Ticket médio fechado",fmtMoney(fechadas>0?valorFechado/fechadas:0));
 }
 
@@ -752,13 +775,30 @@ function countBreakdownHtml(title,order,list,keyFn,colorFn){
   }).join("");
   return `<div class="breakdown"><h3>${title}</h3>${rows}</div>`;
 }
-function groupValor(pairs,keyFn){
+function groupValorPorJob(jobs,keyFn){
   const map={};
-  pairs.forEach(p=>{
-    const k=keyFn(p)||"Não informado";
+  jobs.forEach(job=>{
+    const k=keyFn(job)||"Não informado";
     map[k]=map[k]||{concluido:0,decidido:0,valor:0};
-    if(p.linha.status!=="Em aberto")map[k].decidido++;
-    if(p.linha.status==="Fechado"){map[k].concluido++;map[k].valor+=Number(p.linha.valorFechado)||0;}
+    if(isTerminal(job.faseAtual))map[k].decidido++;
+    if(job.faseAtual==="Fechado"){map[k].concluido++;map[k].valor+=Number(job.valorFechado)||0;}
+  });
+  return map;
+}
+function valorPorVeiculoMap(jobs){
+  const map={};
+  jobs.forEach(job=>{
+    const totalOrc=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+    (job.linhas||[]).forEach(l=>{
+      const k=l.veiculo||"Não informado";
+      map[k]=map[k]||{concluido:0,decidido:0,valor:0};
+      if(isTerminal(job.faseAtual))map[k].decidido++;
+      if(job.faseAtual==="Fechado"){
+        map[k].concluido++;
+        const share=totalOrc>0?(Number(l.valorOrcado)||0)/totalOrc:0;
+        map[k].valor+=(Number(job.valorFechado)||0)*share;
+      }
+    });
   });
   return map;
 }
@@ -795,13 +835,13 @@ function donutHtml(list){
   </div>`;
 }
 function objetivosHtml(jobs,pairs){
-  const epLabsRealizados=jobs.filter(j=>j.origem==="EP Labs"&&j.faseAtual==="Concluído").length;
+  const epLabsRealizados=jobs.filter(j=>j.origem==="EP Labs"&&["Entregue","Fechado","Declinado"].includes(j.faseAtual)).length;
   const contasVarejoMulti=jobs.filter(j=>j.contaEspecial&&j.praca==="VAR"&&(j.linhas||[]).length>1);
-  const somaFechadoVarejo=contasVarejoMulti.reduce((s,j)=>s+(j.linhas||[]).reduce((s2,l)=>s2+(l.status==="Fechado"?Number(l.valorFechado)||0:0),0),0);
+  const somaFechadoVarejo=contasVarejoMulti.reduce((s,j)=>s+(j.faseAtual==="Fechado"?Number(j.valorFechado)||0:0),0);
   const ticketMedioVarejo=contasVarejoMulti.length?somaFechadoVarejo/contasVarejoMulti.length:0;
-  const pairsEstrategicos=pairs.filter(p=>p.job.contaEspecial);
-  const decididasEstr=pairsEstrategicos.filter(p=>p.linha.status!=="Em aberto").length;
-  const fechadasEstr=pairsEstrategicos.filter(p=>p.linha.status==="Fechado").length;
+  const jobsEstrategicos=jobs.filter(j=>j.contaEspecial);
+  const decididasEstr=jobsEstrategicos.filter(j=>isTerminal(j.faseAtual)).length;
+  const fechadasEstr=jobsEstrategicos.filter(j=>j.faseAtual==="Fechado").length;
   const conversaoEstr=decididasEstr>0?Math.round(fechadasEstr/decididasEstr*100):0;
   const totalLinhas=pairs.length;
   const multicanalidade=jobs.length?(totalLinhas/jobs.length):0;
@@ -839,7 +879,7 @@ function evolucaoHtml(jobs,pairs){
   const recebidosPorMes={};
   jobs.forEach(j=>{ const k=(j.dataRecebimento||"").slice(0,7); if(k)recebidosPorMes[k]=(recebidosPorMes[k]||0)+1; });
   const fechadoPorMes={};
-  pairs.forEach(p=>{ if(p.linha.status==="Fechado"){ const k=(p.linha.dataFechamento||"").slice(0,7); if(k)fechadoPorMes[k]=(fechadoPorMes[k]||0)+(Number(p.linha.valorFechado)||0); } });
+  jobs.forEach(j=>{ if(j.faseAtual==="Fechado"){ const k=(j.dataFechamento||"").slice(0,7); if(k)fechadoPorMes[k]=(fechadoPorMes[k]||0)+(Number(j.valorFechado)||0); } });
   return `<div class="dash-grid">`
     + timeSeriesHtml("Jobs recebidos por mês",months,recebidosPorMes,v=>String(v))
     + timeSeriesHtml("Valor fechado por mês",months,fechadoPorMes,v=>fmtMoney(v))
@@ -861,14 +901,14 @@ function comparativoAnualHtml(jobs,pairs){
   jobs.forEach(j=>{
     const y=yearOf(j);
     byYear[y].jobs++;
-    if(j.origem==="EP Labs"&&j.faseAtual==="Concluído")byYear[y].epLabs++;
+    if(j.origem==="EP Labs"&&["Entregue","Fechado","Declinado"].includes(j.faseAtual))byYear[y].epLabs++;
+    if(isTerminal(j.faseAtual))byYear[y].decididas++;
+    if(j.faseAtual==="Fechado"){byYear[y].fechadas++;byYear[y].valorFechado+=Number(j.valorFechado)||0;}
   });
   pairs.forEach(p=>{
     const y=yearOf(p.job);
     if(!byYear[y])return;
     byYear[y].valorOrcado+=Number(p.linha.valorOrcado)||0;
-    if(p.linha.status!=="Em aberto")byYear[y].decididas++;
-    if(p.linha.status==="Fechado"){byYear[y].fechadas++;byYear[y].valorFechado+=Number(p.linha.valorFechado)||0;}
   });
   const metricRow=(label,fn)=>`<tr><td>${label}</td>${yearsSorted.map(y=>`<td>${fn(byYear[y])}</td>`).join("")}</tr>`;
   return `<div class="breakdown"><h3>Comparativo anual</h3>
@@ -885,31 +925,31 @@ function comparativoAnualHtml(jobs,pairs){
 }
 function dinheiroMesaHtml(jobs){
   const rows=[];
-  jobs.forEach(job=>(job.linhas||[]).forEach(l=>{
-    if(l.status==="Em aberto"){
-      const dias=diasParadoLinha(l);
-      if(dias!=null&&dias>=DIAS_LEMBRETE)rows.push({job,l,dias,recuperavel:false});
-    }else if(l.status==="Declinado"&&l.recuperavel){
-      rows.push({job,l,dias:null,recuperavel:true});
+  jobs.forEach(job=>{
+    if(!isTerminal(job.faseAtual)){
+      const dias=diasParadoJob(job);
+      if(dias!=null&&dias>=DIAS_LEMBRETE)rows.push({job,dias,recuperavel:false});
+    }else if(job.faseAtual==="Declinado"&&job.recuperavel){
+      rows.push({job,dias:null,recuperavel:true});
     }
-  }));
-  if(!rows.length)return `<div class="breakdown"><h3>Dinheiro na mesa</h3><div style="color:var(--muted);font-size:13px">Nenhuma proposta parada no momento ✓</div></div>`;
+  });
+  if(!rows.length)return `<div class="breakdown"><h3>Dinheiro na mesa</h3><div style="color:var(--muted);font-size:13px">Nenhum job parado no momento ✓</div></div>`;
   rows.sort((a,b)=>(b.dias??999)-(a.dias??999));
   const html=rows.map(r=>{
-    const valor=r.l.valorOrcado||0;
+    const valor=(r.job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
     const badge=r.recuperavel?`<span class="dbadge rec">declinado auto.</span>`:`<span class="dbadge warn">${r.dias}d parado</span>`;
     const btn=r.recuperavel
-      ?`<button class="mbtn" data-act="linha-recuperar" data-id="${r.job.id}" data-linha="${r.l.id}">↺ Recuperar</button>`
-      :`<button class="mbtn" data-act="linha-contato" data-id="${r.job.id}" data-linha="${r.l.id}">🔔 Marcar contato</button>`;
+      ?`<button class="mbtn" data-act="job-reabrir" data-id="${r.job.id}">↺ Recuperar</button>`
+      :`<button class="mbtn" data-act="job-contato" data-id="${r.job.id}">🔔 Marcar contato</button>`;
     return `<div class="moneyrow">
-      <div><div class="nm">${esc(r.job.cliente)}</div><div class="sub">${esc(r.job.numero||"")} · ${esc(r.l.veiculo||"—")}</div></div>
+      <div><div class="nm">${esc(r.job.cliente)}</div><div class="sub">${esc(r.job.numero||"")}</div></div>
       <div class="sub">${esc(r.job.executivo||"—")}</div>
       <div class="val">${fmtMoney(valor)}</div>
       ${badge}
       ${btn}
     </div>`;
   }).join("");
-  return `<div class="breakdown"><h3>Dinheiro na mesa — propostas paradas</h3>${html}</div>`;
+  return `<div class="breakdown"><h3>Dinheiro na mesa — jobs parados</h3>${html}</div>`;
 }
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
@@ -926,53 +966,43 @@ function renderDashboard(jobs,pairs){
     + countBreakdownHtml("Jobs por praça",PRACAS,jobs,j=>j.praca)
     + countBreakdownHtml("Jobs por origem",ORIGENS,jobs,j=>j.origem)
     + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobs,j=>j.prioridade)
-    + valorBreakdownHtml("Valor fechado por veículo",groupValor(pairs,p=>p.linha.veiculo),"share")
-    + valorBreakdownHtml("Conclusão e valor por analista",groupValor(pairs,p=>p.job.analista),"conv")
-    + valorBreakdownHtml("Conclusão e valor por executivo de conta",groupValor(pairs,p=>p.job.executivo),"conv")
+    + valorBreakdownHtml("Valor fechado por veículo",valorPorVeiculoMap(jobs),"share")
+    + valorBreakdownHtml("Fechamento e valor por analista",groupValorPorJob(jobs,j=>j.analista),"conv")
+    + valorBreakdownHtml("Fechamento e valor por executivo de conta",groupValorPorJob(jobs,j=>j.executivo),"conv")
     + `</div>`;
   document.getElementById("dashboard").innerHTML=html;
 }
 
 /* ============ quadro kanban ============ */
-function linhaMiniHtml(job,l){
-  const cls=l.status==="Fechado"?"fechado":l.status==="Declinado"?"declinado":"aberto";
-  const valorTxt=l.status==="Fechado"?fmtMoney(l.valorFechado):(l.valorOrcado?fmtMoney(l.valorOrcado):"");
-  const dias=diasParadoLinha(l);
-  const lembrete=precisaLembrete(l);
-  const podeRecuperar=l.status==="Declinado"&&l.recuperavel;
+function linhaMiniHtml(l){
   return `<div class="linhamini">
     <span class="lm-name">${esc(l.veiculo||"Sem veículo")}</span>
-    <span class="lm-pill ${cls}">${l.status}</span>
-    ${lembrete?`<span class="lm-pill warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
-    ${valorTxt?`<span class="lm-val">${valorTxt}</span>`:""}
-    ${l.status==="Em aberto"?`<span class="lm-btns">
-      ${lembrete?`<button class="lm-btn warn" data-act="linha-contato" data-id="${job.id}" data-linha="${l.id}" title="Marcar contato feito hoje">🔔</button>`:""}
-      <button class="lm-btn ok" data-act="linha-fechar" data-id="${job.id}" data-linha="${l.id}" title="Marcar como fechado">✓</button>
-      <button class="lm-btn no" data-act="linha-declinar" data-id="${job.id}" data-linha="${l.id}" title="Marcar como declinado">✕</button>
-    </span>`:""}
-    ${podeRecuperar?`<span class="lm-btns"><button class="lm-btn ok" data-act="linha-recuperar" data-id="${job.id}" data-linha="${l.id}" title="Recuperar proposta">↺</button></span>`:""}
+    ${l.valorOrcado?`<span class="lm-val">${fmtMoney(l.valorOrcado)}</span>`:""}
   </div>`;
 }
 function mcardHtml(job){
   const alerta=alertaPrazo(job);
   const pct=Math.round(pctConcl(job)*100);
-  const podeAvancar=FASE_ORDEM.includes(job.faseAtual)&&!isTerminal(job.faseAtual);
+  const terminal=isTerminal(job.faseAtual);
+  const podeAvancar=FASE_ORDEM.includes(job.faseAtual)&&FASE_ORDEM.indexOf(job.faseAtual)<FASE_ORDEM.length-1;
   const proxFase=podeAvancar?FASE_ORDEM[FASE_ORDEM.indexOf(job.faseAtual)+1]:null;
   const accent=FASE_COLOR[job.faseAtual]||"var(--line-strong)";
   const linhas=job.linhas||[];
   const totalOrcado=linhas.reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
-  const totalFechado=linhas.reduce((s,l)=>s+(l.status==="Fechado"?Number(l.valorFechado)||0:0),0);
+  const dias=diasParadoJob(job);
+  const lembrete=precisaLembreteJob(job);
   return `<div class="mcard" style="--card-accent:${accent}" data-act="edit" data-id="${job.id}">
     <div class="jobnum">${esc(job.numero||"")}</div>
     <div class="cliente">${esc(job.cliente)}</div>
     <div class="tags">
       <span class="tag-sm">${esc(job.praca)}</span>
       <span class="tag-sm">${esc(job.prioridade)}</span>
-      ${!isTerminal(job.faseAtual)?`<span class="${situClass(job.situacao).replace('status','situ-sm')}" style="background:${SITU_COLOR[job.situacao]}22;color:${SITU_COLOR[job.situacao]}">${esc(job.situacao)}</span>`:""}
+      ${!terminal?`<span class="${situClass(job.situacao).replace('status','situ-sm')}" style="background:${SITU_COLOR[job.situacao]}22;color:${SITU_COLOR[job.situacao]}">${esc(job.situacao)}</span>`:""}
+      ${lembrete?`<span class="tag-sm warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
     </div>
     <div class="pbar"><i style="width:${pct}%"></i></div>
-    <div class="linhaslist">${linhas.map(l=>linhaMiniHtml(job,l)).join("")}</div>
-    ${(totalFechado||totalOrcado)?`<div class="valorline">${totalFechado?"Fechado":"Orçado"}: <b>${fmtMoney(totalFechado||totalOrcado)}</b></div>`:""}
+    ${linhas.length?`<div class="linhaslist">${linhas.map(linhaMiniHtml).join("")}</div>`:""}
+    <div class="valorline">${job.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(job.faseAtual==="Fechado"?(job.valorFechado||totalOrcado):totalOrcado)}</b></div>
     ${(job.planoMidia||(job.planilhas&&job.planilhas.length))?`<div class="joblinks">
       ${job.planoMidia?`<a class="joblink" href="${esc(job.planoMidia)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🖼 Plano de Mídia</a>`:""}
       ${(job.planilhas||[]).filter(p=>p.url).map((p,i)=>`<a class="joblink" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📊 ${esc(p.nome||("Planilha "+(i+1)))}</a>`).join("")}
@@ -980,7 +1010,14 @@ function mcardHtml(job){
     <div class="foot">
       <span>${esc(job.analista||"—")}</span>
       <span class="${alerta==='Atrasado'?'late':''}">${alerta==='Atrasado'?'Atrasado':fmtDate(job.prazoPrevisto)}</span>
-      ${proxFase?`<button class="advance" data-act="avancar" data-id="${job.id}" title="Avançar para ${esc(proxFase)}">▶</button>`:""}
+    </div>
+    <div class="cardactions">
+      ${lembrete?`<button class="cbtn warn" data-act="job-contato" data-id="${job.id}" title="Marcar contato feito hoje">🔔</button>`:""}
+      ${!terminal?`
+        ${proxFase?`<button class="cbtn ok" data-act="avancar" data-id="${job.id}" title="Avançar para ${esc(proxFase)}">▶</button>`:""}
+        <button class="cbtn ok" data-act="job-fechar" data-id="${job.id}" title="Fechar job">✓</button>
+        <button class="cbtn no" data-act="job-declinar" data-id="${job.id}" title="Declinar job">✕</button>
+      `:`<button class="cbtn ok" data-act="job-reabrir" data-id="${job.id}" title="Reabrir job">↺</button>`}
     </div>
   </div>`;
 }
@@ -1007,22 +1044,16 @@ function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o==
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
 
 function linhaRowHtml(l,idx){
-  l=l||{id:uid(),veiculo:"",status:"Em aberto",valorOrcado:0,valorFechado:0,dataFechamento:"",motivoPerda:""};
+  l=l||{id:uid(),veiculo:"",valorOrcado:0};
   return `<div class="linharow" data-linha-id="${l.id}">
     <div class="linharow-head">
-      <span class="linharow-n">Linha ${idx+1}</span>
+      <span class="linharow-n">Veículo ${idx+1}</span>
       <button type="button" class="linharow-del" data-act="linha-del">✕ Remover</button>
     </div>
     <div class="row2">
       <div class="field"><label>Veículo</label><select class="li-veiculo"><option value="">Selecione...</option>${optionsHtml(data.config.veiculos,l.veiculo)}</select></div>
-      <div class="field"><label>Status</label><select class="li-status">${optionsHtml(STATUS_LINHA,l.status||"Em aberto")}</select></div>
-    </div>
-    <div class="field li-motivo-wrap" style="display:${l.status==='Declinado'?'block':'none'}"><label>Motivo (declínio)</label><select class="li-motivo">${optionsHtml(MOTIVOS,l.motivoPerda)}</select></div>
-    <div class="row2">
       <div class="field"><label>Valor orçado</label><input class="li-valorOrcado" type="number" step="0.01" min="0" value="${l.valorOrcado||""}" placeholder="0,00"></div>
-      <div class="field"><label>Valor fechado</label><input class="li-valorFechado" type="number" step="0.01" min="0" value="${l.valorFechado||""}" placeholder="0,00"></div>
     </div>
-    <div class="field"><label>Data de fechamento</label><input class="li-dataFechamento" type="date" value="${l.dataFechamento||""}"></div>
   </div>`;
 }
 function planilhaRowHtml(p,idx){
@@ -1058,14 +1089,10 @@ function jobForm(j){
         <div class="field"><label>Situação</label><select id="f_situacao">${optionsHtml(SITUACOES,j.situacao||"No prazo")}</select></div>
       </div>
       <div class="row2">
-        <div class="field"><label>Prazo previsto</label><input id="f_prazo" type="date" value="${j.prazoPrevisto||""}"></div>
-        <div class="field"><label>Data de recebimento</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
+        <div class="field"><label>Data da solicitação</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
+        <div class="field"><label>Data do prazo</label><input id="f_prazo" type="date" value="${j.prazoPrevisto||""}"></div>
       </div>
-      <div class="row2">
-        <div class="field"><label>Data de entrega</label><input id="f_entrega" type="date" value="${j.dataEntrega||""}"></div>
-        <div class="field"><label>Data de conclusão</label><input id="f_conclusao" type="date" value="${j.dataConclusao||""}"></div>
-      </div>
-      <div class="field"><label>Último contato</label><input id="f_ultimoContato" type="date" value="${j.ultimoContato||""}"></div>
+      <div class="field"><label>Data da entrega</label><input id="f_entrega" type="date" value="${j.dataEntrega||""}"></div>
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
       <div class="field"><label>Briefing recebido</label><textarea id="f_briefing" placeholder="Cole aqui o briefing que foi enviado para o analista...">${esc(j.briefing||"")}</textarea></div>
       <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
@@ -1077,49 +1104,38 @@ function jobForm(j){
       </div>
 
       <div class="linhas-section">
-        <div class="linhas-head"><label>Linhas de veículo</label><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar linha</button></div>
+        <div class="linhas-head"><label>Veículos e valor orçado</label><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar veículo</button></div>
         <div id="linhasWrap">${linhas.map((l,i)=>linhaRowHtml(l,i)).join("")}</div>
       </div>
+
+      ${j.id&&isTerminal(j.faseAtual)?`
+      <div class="linhas-section">
+        <div class="linhas-head"><label>${j.faseAtual==="Fechado"?"Job fechado":"Job declinado"}</label></div>
+        ${j.faseAtual==="Fechado"?`<div class="field"><label>Valor fechado</label><input id="f_valorFechado" type="number" step="0.01" min="0" value="${j.valorFechado||""}"></div>`:""}
+        ${j.faseAtual==="Declinado"?`<div class="field"><label>Motivo</label><select id="f_motivoPerda">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>`:""}
+        <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento" type="date" value="${j.dataFechamento||""}"></div>
+      </div>`:""}
 
       <button class="save" data-act="save-job">Salvar</button>
       ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
     </div>`;
 }
-let editingLinhasMap={};
-function openNewJobModal(){editId=null;editingLinhasMap={};openModal(jobForm({}));}
+function openNewJobModal(){editId=null;openModal(jobForm({}));}
 function openEditJobModal(id){
   const j=data.jobs.find(x=>x.id===id);if(!j)return;
   editId=id;
-  editingLinhasMap={};
-  (j.linhas||[]).forEach(l=>editingLinhasMap[l.id]=l);
   openModal(jobForm(j));
 }
 function saveJobForm(){
   const cliente=document.getElementById("f_cliente").value.trim();
   if(!cliente){toast("Informe o cliente.");return;}
   const rows=[...document.querySelectorAll("#linhasWrap .linharow")];
-  if(!rows.length){toast("Adicione pelo menos uma linha de veículo.");return;}
-  const linhas=rows.map(row=>{
-    const status=row.querySelector(".li-status").value;
-    const prev=editingLinhasMap[row.dataset.linhaId];
-    const statusMudou=!prev||prev.status!==status;
-    const l={
-      id:row.dataset.linhaId,
-      veiculo:row.querySelector(".li-veiculo").value,
-      status,
-      valorOrcado:Number(row.querySelector(".li-valorOrcado").value)||0,
-      valorFechado:Number(row.querySelector(".li-valorFechado").value)||0,
-      dataFechamento:row.querySelector(".li-dataFechamento").value,
-      motivoPerda:status==="Declinado"?row.querySelector(".li-motivo").value:"",
-      ultimoContatoEm:(prev&&!statusMudou)?prev.ultimoContatoEm:Date.now(),
-      recuperavel:statusMudou?false:!!(prev&&prev.recuperavel),
-      declinioAutomatico:statusMudou?false:!!(prev&&prev.declinioAutomatico),
-      updatedAt:Date.now()
-    };
-    if(status!=="Em aberto"&&!l.dataFechamento)l.dataFechamento=today();
-    if(status==="Fechado"&&!l.valorFechado)l.valorFechado=l.valorOrcado;
-    return l;
-  });
+  if(!rows.length){toast("Adicione pelo menos um veículo.");return;}
+  const linhas=rows.map(row=>({
+    id:row.dataset.linhaId,
+    veiculo:row.querySelector(".li-veiculo").value,
+    valorOrcado:Number(row.querySelector(".li-valorOrcado").value)||0
+  }));
   const planilhas=[...document.querySelectorAll("#planilhasWrap .linharow")].map(row=>({
     id:row.dataset.planilhaId,
     nome:row.querySelector(".pl-nome").value.trim(),
@@ -1130,7 +1146,7 @@ function saveJobForm(){
   const existing=editId?data.jobs.find(x=>x.id===editId):null;
   const j={
     id:editId||uid(),
-    numero:existing?existing.numero:nextNumero(),
+    numero:existing?existing.numero:nextNumero(cliente),
     cliente,
     praca:document.getElementById("f_praca").value,
     origem:document.getElementById("f_origem").value,
@@ -1142,16 +1158,27 @@ function saveJobForm(){
     prazoPrevisto:document.getElementById("f_prazo").value,
     dataRecebimento:document.getElementById("f_recebimento").value||today(),
     dataEntrega:document.getElementById("f_entrega").value,
-    dataConclusao:document.getElementById("f_conclusao").value,
-    ultimoContato:document.getElementById("f_ultimoContato").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
     briefing:document.getElementById("f_briefing").value.trim(),
     proximosPassos:document.getElementById("f_proximos").value.trim(),
     planoMidia:document.getElementById("f_planoMidia").value.trim(),
     planilhas,
     linhas,
+    ultimoContatoEm:existing?existing.ultimoContatoEm:Date.now(),
+    valorFechado:existing?existing.valorFechado:0,
+    motivoPerda:existing?existing.motivoPerda:"",
+    dataFechamento:existing?existing.dataFechamento:"",
+    recuperavel:existing?existing.recuperavel:false,
+    declinioAutomatico:existing?existing.declinioAutomatico:false,
+    faseAntesFechamento:existing?existing.faseAntesFechamento:null,
     updatedAt:Date.now()
   };
+  const fValorFechado=document.getElementById("f_valorFechado");
+  if(fValorFechado)j.valorFechado=Number(fValorFechado.value)||0;
+  const fMotivo=document.getElementById("f_motivoPerda");
+  if(fMotivo)j.motivoPerda=fMotivo.value;
+  const fDataFechamento=document.getElementById("f_dataFechamento");
+  if(fDataFechamento)j.dataFechamento=fDataFechamento.value;
   if(analista&&!data.config.analistas.includes(analista))data.config.analistas.push(analista);
   if(executivo&&!data.config.executivos.includes(executivo))data.config.executivos.push(executivo);
   const idx=data.jobs.findIndex(x=>x.id===j.id);
@@ -1162,6 +1189,7 @@ function saveJobForm(){
 }
 function avancarJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(isTerminal(job.faseAtual))return;
   const idx=FASE_ORDEM.indexOf(job.faseAtual);if(idx<0||idx>=FASE_ORDEM.length-1)return;
   const proxima=FASE_ORDEM[idx+1];
   const campoData=FASE_AVANCO_DATA[proxima];
@@ -1171,30 +1199,28 @@ function avancarJob(id){
   save();render();
   toast(`Avançou para ${proxima} ✓`);
 }
-function fecharLinha(jobId,linhaId){
-  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
-  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
-  if(linha.status!=="Em aberto")return;
-  linha.status="Fechado";
-  linha.dataFechamento=today();
-  if(!linha.valorFechado)linha.valorFechado=linha.valorOrcado;
-  linha.recuperavel=false;linha.declinioAutomatico=false;
-  linha.updatedAt=Date.now();
+function fecharJob(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(isTerminal(job.faseAtual))return;
+  job.faseAntesFechamento=job.faseAtual;
+  job.faseAtual="Fechado";
+  job.dataFechamento=today();
+  if(!job.valorFechado)job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
   save();render();
-  toast("Linha marcada como fechada ✓");
+  toast("Job fechado ✓");
 }
-function declinarLinha(jobId,linhaId){
-  const job=data.jobs.find(x=>x.id===jobId);if(!job)return;
-  const linha=(job.linhas||[]).find(l=>l.id===linhaId);if(!linha)return;
-  if(linha.status!=="Em aberto")return;
-  linha.status="Declinado";
-  linha.dataFechamento=today();
-  linha.recuperavel=false;linha.declinioAutomatico=false;
-  linha.updatedAt=Date.now();
+function declinarJob(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(isTerminal(job.faseAtual))return;
+  job.faseAntesFechamento=job.faseAtual;
+  job.faseAtual="Declinado";
+  job.dataFechamento=today();
+  job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
   save();render();
-  toast("Linha marcada como declinada");
+  toast("Job declinado");
 }
 
 /* ============ cadastros (analistas / executivos / veículos) ============ */
@@ -1274,12 +1300,6 @@ document.getElementById("fBusca").addEventListener("input",e=>{filters.q=e.targe
 document.getElementById("fDe").addEventListener("change",e=>{filters.de=e.target.value;render();});
 document.getElementById("fAte").addEventListener("change",e=>{filters.ate=e.target.value;render();});
 document.getElementById("fileImport").addEventListener("change",e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value="";});
-document.body.addEventListener("change",e=>{
-  if(e.target.classList.contains("li-status")){
-    const row=e.target.closest(".linharow");
-    row.querySelector(".li-motivo-wrap").style.display=e.target.value==="Declinado"?"block":"none";
-  }
-});
 document.body.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&e.target.matches("[data-cfg-input]")){
     e.preventDefault();
@@ -1294,10 +1314,10 @@ document.body.addEventListener("click",e=>{
   if(act==="new")openNewJobModal();
   else if(act==="edit")openEditJobModal(id);
   else if(act==="avancar")avancarJob(id);
-  else if(act==="linha-fechar")fecharLinha(id,b.dataset.linha);
-  else if(act==="linha-declinar")declinarLinha(id,b.dataset.linha);
-  else if(act==="linha-contato")marcarContatoLinha(id,b.dataset.linha);
-  else if(act==="linha-recuperar")recuperarLinha(id,b.dataset.linha);
+  else if(act==="job-fechar")fecharJob(id);
+  else if(act==="job-declinar")declinarJob(id);
+  else if(act==="job-contato")marcarContatoJob(id);
+  else if(act==="job-reabrir")reabrirJob(id);
   else if(act==="save-job")saveJobForm();
   else if(act==="linha-add"){
     const wrap=document.getElementById("linhasWrap");
