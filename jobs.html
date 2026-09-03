@@ -588,35 +588,43 @@ function desempenhoPorClienteHtml(jobs){
     </table></div>
   </div>`;
 }
-function metaCEHtml(jobs){
-  const curYear=new Date().getFullYear(),prevYear=curYear-1;
-  const meta=Number(data.config.metaCEMensal)||0;
-  const meses=["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
-  const valoresAno={[prevYear]:Array(12).fill(0),[curYear]:Array(12).fill(0)};
+function metaMensalHtml(titulo,praca,jobs){
+  const meta=Number((data.config.metasPraca||{})[praca])||0;
+  const months=last6Months();
+  const porMes={};
   jobs.forEach(j=>{
     if(j.faseAtual!=="Fechado"||!j.dataFechamento)return;
-    const ano=Number(j.dataFechamento.slice(0,4)),mes=Number(j.dataFechamento.slice(5,7))-1;
-    if(valoresAno[ano])valoresAno[ano][mes]+=Number(j.valorFechado)||0;
+    const k=j.dataFechamento.slice(0,7);
+    porMes[k]=(porMes[k]||0)+(Number(j.valorFechado)||0);
   });
-  const rows=meses.map((m,i)=>{
-    const v25=valoresAno[prevYear][i],v26=valoresAno[curYear][i];
-    const deltaAno=v25>0?Math.round((v26-v25)/v25*100):(v26>0?100:0);
-    const atingimento=meta>0?Math.round(v26/meta*100):null;
-    return `<tr>
-      <td>${m}</td>
-      <td style="text-align:right">${fmtMoney(v26)}</td>
-      <td style="text-align:right;color:${(v25||v26)?(deltaAno>=0?"var(--concluido)":"var(--cancelado)"):"var(--faint)"}">${(v25||v26)?(deltaAno>=0?"+":"")+deltaAno+"%":"—"}</td>
-      <td style="text-align:right">${atingimento!=null?atingimento+"%":"—"}</td>
-    </tr>`;
+  const vals=months.map(m=>porMes[m.key]||0);
+  const max=Math.max(1,meta,...vals);
+  const bars=months.map((m,i)=>{
+    const v=vals[i];
+    const h=Math.round(v/max*100);
+    const atingiu=meta>0&&v>=meta;
+    const fill=meta>0?(atingiu?"linear-gradient(180deg,var(--brand-2),var(--brand))":"linear-gradient(180deg,var(--atrasado),#a8380f)"):"linear-gradient(180deg,var(--brand-2),var(--brand))";
+    const metaLinePct=meta>0?Math.min(100,Math.round(meta/max*100)):null;
+    return `<div class="tsbar">
+      <div class="tsbar-col" style="position:relative">
+        ${metaLinePct!=null?`<div style="position:absolute;left:0;right:0;bottom:${metaLinePct}%;border-top:2px dashed var(--muted);z-index:1"></div>`:""}
+        <div class="tsbar-fill" style="height:${h}%;background:${fill}"></div>
+      </div>
+      <div class="tsbar-val">${fmtMoney(v)}</div>
+      ${meta>0?`<div style="font-size:9px;font-weight:700;color:${atingiu?"var(--concluido)":"var(--atrasado)"}">${Math.round(v/meta*100)}%</div>`:""}
+      <div class="tsbar-label">${esc(m.label)}</div>
+    </div>`;
   }).join("");
   return `<div class="breakdown">
-    <h3>Meta de Contas Especiais — mês a mês</h3>
-    ${meta>0?`<p style="color:var(--muted);font-size:12px;margin:0 0 10px">Meta mensal: <b>${fmtMoney(meta)}</b> (ajustável em ⚙ Cadastros)</p>`:`<p style="color:var(--warn);font-size:12px;margin:0 0 10px">Nenhuma meta mensal definida ainda — configure em ⚙ Cadastros pra ver o % de atingimento.</p>`}
-    <div style="overflow-x:auto"><table class="yr-table">
-      <tr><th>Mês</th><th>${curYear}</th><th>vs ${prevYear}</th><th>Atingimento</th></tr>
-      ${rows}
-    </table></div>
+    <h3>${esc(titulo)}</h3>
+    ${meta>0?`<p style="color:var(--muted);font-size:12px;margin:0 0 6px">Meta mensal: <b>${fmtMoney(meta)}</b> (linha tracejada) — ajustável em ⚙ Cadastros</p>`:`<p style="color:var(--warn);font-size:12px;margin:0 0 6px">Nenhuma meta definida ainda — configure em ⚙ Cadastros pra ver o % de atingimento.</p>`}
+    <div class="tschart">${bars}</div>
   </div>`;
+}
+function metasHtml(jobs){
+  const pracasPresentes=[...new Set(jobs.map(j=>j.praca).filter(Boolean))].sort();
+  if(!pracasPresentes.length)return "";
+  return pracasPresentes.map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,p,jobs.filter(j=>j.praca===p))).join("");
 }
 function clienteVeiculoHtml(jobs){
   const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
@@ -761,7 +769,10 @@ async function load(){
   data.config.analistas=data.config.analistas||[];
   data.config.executivos=data.config.executivos||[];
   data.config.veiculos=(data.config.veiculos&&data.config.veiculos.length)?data.config.veiculos:VEICULOS_PADRAO.slice();
-  data.config.metaCEMensal=Number(data.config.metaCEMensal)||0;
+  data.config.metasPraca=data.config.metasPraca||{};
+  if(data.config.metaCEMensal&&!data.config.metasPraca.CE)data.config.metasPraca.CE=Number(data.config.metaCEMensal)||0;
+  delete data.config.metaCEMensal;
+  PRACAS.forEach(p=>{data.config.metasPraca[p]=Number(data.config.metasPraca[p])||0;});
   data.jobs=data.jobs.map(migrateJob);
   data.jobs.forEach(j=>{
     if(j.analista&&!data.config.analistas.includes(j.analista))data.config.analistas.push(j.analista);
@@ -1342,7 +1353,8 @@ function renderDashboard(jobs,pairs){
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const html=
     objetivosHtml(jobs,pairs)
-    + (isCE?desempenhoPorClienteHtml(jobs)+metaCEHtml(jobs)+clienteVeiculoHtml(jobs):"")
+    + (isCE?desempenhoPorClienteHtml(jobs)+clienteVeiculoHtml(jobs):"")
+    + metasHtml(jobs)
     + dinheiroMesaHtml(jobs)
     + riscoHtml()
     + evolucaoHtml(jobs,pairs)
@@ -1655,9 +1667,9 @@ function settingsHtml(){
       ${sec("Executivos de conta","executivos","Nome do executivo")}
       ${sec("Veículos de mídia","veiculos","Nome do veículo")}
       <div class="cfgsection">
-        <h4>Meta mensal de Contas Especiais (CE)</h4>
-        <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Usada pra calcular o % de atingimento no Dashboard da visão de Contas especiais.</p>
-        <div class="addrow"><input id="cfg_metaCE" type="number" step="0.01" min="0" value="${data.config.metaCEMensal||""}" placeholder="Ex: 50000"><button data-act="cfg-meta-ce">Salvar</button></div>
+        <h4>Metas mensais por praça</h4>
+        <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Usadas pra calcular o % de atingimento no gráfico "Meta — mês a mês" do Dashboard.</p>
+        ${PRACAS.map(p=>`<div class="addrow"><input class="cfg-meta-praca-input" data-praca="${esc(p)}" type="number" step="0.01" min="0" value="${(data.config.metasPraca&&data.config.metasPraca[p])||""}" placeholder="Meta ${esc(p==="CE"?"CE (Contas Especiais)":p)}"><button data-act="cfg-meta-praca" data-praca="${esc(p)}">Salvar</button></div>`).join("")}
       </div>
     </div>`;
 }
@@ -1867,8 +1879,11 @@ document.body.addEventListener("click",e=>{
     if(!data.config[key].includes(v))data.config[key].push(v);
     save();openModal(settingsHtml());render();
   }
-  else if(act==="cfg-meta-ce"){
-    data.config.metaCEMensal=Number(document.getElementById("cfg_metaCE").value)||0;
+  else if(act==="cfg-meta-praca"){
+    const p=b.dataset.praca;
+    const input=document.querySelector(`.cfg-meta-praca-input[data-praca="${p}"]`);
+    data.config.metasPraca=data.config.metasPraca||{};
+    data.config.metasPraca[p]=Number(input.value)||0;
     save();openModal(settingsHtml());render();
     toast("Meta salva ✓");
   }
