@@ -433,6 +433,7 @@ let mainView="jobs";
 const PRACAS=["CAM","RIB","SCA","VAR","CE"];
 const ORIGENS=["Solicitação interna","Proativo"];
 const PRIORIDADES=["Alta","Média","Baixa"];
+const TIPOS_JOB=["Proposta comercial","Pós-venda","Fechamento direto"];
 const FASES=["Recebido","Em desenvolvimento","Entregue","Fechado","Declinado"];
 const FASE_PCT={"Recebido":.15,"Em desenvolvimento":.5,"Entregue":.85,"Fechado":1,"Declinado":1};
 const FASE_ORDEM=["Recebido","Em desenvolvimento","Entregue"];
@@ -548,13 +549,14 @@ function executivoFormHtml(){
     <p style="color:var(--muted);font-size:13.5px;margin:0 0 18px">Preencha o briefing do job. Assim que enviar, ele aparece pronto pra um analista assumir.</p>
     <div class="field"><label>Cliente</label><input id="ex_cliente" placeholder="Nome do cliente"></div>
     <div class="row2">
+      <div class="field"><label>Tipo</label><select id="ex_tipo">${optionsHtml(TIPOS_JOB,TIPOS_JOB[0])}</select></div>
       <div class="field"><label>Praça</label><select id="ex_praca">${pracaOptionsHtml("CAM")}</select></div>
-      <div class="field"><label>Origem</label><select id="ex_origem">${optionsHtml(ORIGENS,ORIGENS[0])}</select></div>
     </div>
     <div class="row2">
+      <div class="field"><label>Origem</label><select id="ex_origem">${optionsHtml(ORIGENS,ORIGENS[0])}</select></div>
       <div class="field"><label>Prioridade</label><select id="ex_prioridade">${optionsHtml(PRIORIDADES,"Média")}</select></div>
-      <div class="field"><label>Data do prazo</label><input id="ex_prazo" type="date"></div>
     </div>
+    <div class="field"><label>Data do prazo</label><input id="ex_prazo" type="date"></div>
     <div class="field"><label>Seu nome (executivo)</label><input id="ex_executivo" list="dl_executivos_exec" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos_exec",data.config.executivos)}</div>
     <div class="field"><label>Briefing</label><textarea id="ex_briefing" style="min-height:160px" placeholder="Cole aqui o briefing completo: o que o cliente pediu, contexto, verba se souber, prazo, tudo que o analista precisa saber..."></textarea></div>
     <button class="save" data-act="exec-submit">Enviar briefing</button>
@@ -571,6 +573,7 @@ function submitExecutivoBriefing(){
     id:uid(),
     numero:nextNumero(cliente),
     cliente,
+    tipo:document.getElementById("ex_tipo").value,
     praca:document.getElementById("ex_praca").value,
     origem:document.getElementById("ex_origem").value,
     analista:"",
@@ -1014,7 +1017,9 @@ function migrateJob(j){
   delete j.dataConclusao;delete j.ultimoContato;
   if(j.origem==="EP Labs")j.origem="Solicitação interna";
   j.contaEspecial=!!j.contaEspecial;
-  j.fechamentoDireto=!!j.fechamentoDireto;
+  if(!j.tipo)j.tipo=j.fechamentoDireto?"Fechamento direto":"Proposta comercial";
+  if(!TIPOS_JOB.includes(j.tipo))j.tipo="Proposta comercial";
+  delete j.fechamentoDireto;
   if(!j.numero)j.numero=nextNumero(j.cliente);
   j.briefing=j.briefing||"";
   j.checklist=(j.checklist||[]).map(c=>({id:c.id||uid(),texto:c.texto||"",feito:!!c.feito}));
@@ -1025,7 +1030,6 @@ function migrateJob(j){
   }
   delete j.linkPlanilha;
   j.planilhas=j.planilhas.map(p=>({id:p.id||uid(),nome:p.nome||"",url:p.url||""}));
-  j.posVenda=j.faseAtual==="Fechado"?(j.posVenda||{status:"pendente",data:"",observacao:""}):(j.posVenda||null);
   return j;
 }
 function diasParadoJob(job){
@@ -1228,7 +1232,7 @@ function renderKpis(jobs,pairs){
     +kpi("k-concluido",KPI_ICONS.concluido,"Fechados",fechados)
     +kpi("k-atrasado"+(atrasados>0?" k-alert":""),KPI_ICONS.atrasado,"Atrasados",atrasados)
     +kpi("k-aguardando",KPI_ICONS.aguardando,"Aguardando cliente",aguardando);
-  const jobsM=jobs.filter(j=>!j.fechamentoDireto);
+  const jobsM=jobs.filter(j=>j.tipo==="Proposta comercial");
   const pairsM=pairsFor(jobsM);
   const valorOrcado=pairsM.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0);
   const valorFechado=jobsM.reduce((s,j)=>s+(j.faseAtual==="Fechado"?Number(j.valorFechado)||0:0),0);
@@ -1451,38 +1455,17 @@ function dinheiroMesaHtml(jobs){
   }).join("");
   return `<div class="breakdown"><h3>Dinheiro na mesa — jobs parados</h3>${html}</div>`;
 }
-function posVendaHtml(jobs){
-  const fechados=jobs.filter(j=>j.faseAtual==="Fechado"&&j.posVenda);
-  const pendentes=fechados.filter(j=>j.posVenda.status==="pendente");
-  const feitos=fechados.filter(j=>j.posVenda.status==="feito").length;
-  const naoVai=fechados.filter(j=>j.posVenda.status==="nao_vai_fazer").length;
-  const pct=fechados.length?Math.round(feitos/fechados.length*100):0;
+function tipoSectionHtml(titulo,descricao,lista){
+  if(!lista.length)return "";
+  const fechados=lista.filter(j=>j.faseAtual==="Fechado");
+  const valorTotal=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const ticket=fechados.length?valorTotal/fechados.length:0;
   const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
-  const kpis=`<div class="kpis" style="margin-bottom:12px">${item("Pendentes",pendentes.length)+item("Feito",feitos)+item("Não vai fazer",naoVai)+item("% pós-venda feito",pct+"%")}</div>`;
-  if(!pendentes.length)return `<div class="breakdown"><h3>Pós-venda</h3>${kpis}<div style="color:var(--muted);font-size:13px">Nenhum pós-venda pendente no momento ✓</div></div>`;
-  pendentes.sort((a,b)=>(b.dataFechamento||"").localeCompare(a.dataFechamento||""));
-  const rows=pendentes.map(j=>{
-    const dias=j.dataFechamento?Math.floor((Date.now()-pd(j.dataFechamento))/86400000):null;
-    return `<div class="moneyrow">
-      <div><div class="nm">${esc(j.cliente)}</div><div class="sub">${esc(j.numero||"")}</div></div>
-      <div class="sub">${esc(j.praca||"—")}</div>
-      <div class="val">${fmtMoney(j.valorFechado)}</div>
-      <span class="dbadge warn">${dias!=null?dias+"d fechado":""}</span>
-      <div style="display:flex;gap:5px">
-        <button class="mbtn" data-act="posvenda-feito" data-id="${j.id}">✓ Feito</button>
-        <button class="mbtn" style="background:var(--cancelado-bg);color:var(--cancelado)" data-act="posvenda-naovai" data-id="${j.id}">✕ Não vai</button>
-      </div>
-    </div>`;
-  }).join("");
-  return `<div class="breakdown"><h3>Pós-venda</h3>${kpis}${rows}</div>`;
-}
-function marcarPosVenda(id,status){
-  const job=data.jobs.find(x=>x.id===id);if(!job||!job.posVenda)return;
-  job.posVenda.status=status;
-  job.posVenda.data=today();
-  job.updatedAt=Date.now();
-  save();render();
-  toast(status==="feito"?"Pós-venda marcado ✓":"Marcado como não vai fazer");
+  return `<div class="breakdown">
+    <h3>${esc(titulo)}</h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:12px">${esc(descricao)}</p>
+    <div class="kpis">${item("Quantidade",lista.length)+item("Fechados",fechados.length)+item("Valor fechado",fmtMoney(valorTotal))+item("Ticket médio",fmtMoney(ticket))}</div>
+  </div>`;
 }
 function riscoHtml(){
   return `<div class="breakdown">
@@ -1547,25 +1530,14 @@ function funilHtml(jobs){
     ${declinados?`<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--cancelado)">✕ ${declinados} declinado(s) fora do funil</div>`:""}
   </div>`;
 }
-function fechamentosDiretosHtml(diretos){
-  if(!diretos.length)return "";
-  const fechados=diretos.filter(j=>j.faseAtual==="Fechado");
-  const valorTotal=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
-  const ticket=fechados.length?valorTotal/fechados.length:0;
-  const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
-  return `<div class="breakdown">
-    <h3>Fechamentos diretos (sem proposta customizada)</h3>
-    <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Jobs de mídia fechada direto, sem passar por uma proposta customizada da marketing — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.</p>
-    <div class="kpis">${item("Quantidade",diretos.length)+item("Fechados",fechados.length)+item("Valor fechado",fmtMoney(valorTotal))+item("Ticket médio",fmtMoney(ticket))}</div>
-  </div>`;
-}
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||viewerScope.mode==="contas-especiais");
-  const jobsM=jobs.filter(j=>!j.fechamentoDireto);
+  const jobsM=jobs.filter(j=>j.tipo==="Proposta comercial");
   const pairsM=pairsFor(jobsM);
-  const diretos=jobs.filter(j=>j.fechamentoDireto);
+  const posVenda=jobs.filter(j=>j.tipo==="Pós-venda");
+  const diretos=jobs.filter(j=>j.tipo==="Fechamento direto");
   const html=
     objetivosHtml(jobsM,pairsM)
     + (isPracaOuCE?resumoDoDiaHtml(jobs):"")
@@ -1574,8 +1546,8 @@ function renderDashboard(jobs,pairs){
     + heatmapMetaHtml(jobsM)
     + heatmapVerbaHtml(jobsM)
     + dinheiroMesaHtml(jobs)
-    + posVendaHtml(jobs)
-    + fechamentosDiretosHtml(diretos)
+    + tipoSectionHtml("Pós-venda","Jobs classificados como pós-venda (acompanhamento/atendimento de cliente já fechado) — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",posVenda)
+    + tipoSectionHtml("Fechamentos diretos (sem proposta customizada)","Jobs de mídia fechada direto, sem passar por uma proposta customizada da marketing — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",diretos)
     + riscoHtml()
     + evolucaoHtml(jobsM,pairsM)
     + resumoSemanalHtml()
@@ -1586,6 +1558,7 @@ function renderDashboard(jobs,pairs){
     + funilHtml(jobsM)
     + `</div>`
     +`<div class="dash-grid">`
+    + countBreakdownHtml("Jobs por tipo",TIPOS_JOB,jobs,j=>j.tipo)
     + countBreakdownHtml("Jobs por praça",PRACAS,jobsM,j=>j.praca)
     + countBreakdownHtml("Jobs por origem",ORIGENS,jobsM,j=>j.origem)
     + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobsM,j=>j.prioridade)
@@ -1704,24 +1677,24 @@ function jobForm(j){
       ${!j.id?`<div class="field"><label>Nº do job</label><input value="Gerado automaticamente ao salvar" disabled style="color:var(--muted)"></div>`:""}
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
       <div class="row2">
+        <div class="field"><label>Tipo</label><select id="f_tipo">${optionsHtml(TIPOS_JOB,j.tipo||TIPOS_JOB[0])}</select></div>
         <div class="field"><label>Praça</label><select id="f_praca">${pracaOptionsHtml(j.praca||"CAM")}</select></div>
+      </div>
+      <div class="row2">
         <div class="field"><label>Origem</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem||ORIGENS[0])}</select></div>
+        <div class="field"><label>Prioridade</label><select id="f_prioridade">${optionsHtml(PRIORIDADES,j.prioridade||"Média")}</select></div>
       </div>
       <div class="row2">
         <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",analistaNomes())}</div>
         <div class="field"><label>Executivo de conta</label><input id="f_executivo" list="dl_executivos" value="${esc(j.executivo||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos",data.config.executivos)}</div>
       </div>
-      <div class="row2">
-        <div class="field"><label>Prioridade</label><select id="f_prioridade">${optionsHtml(PRIORIDADES,j.prioridade||"Média")}</select></div>
-        <div class="field"><label>Situação</label><select id="f_situacao">${optionsHtml(SITUACOES,j.situacao||"No prazo")}</select></div>
-      </div>
+      <div class="field"><label>Situação</label><select id="f_situacao">${optionsHtml(SITUACOES,j.situacao||"No prazo")}</select></div>
       <div class="row2">
         <div class="field"><label>Data da solicitação</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
         <div class="field"><label>Data do prazo</label><input id="f_prazo" type="date" value="${j.prazoPrevisto||""}"></div>
       </div>
       <div class="field"><label>Data da entrega</label><input id="f_entrega" type="date" value="${j.dataEntrega||""}"></div>
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
-      <div class="field checkfield"><label><input type="checkbox" id="f_fechamentoDireto" ${j.fechamentoDireto?"checked":""}> Fechamento direto (sem proposta customizada da marketing)</label></div>
       <div class="field"><label>Briefing recebido</label><textarea id="f_briefing" placeholder="Cole aqui o briefing que foi enviado para o analista...">${esc(j.briefing||"")}</textarea></div>
 
       <div class="linhas-section">
@@ -1798,6 +1771,7 @@ function saveJobForm(){
     id:editId||uid(),
     numero:existing?existing.numero:nextNumero(cliente),
     cliente,
+    tipo:document.getElementById("f_tipo").value,
     praca:document.getElementById("f_praca").value,
     origem:document.getElementById("f_origem").value,
     analista,
@@ -1809,7 +1783,6 @@ function saveJobForm(){
     dataRecebimento:document.getElementById("f_recebimento").value||today(),
     dataEntrega:document.getElementById("f_entrega").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
-    fechamentoDireto:document.getElementById("f_fechamentoDireto").checked,
     briefing:document.getElementById("f_briefing").value.trim(),
     checklist,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
@@ -1884,7 +1857,6 @@ function fecharJob(id){
   (job.linhas||[]).forEach(l=>{ if(!l.valorFechado)l.valorFechado=l.valorOrcado; });
   job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   job.recuperavel=false;job.declinioAutomatico=false;
-  job.posVenda={status:"pendente",data:"",observacao:""};
   job.updatedAt=Date.now();
   save();render();
   toast(`Job fechado ✓ — ${fmtMoney(job.valorFechado)}`);
@@ -2016,13 +1988,13 @@ function downloadCsv(filename,rows){
 }
 function exportCsv(){
   try{
-    const header=["Número","Cliente","Praça","Origem","Analista","Papel da analista","Executivo","Prioridade","Fase","Conta especial","Fechamento direto (sem proposta)","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
+    const header=["Número","Cliente","Tipo","Praça","Origem","Analista","Papel da analista","Executivo","Prioridade","Fase","Conta especial","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
     const rows=[header];
     data.jobs.forEach(j=>{
       const linhas=(j.linhas&&j.linhas.length)?j.linhas:[{veiculo:"",valorOrcado:j.valorOrcado||0,valorFechado:j.valorFechado||0}];
       linhas.forEach(l=>{
         rows.push([
-          j.numero||"",j.cliente||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",j.fechamentoDireto?"Sim":"Não",
+          j.numero||"",j.cliente||"",j.tipo||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",
           j.dataRecebimento||"",j.prazoPrevisto||"",j.dataEntrega||"",j.dataFechamento||"",
           l.veiculo||"",Number(l.valorOrcado)||0,Number(l.valorFechado)||0,j.motivoPerda||""
         ]);
@@ -2115,8 +2087,6 @@ document.body.addEventListener("click",e=>{
   else if(act==="confirmar-fechamento")confirmarFechamento(id);
   else if(act==="job-declinar")declinarJob(id);
   else if(act==="job-contato")marcarContatoJob(id);
-  else if(act==="posvenda-feito")marcarPosVenda(id,"feito");
-  else if(act==="posvenda-naovai")marcarPosVenda(id,"nao_vai_fazer");
   else if(act==="job-reabrir")reabrirJob(id);
   else if(act==="save-job")saveJobForm();
   else if(act==="linha-add"){
