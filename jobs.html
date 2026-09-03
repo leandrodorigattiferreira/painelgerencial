@@ -281,6 +281,11 @@
   .tsbar-fill{width:100%;background:linear-gradient(180deg,var(--brand-2),var(--brand));border-radius:6px 6px 0 0;min-height:2px}
   .tsbar-val{font-size:10px;font-weight:700;color:var(--ink-soft);margin-top:5px;white-space:nowrap}
   .tsbar-label{font-size:9.5px;color:var(--muted);margin-top:2px;text-transform:uppercase}
+  .heatmap{display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+  .heatrow{display:grid;grid-template-columns:130px repeat(6,minmax(64px,1fr));gap:4px;align-items:center}
+  .heatlabel{font-size:12.5px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  .heatcell{border-radius:8px;padding:9px 4px;text-align:center;font-size:11.5px;font-weight:700}
+  .heathead{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase}
 
   /* cadastros (settings) */
   .cfgsection+.cfgsection{margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
@@ -289,6 +294,8 @@
   .chip{display:flex;align-items:center;gap:6px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;padding:5px 6px 5px 12px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
   .chip button{border:0;background:var(--line);color:var(--ink-soft);width:18px;height:18px;border-radius:50%;font-size:11px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0}
   .chip button:hover{background:var(--cancelado-bg);color:var(--cancelado)}
+  .chip .chip-role{width:auto;border-radius:99px;padding:3px 9px;font-size:11px;font-weight:700;background:var(--brand-bg);color:var(--brand)}
+  .chip .chip-role:hover{background:var(--brand);color:#fff}
   .addrow{display:flex;gap:8px;margin-top:9px}
   .addrow input{flex:1;border:1px solid var(--line-strong);border-radius:10px;padding:8px 11px;background:var(--surface-2)}
   .addrow button{border:0;background:var(--inverse);color:var(--inverse-text);border-radius:10px;padding:8px 14px;font-weight:700;font-size:13px;white-space:nowrap}
@@ -380,7 +387,8 @@
       <button class="sbtn primary" data-act="new" data-writeonly>＋ Novo job</button>
       <button class="sbtn" data-act="settings" data-writeonly>⚙ Cadastros</button>
       <button class="sbtn" data-act="eplabs">📋 EP Labs</button>
-      <button class="sbtn" data-act="export">⬇ Exportar</button>
+      <button class="sbtn" data-act="export">⬇ Backup (JSON)</button>
+      <button class="sbtn" data-act="export-csv">📊 Exportar Excel</button>
       <label class="sbtn" data-writeonly>⬆ Importar<input type="file" id="fileImport" accept="application/json"></label>
     </div>
 
@@ -463,10 +471,69 @@ function openScopePicker(){
   document.getElementById("scopeBackdrop").classList.add("open");
 }
 function closeScopePicker(){document.getElementById("scopeBackdrop").classList.remove("open");}
+function scopeLabel(s){
+  return s&&s.mode==="praca"?`Praça ${esc(s.praca)}`:s&&s.mode==="executivo"?"Executivo":s&&s.mode==="contas-especiais"?"Contas especiais":"Visão geral (gestão)";
+}
 function renderScopeBadge(){
   const el=document.getElementById("scopeBadge");if(!el)return;
-  const label=viewerScope&&viewerScope.mode==="praca"?`Praça ${esc(viewerScope.praca)}`:viewerScope&&viewerScope.mode==="executivo"?"Executivo":viewerScope&&viewerScope.mode==="contas-especiais"?"Contas especiais":"Visão geral";
-  el.innerHTML=`👤 ${label} <button data-act="scope-change">trocar</button>`;
+  el.innerHTML=`👤 ${scopeLabel(viewerScope)} <button data-act="scope-change">trocar</button>`;
+}
+
+/* ============ senha por visão (trava simples do navegador, não é segurança de verdade) ============ */
+const SCOPE_UNLOCK_KEY="jobs-viewer-unlocked-v1";
+function scopeSenha(s){
+  if(!s)return "";
+  const cfg=data.config.senhasAcesso||{};
+  if(s.mode==="todos")return cfg.todos||"";
+  if(s.mode==="praca")return (cfg.praca&&cfg.praca[s.praca])||"";
+  if(s.mode==="contas-especiais")return cfg.contasEspeciais||"";
+  if(s.mode==="executivo")return cfg.executivo||"";
+  return "";
+}
+function scopeSignature(s){
+  if(!s)return "";
+  return s.mode==="praca"?"praca:"+s.praca:s.mode;
+}
+function isScopeUnlocked(s){
+  const senha=scopeSenha(s);
+  if(!senha)return true;
+  try{
+    const arr=JSON.parse(sessionStorage.getItem(SCOPE_UNLOCK_KEY)||"[]");
+    return arr.includes(scopeSignature(s));
+  }catch(e){return false;}
+}
+function unlockScope(s){
+  try{
+    const arr=JSON.parse(sessionStorage.getItem(SCOPE_UNLOCK_KEY)||"[]");
+    if(!arr.includes(scopeSignature(s)))arr.push(scopeSignature(s));
+    sessionStorage.setItem(SCOPE_UNLOCK_KEY,JSON.stringify(arr));
+  }catch(e){}
+}
+function lockGateHtml(s){
+  return `<header><h3>🔒 ${scopeLabel(s)}</h3></header>
+    <div class="form">
+      <p style="margin:0 0 12px;color:var(--muted);font-size:13px">Essa visão tem senha porque lida com dados estratégicos. É uma trava simples do navegador — não é criptografia — então não repasse a senha nem o link fora do time.</p>
+      <div class="field"><label>Senha</label><input id="lockPassword" type="password" placeholder="Digite a senha"></div>
+      <button class="save" data-act="lock-unlock">Entrar</button>
+      <div class="delrow"><button data-act="scope-change">Trocar de visão</button></div>
+    </div>`;
+}
+function openLockGate(s){
+  document.getElementById("scopeModal").innerHTML=lockGateHtml(s);
+  document.getElementById("scopeBackdrop").classList.add("open");
+  const input=document.getElementById("lockPassword");if(input)input.focus();
+}
+function tryUnlock(){
+  const input=document.getElementById("lockPassword");
+  const val=input?input.value:"";
+  if(val&&val===scopeSenha(viewerScope)){
+    unlockScope(viewerScope);
+    closeScopePicker();render();
+    toast("Acesso liberado ✓");
+  }else{
+    toast("Senha incorreta.");
+    if(input){input.value="";input.focus();}
+  }
 }
 let sampleApi=null;
 async function initSample(){
@@ -621,13 +688,73 @@ function metaMensalHtml(titulo,praca,jobs){
     <div class="tschart">${bars}</div>
   </div>`;
 }
+function pracasEmEscopo(){
+  if(viewerScope&&viewerScope.mode==="praca")return [viewerScope.praca];
+  if(viewerScope&&viewerScope.mode==="contas-especiais")return ["CE"];
+  if(filters.praca&&filters.praca!=="todos")return [filters.praca];
+  return PRACAS.slice();
+}
 function metasHtml(jobs){
-  let pracasAlvo;
-  if(viewerScope&&viewerScope.mode==="praca")pracasAlvo=[viewerScope.praca];
-  else if(viewerScope&&viewerScope.mode==="contas-especiais")pracasAlvo=["CE"];
-  else if(filters.praca&&filters.praca!=="todos")pracasAlvo=[filters.praca];
-  else pracasAlvo=PRACAS.slice();
-  return pracasAlvo.map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,p,jobs.filter(j=>j.praca===p))).join("");
+  return pracasEmEscopo().map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,p,jobs.filter(j=>j.praca===p))).join("");
+}
+function heatmapMetaHtml(jobs){
+  const pracasAlvo=pracasEmEscopo();
+  const months=last6Months();
+  const cell=(praca,m)=>{
+    const meta=Number((data.config.metasPraca||{})[praca])||0;
+    const v=jobs.filter(j=>j.praca===praca&&j.faseAtual==="Fechado"&&j.dataFechamento&&j.dataFechamento.slice(0,7)===m.key).reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+    const pct=meta>0?Math.round(v/meta*100):null;
+    const bg=pct==null?"var(--track)":pct>=100?"var(--concluido)":pct>=50?"var(--warn)":"var(--atrasado)";
+    const fg=pct==null?"var(--muted)":"#fff";
+    return `<div class="heatcell" style="background:${bg};color:${fg}" title="${esc(praca)} · ${esc(m.label)} · ${fmtMoney(v)}${meta>0?` de ${fmtMoney(meta)}`:""}">${pct==null?"—":pct+"%"}</div>`;
+  };
+  const header=`<div class="heatrow heatrow-head"><div class="heatlabel"></div>${months.map(m=>`<div class="heatcell heathead">${esc(m.label)}</div>`).join("")}</div>`;
+  const rows=pracasAlvo.map(p=>`<div class="heatrow"><div class="heatlabel">${esc(p==="CE"?"CE (Contas Especiais)":p)}</div>${months.map(m=>cell(p,m)).join("")}</div>`).join("");
+  return `<div class="breakdown">
+    <h3>Mapa de calor — atingimento de meta por praça</h3>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:12px">Verde = bateu a meta do mês, amarelo = 50%+ perto, vermelho = longe. Cinza = sem meta configurada pra essa praça.</p>
+    <div class="heatmap">${header}${rows}</div>
+  </div>`;
+}
+function heatmapVerbaHtml(jobs){
+  const pracasAlvo=pracasEmEscopo();
+  const months=last6Months();
+  const valores={};
+  pracasAlvo.forEach(p=>{valores[p]={};months.forEach(m=>valores[p][m.key]=0);});
+  jobs.forEach(j=>{
+    if(!valores[j.praca]||!j.dataRecebimento)return;
+    const k=j.dataRecebimento.slice(0,7);
+    if(valores[j.praca][k]==null)return;
+    valores[j.praca][k]+=(j.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  });
+  const max=Math.max(1,...pracasAlvo.flatMap(p=>months.map(m=>valores[p][m.key])));
+  const cell=(praca,m)=>{
+    const v=valores[praca][m.key]||0;
+    const alpha=v>0?Math.max(0.12,Math.min(1,v/max)):0;
+    return `<div class="heatcell" style="position:relative;overflow:hidden;background:var(--surface-2)" title="${esc(praca)} · ${esc(m.label)} · ${fmtMoney(v)}"><div style="position:absolute;inset:0;background:var(--brand);opacity:${alpha}"></div><span style="position:relative;z-index:1;color:${alpha>0.55?"#fff":"var(--ink)"}">${v?fmtMoney(v):"—"}</span></div>`;
+  };
+  const header=`<div class="heatrow heatrow-head"><div class="heatlabel"></div>${months.map(m=>`<div class="heatcell heathead">${esc(m.label)}</div>`).join("")}</div>`;
+  const rows=pracasAlvo.map(p=>`<div class="heatrow"><div class="heatlabel">${esc(p==="CE"?"CE (Contas Especiais)":p)}</div>${months.map(m=>cell(p,m)).join("")}</div>`).join("");
+  return `<div class="breakdown">
+    <h3>Mapa de calor — verba orçada por praça (mês da solicitação)</h3>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:12px">Quanto mais forte a cor, maior o valor orçado pedido naquele mês — dá pra ver onde a demanda está concentrada.</p>
+    <div class="heatmap">${header}${rows}</div>
+  </div>`;
+}
+function resumoDoDiaHtml(jobs){
+  const hoje=today();
+  const recebidosHoje=jobs.filter(j=>j.dataRecebimento===hoje);
+  const fechadosHoje=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje);
+  const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
+  const emAndamento=jobs.filter(j=>!isTerminal(j.faseAtual));
+  const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
+  return `<div class="breakdown">
+    <h3>Resumo do dia</h3>
+    <div class="kpis" style="margin-bottom:12px">${item("Recebidos hoje",recebidosHoje.length)+item("Fechados hoje",`${fechadosHoje.length} · ${fmtMoney(valorFechadoHoje)}`)+item("Parados (7+ dias)",parados.length)+item("Em andamento",emAndamento.length)}</div>
+    <button class="linha-add-btn" data-act="ai-resumo-dia" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>📋 Gerar resumo do dia (IA)</button>
+    <div id="resumoDiaResultado" style="margin-top:12px"></div>
+  </div>`;
 }
 function clienteVeiculoHtml(jobs){
   const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
@@ -754,6 +881,33 @@ async function gerarResumoIA(){
     if(btn){btn.disabled=false;btn.textContent="📋 Gerar resumo";}
   }
 }
+async function gerarResumoDoDiaIA(){
+  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  const jobs=filtered();
+  const hoje=today();
+  const recebidosHoje=jobs.filter(j=>j.dataRecebimento===hoje);
+  const fechadosHoje=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje);
+  const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
+  const dadosTexto=`Jobs recebidos hoje: ${recebidosHoje.length}.\nJobs fechados hoje: ${fechadosHoje.length}, somando ${fmtMoney(valorFechadoHoje)}.\nJobs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de jobs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
+  const btn=document.querySelector('[data-act="ai-resumo-dia"]');
+  if(btn){btn.disabled=true;btn.textContent="Gerando...";}
+  const el=document.getElementById("resumoDiaResultado");
+  try{
+    const out=await sampleApi(
+      `Escreva um resumo curto (2-4 frases, tom direto, em português) do dia de hoje pra uma dupla de analista e estagiária de um time de marketing de clientes, pronto pra colar num Slack. Não invente números, use só os que eu passar.\n\n${dadosTexto}`,
+      {modelTier:"quick"}
+    );
+    const texto=(out&&out.text)||"";
+    el.innerHTML=texto
+      ?`<textarea id="resumoDiaTexto" style="width:100%;min-height:90px;border:1px solid var(--line-strong);border-radius:10px;padding:10px;background:var(--surface-2)">${esc(texto)}</textarea><button type="button" class="linha-add-btn" style="margin-top:8px" data-act="copiar-resumo-dia">📋 Copiar</button>`
+      :`<div style="color:var(--muted);font-size:13px">Não consegui gerar agora.</div>`;
+  }catch(e){
+    el.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora. Tente de novo.</div>`;
+  }finally{
+    if(btn){btn.disabled=false;btn.textContent="📋 Gerar resumo do dia (IA)";}
+  }
+}
 
 /* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
 async function load(){
@@ -770,19 +924,24 @@ async function load(){
   data.epLabs=data.epLabs||[];
   data.config=data.config||{};
   data.config.analistas=data.config.analistas||[];
+  data.config.analistas=data.config.analistas.map(a=>typeof a==="string"?{nome:a,papel:"Analista"}:{nome:a.nome,papel:a.papel||"Analista"});
   data.config.executivos=data.config.executivos||[];
   data.config.veiculos=(data.config.veiculos&&data.config.veiculos.length)?data.config.veiculos:VEICULOS_PADRAO.slice();
   data.config.metasPraca=data.config.metasPraca||{};
   if(data.config.metaCEMensal&&!data.config.metasPraca.CE)data.config.metasPraca.CE=Number(data.config.metaCEMensal)||0;
   delete data.config.metaCEMensal;
   PRACAS.forEach(p=>{data.config.metasPraca[p]=Number(data.config.metasPraca[p])||0;});
+  data.config.senhasAcesso=data.config.senhasAcesso||{};
+  data.config.senhasAcesso.praca=data.config.senhasAcesso.praca||{};
   data.jobs=data.jobs.map(migrateJob);
   data.jobs.forEach(j=>{
-    if(j.analista&&!data.config.analistas.includes(j.analista))data.config.analistas.push(j.analista);
+    if(j.analista&&!analistaNomes().includes(j.analista))data.config.analistas.push({nome:j.analista,papel:"Analista"});
     if(j.executivo&&!data.config.executivos.includes(j.executivo))data.config.executivos.push(j.executivo);
   });
   if(applyAgingRules())save();
 }
+function analistaNomes(){return (data.config.analistas||[]).map(a=>a.nome);}
+function analistaPapel(nome){const a=(data.config.analistas||[]).find(x=>x.nome===nome);return a?a.papel:"";}
 function migrateJob(j){
   if(!j.linhas){
     j.linhas=[{
@@ -1036,7 +1195,7 @@ function renderFPraca(){
 }
 function renderFAnalista(){
   const sel=document.getElementById("fAnalista");
-  filters.analista=fillFilterSelect("fAnalista","Todas as analistas",[...(data.config.analistas||[]),...data.jobs.map(j=>j.analista)],sel.value||filters.analista);
+  filters.analista=fillFilterSelect("fAnalista","Todas as analistas",[...analistaNomes(),...data.jobs.map(j=>j.analista)],sel.value||filters.analista);
 }
 function renderFExecutivo(){
   const sel=document.getElementById("fExecutivo");
@@ -1354,10 +1513,14 @@ function funilHtml(jobs){
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
+  const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||viewerScope.mode==="contas-especiais");
   const html=
     objetivosHtml(jobs,pairs)
+    + (isPracaOuCE?resumoDoDiaHtml(jobs):"")
     + (isCE?desempenhoPorClienteHtml(jobs)+clienteVeiculoHtml(jobs):"")
     + metasHtml(jobs)
+    + heatmapMetaHtml(jobs)
+    + heatmapVerbaHtml(jobs)
     + dinheiroMesaHtml(jobs)
     + riscoHtml()
     + evolucaoHtml(jobs,pairs)
@@ -1372,6 +1535,7 @@ function renderDashboard(jobs,pairs){
     + countBreakdownHtml("Jobs por praça",PRACAS,jobs,j=>j.praca)
     + countBreakdownHtml("Jobs por origem",ORIGENS,jobs,j=>j.origem)
     + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobs,j=>j.prioridade)
+    + countBreakdownHtml("Jobs por papel (analista/estagiária)",["Analista","Estagiária"],jobs,j=>analistaPapel(j.analista)||null)
     + valorBreakdownHtml("Valor fechado por veículo",valorPorVeiculoMap(jobs),"share")
     + conversaoDuplaHtml("Conversão e valor por analista",groupValorPorJob(jobs,j=>j.analista))
     + conversaoDuplaHtml("Conversão e valor por executivo de conta",groupValorPorJob(jobs,j=>j.executivo))
@@ -1490,7 +1654,7 @@ function jobForm(j){
         <div class="field"><label>Origem</label><select id="f_origem">${optionsHtml(ORIGENS,j.origem||ORIGENS[0])}</select></div>
       </div>
       <div class="row2">
-        <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",data.config.analistas)}</div>
+        <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",analistaNomes())}</div>
         <div class="field"><label>Executivo de conta</label><input id="f_executivo" list="dl_executivos" value="${esc(j.executivo||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos",data.config.executivos)}</div>
       </div>
       <div class="row2">
@@ -1610,7 +1774,7 @@ function saveJobForm(){
   if(fMotivo)j.motivoPerda=fMotivo.value;
   const fDataFechamento=document.getElementById("f_dataFechamento");
   if(fDataFechamento)j.dataFechamento=fDataFechamento.value;
-  if(analista&&!data.config.analistas.includes(analista))data.config.analistas.push(analista);
+  if(analista&&!analistaNomes().includes(analista))data.config.analistas.push({nome:analista,papel:"Analista"});
   if(executivo&&!data.config.executivos.includes(executivo))data.config.executivos.push(executivo);
   const idx=data.jobs.findIndex(x=>x.id===j.id);
   if(idx>=0)data.jobs[idx]=Object.assign({},data.jobs[idx],j);
@@ -1630,6 +1794,31 @@ function avancarJob(id){
   save();render();
   toast(`Avançou para ${proxima} ✓`);
 }
+function abrirFechamentoModal(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(isTerminal(job.faseAtual))return;
+  const linhas=(job.linhas&&job.linhas.length)?job.linhas:[{id:uid(),veiculo:"",valorOrcado:0,valorFechado:0}];
+  openModal(`<header><h3>Fechar job — ${esc(job.cliente)}</h3><button class="x" data-act="close">×</button></header>
+    <div class="form">
+      <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Confirme o valor fechado de cada veículo antes de encerrar o job. Vem preenchido com o valor orçado — ajuste se houve negociação por canal.</p>
+      <div id="fechamentoLinhas">${linhas.map((l,i)=>`
+        <div class="row2" data-fechamento-linha-id="${l.id}">
+          <div class="field"><label>${esc(l.veiculo||`Veículo ${i+1}`)}</label><div style="font-size:12.5px;color:var(--muted);padding:9px 0">Orçado: ${fmtMoney(l.valorOrcado||0)}</div></div>
+          <div class="field"><label>Valor fechado</label><input class="fech-valorFechado" type="number" step="0.01" min="0" value="${l.valorFechado||l.valorOrcado||""}" placeholder="0,00"></div>
+        </div>`).join("")}</div>
+      <button class="save" data-act="confirmar-fechamento" data-id="${job.id}">✓ Confirmar fechamento</button>
+    </div>`);
+}
+function confirmarFechamento(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  document.querySelectorAll("#fechamentoLinhas [data-fechamento-linha-id]").forEach(row=>{
+    const linha=(job.linhas||[]).find(l=>l.id===row.dataset.fechamentoLinhaId);
+    const input=row.querySelector(".fech-valorFechado");
+    if(linha)linha.valorFechado=Number(input.value)||0;
+  });
+  closeModal();
+  fecharJob(id);
+}
 function fecharJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
   if(isTerminal(job.faseAtual))return;
@@ -1641,7 +1830,7 @@ function fecharJob(id){
   job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
   save();render();
-  toast("Job fechado ✓");
+  toast(`Job fechado ✓ — ${fmtMoney(job.valorFechado)}`);
 }
 function declinarJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
@@ -1656,6 +1845,28 @@ function declinarJob(id){
 }
 
 /* ============ cadastros (analistas / executivos / veículos) ============ */
+function analistasSecHtml(){
+  const list=data.config.analistas||[];
+  return `<div class="cfgsection" data-key="analistas">
+    <h4>Analistas</h4>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Cada praça e contas especiais costuma ter duas pessoas — uma analista e uma estagiária. Clique no papel pra alternar.</p>
+    <div class="chiplist">${list.length?list.map(a=>`<span class="chip">${esc(a.nome)} <button type="button" class="chip-role" data-act="cfg-role-toggle" data-nome="${esc(a.nome)}" title="Clique para alternar o papel">${esc(a.papel||"Analista")}</button><button data-act="cfg-del" data-key="analistas" data-name="${esc(a.nome)}">×</button></span>`).join(""):`<span style="color:var(--muted);font-size:12.5px">Nenhuma cadastrada ainda</span>`}</div>
+    <div class="addrow"><input data-cfg-input="analistas" placeholder="Nome da analista"><button data-act="cfg-add" data-key="analistas">Adicionar</button></div>
+  </div>`;
+}
+function senhasSecHtml(){
+  const cfg=data.config.senhasAcesso||{};
+  const pracaCfg=cfg.praca||{};
+  const linha=(label,val,attrs)=>`<div class="addrow"><input type="text" class="cfg-senha-input" placeholder="Senha ${esc(label)} (vazio = sem senha)" value="${esc(val||"")}"><button data-act="cfg-senha-save" ${attrs}>Salvar</button></div>`;
+  return `<div class="cfgsection">
+    <h4>Senha por visão (opcional)</h4>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Trava simples do navegador pra evitar abertura casual/acidental de dados estratégicos — não é criptografia, então não repasse senha nem link fora do time. Deixe em branco pra não pedir senha nessa visão.</p>
+    ${linha("gestão (ver tudo)",cfg.todos,`data-senha-mode="todos"`)}
+    ${PRACAS.filter(p=>p!=="CE").map(p=>linha("praça "+p,pracaCfg[p],`data-senha-mode="praca" data-senha-praca="${esc(p)}"`)).join("")}
+    ${linha("contas especiais",cfg.contasEspeciais,`data-senha-mode="contas-especiais"`)}
+    ${linha("executivo",cfg.executivo,`data-senha-mode="executivo"`)}
+  </div>`;
+}
 function settingsHtml(){
   const sec=(title,key,placeholder)=>`
     <div class="cfgsection" data-key="${key}">
@@ -1666,7 +1877,7 @@ function settingsHtml(){
   return `<header><h3>Cadastros</h3><button class="x" data-act="close">×</button></header>
     <div class="form">
       <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Esses nomes viram sugestão nos campos do job. Um nome novo digitado ali também entra pra cá automaticamente. Praça, prioridade, fase e situação já vêm fixas.</p>
-      ${sec("Analistas","analistas","Nome da analista")}
+      ${analistasSecHtml()}
       ${sec("Executivos de conta","executivos","Nome do executivo")}
       ${sec("Veículos de mídia","veiculos","Nome do veículo")}
       <div class="cfgsection">
@@ -1674,6 +1885,7 @@ function settingsHtml(){
         <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Usadas pra calcular o % de atingimento no gráfico "Meta — mês a mês" do Dashboard.</p>
         ${PRACAS.map(p=>`<div class="addrow"><input class="cfg-meta-praca-input" data-praca="${esc(p)}" type="number" step="0.01" min="0" value="${(data.config.metasPraca&&data.config.metasPraca[p])||""}" placeholder="Meta ${esc(p==="CE"?"CE (Contas Especiais)":p)}"><button data-act="cfg-meta-praca" data-praca="${esc(p)}">Salvar</button></div>`).join("")}
       </div>
+      ${senhasSecHtml()}
     </div>`;
 }
 function openSettings(){openModal(settingsHtml());}
@@ -1700,7 +1912,8 @@ function epLabsModalHtml(){
       <button class="save" data-act="eplabs-add" data-writeonly>+ Registrar EP Labs</button>
       <div class="cfgsection" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
         <h4>Histórico</h4>
-        <div id="epLabsListWrap" style="margin-top:9px">${epLabsListHtml()}</div>
+        <button type="button" class="linha-add-btn" data-act="export-eplabs-csv" style="margin-bottom:9px">📊 Exportar Excel</button>
+        <div id="epLabsListWrap">${epLabsListHtml()}</div>
       </div>
     </div>`;
 }
@@ -1730,6 +1943,45 @@ function exportData(){
     setTimeout(()=>URL.revokeObjectURL(url),1500);
     toast("Backup baixado ✓");
   }catch(e){toast("Não consegui gerar o arquivo.");}
+}
+function csvEscape(v){
+  const s=(v===null||v===undefined)?"":String(v);
+  return /[";\n]/.test(s)?`"${s.replace(/"/g,'""')}"`:s;
+}
+function downloadCsv(filename,rows){
+  const csv="﻿"+rows.map(r=>r.map(csvEscape).join(";")).join("\r\n");
+  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;a.download=filename;
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+}
+function exportCsv(){
+  try{
+    const header=["Número","Cliente","Praça","Origem","Analista","Papel da analista","Executivo","Prioridade","Fase","Conta especial","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
+    const rows=[header];
+    data.jobs.forEach(j=>{
+      const linhas=(j.linhas&&j.linhas.length)?j.linhas:[{veiculo:"",valorOrcado:j.valorOrcado||0,valorFechado:j.valorFechado||0}];
+      linhas.forEach(l=>{
+        rows.push([
+          j.numero||"",j.cliente||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",
+          j.dataRecebimento||"",j.prazoPrevisto||"",j.dataEntrega||"",j.dataFechamento||"",
+          l.veiculo||"",Number(l.valorOrcado)||0,Number(l.valorFechado)||0,j.motivoPerda||""
+        ]);
+      });
+    });
+    downloadCsv("jobs-marketing-"+today()+".csv",rows);
+    toast("Planilha baixada ✓");
+  }catch(e){toast("Não consegui gerar a planilha.");}
+}
+function exportEpLabsCsv(){
+  try{
+    const header=["Data","Horário","Local","Gerou proposta"];
+    const rows=[header,...(data.epLabs||[]).map(ep=>[ep.data||"",ep.horario||"",ep.local||"",ep.gerouProposta?"Sim":"Não"])];
+    downloadCsv("ep-labs-"+today()+".csv",rows);
+    toast("Planilha baixada ✓");
+  }catch(e){toast("Não consegui gerar a planilha.");}
 }
 function importData(file){
   const r=new FileReader();
@@ -1789,6 +2041,10 @@ document.body.addEventListener("keydown",e=>{
     e.preventDefault();
     document.querySelector(`button[data-act="cfg-add"][data-key="${e.target.dataset.cfgInput}"]`).click();
   }
+  if(e.key==="Enter"&&e.target.id==="lockPassword"){
+    e.preventDefault();
+    tryUnlock();
+  }
   if(e.key==="Escape")closeModal();
 });
 
@@ -1798,7 +2054,8 @@ document.body.addEventListener("click",e=>{
   if(act==="new")openNewJobModal();
   else if(act==="edit")openEditJobModal(id);
   else if(act==="avancar")avancarJob(id);
-  else if(act==="job-fechar")fecharJob(id);
+  else if(act==="job-fechar")abrirFechamentoModal(id);
+  else if(act==="confirmar-fechamento")confirmarFechamento(id);
   else if(act==="job-declinar")declinarJob(id);
   else if(act==="job-contato")marcarContatoJob(id);
   else if(act==="job-reabrir")reabrirJob(id);
@@ -1853,12 +2110,20 @@ document.body.addEventListener("click",e=>{
     const el=document.getElementById("resumoTexto");
     if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
   }
+  else if(act==="ai-resumo-dia")gerarResumoDoDiaIA();
+  else if(act==="copiar-resumo-dia"){
+    const el=document.getElementById("resumoDiaTexto");
+    if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
+  }
   else if(act==="exec-submit")submitExecutivoBriefing();
   else if(act==="scope-pick"){
     const mode=b.dataset.scopeMode;
-    saveScope(mode==="praca"?{mode:"praca",praca:b.dataset.scopePraca}:{mode});
-    closeScopePicker();render();
+    const newScope=mode==="praca"?{mode:"praca",praca:b.dataset.scopePraca}:{mode};
+    saveScope(newScope);
+    if(!isScopeUnlocked(newScope))openLockGate(newScope);
+    else{closeScopePicker();render();}
   }
+  else if(act==="lock-unlock")tryUnlock();
   else if(act==="scope-change")openScopePicker();
   else if(act==="del"){
     if(confirm("Excluir este job? Essa ação não pode ser desfeita.")){
@@ -1867,6 +2132,8 @@ document.body.addEventListener("click",e=>{
     }
   }
   else if(act==="export")exportData();
+  else if(act==="export-csv")exportCsv();
+  else if(act==="export-eplabs-csv")exportEpLabsCsv();
   else if(act==="do-import-merge")doImport("merge");
   else if(act==="do-import-replace")doImport("replace");
   else if(act==="settings")openSettings();
@@ -1879,7 +2146,9 @@ document.body.addEventListener("click",e=>{
     const v=input.value.trim();
     if(!v)return;
     data.config[key]=data.config[key]||[];
-    if(!data.config[key].includes(v))data.config[key].push(v);
+    if(key==="analistas"){
+      if(!analistaNomes().includes(v))data.config.analistas.push({nome:v,papel:"Analista"});
+    }else if(!data.config[key].includes(v))data.config[key].push(v);
     save();openModal(settingsHtml());render();
   }
   else if(act==="cfg-meta-praca"){
@@ -1891,15 +2160,36 @@ document.body.addEventListener("click",e=>{
     toast("Meta salva ✓");
   }
   else if(act==="cfg-del"){
-    data.config[b.dataset.key]=(data.config[b.dataset.key]||[]).filter(n=>n!==b.dataset.name);
+    if(b.dataset.key==="analistas")data.config.analistas=(data.config.analistas||[]).filter(a=>a.nome!==b.dataset.name);
+    else data.config[b.dataset.key]=(data.config[b.dataset.key]||[]).filter(n=>n!==b.dataset.name);
     save();openModal(settingsHtml());render();
+  }
+  else if(act==="cfg-role-toggle"){
+    const nome=b.dataset.nome;
+    const a=(data.config.analistas||[]).find(x=>x.nome===nome);
+    if(a)a.papel=a.papel==="Estagiária"?"Analista":"Estagiária";
+    save();openModal(settingsHtml());render();
+  }
+  else if(act==="cfg-senha-save"){
+    const mode=b.dataset.senhaMode;
+    const input=b.previousElementSibling;
+    const val=(input&&input.value||"").trim();
+    data.config.senhasAcesso=data.config.senhasAcesso||{};
+    if(mode==="praca"){
+      data.config.senhasAcesso.praca=data.config.senhasAcesso.praca||{};
+      data.config.senhasAcesso.praca[b.dataset.senhaPraca]=val;
+    }else if(mode==="contas-especiais")data.config.senhasAcesso.contasEspeciais=val;
+    else if(mode==="executivo")data.config.senhasAcesso.executivo=val;
+    else data.config.senhasAcesso.todos=val;
+    save();openModal(settingsHtml());render();
+    toast(val?"Senha definida ✓":"Senha removida ✓");
   }
   else if(act==="close")closeModal();
 });
 document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
 
 /* ============ boot ============ */
-(async function(){loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();await initSample();render();})();
+(async function(){loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();else if(!isScopeUnlocked(viewerScope))openLockGate(viewerScope);await initSample();render();})();
 </script>
 </body>
 </html>
