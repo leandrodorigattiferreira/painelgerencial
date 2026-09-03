@@ -622,9 +622,12 @@ function metaMensalHtml(titulo,praca,jobs){
   </div>`;
 }
 function metasHtml(jobs){
-  const pracasPresentes=[...new Set(jobs.map(j=>j.praca).filter(Boolean))].sort();
-  if(!pracasPresentes.length)return "";
-  return pracasPresentes.map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,p,jobs.filter(j=>j.praca===p))).join("");
+  let pracasAlvo;
+  if(viewerScope&&viewerScope.mode==="praca")pracasAlvo=[viewerScope.praca];
+  else if(viewerScope&&viewerScope.mode==="contas-especiais")pracasAlvo=["CE"];
+  else if(filters.praca&&filters.praca!=="todos")pracasAlvo=[filters.praca];
+  else pracasAlvo=PRACAS.slice();
+  return pracasAlvo.map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,p,jobs.filter(j=>j.praca===p))).join("");
 }
 function clienteVeiculoHtml(jobs){
   const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
@@ -1349,7 +1352,7 @@ function funilHtml(jobs){
   </div>`;
 }
 function renderDashboard(jobs,pairs){
-  if(!jobs.length){document.getElementById("dashboard").innerHTML=`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
+  if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const html=
     objetivosHtml(jobs,pairs)
