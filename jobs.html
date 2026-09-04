@@ -99,6 +99,29 @@
   /* ===== shell: sidebar + main ===== */
   .shell{display:grid;grid-template-columns:258px 1fr;min-height:100vh}
   .side{background:var(--side-bg);color:var(--side-ink);padding:22px 16px;display:flex;flex-direction:column;gap:22px;position:sticky;top:0;height:100vh;overflow-y:auto;border-right:1px solid var(--side-line)}
+  .brand-logo{padding:0 4px 14px;display:flex;align-items:center}
+  .brand-logo img{max-height:26px;display:block}
+  .brand-logo .lp{font-family:"Lexend";font-weight:700;font-size:11px;letter-spacing:.09em;color:var(--muted);text-transform:uppercase}
+  #printArea{display:none}
+  @media print{
+    body *{visibility:hidden}
+    #printArea,#printArea *{visibility:visible}
+    #printArea{display:block;position:absolute;top:0;left:0;width:100%;padding:0;margin:0}
+  }
+  .pdf-doc{font-family:Arial,Helvetica,sans-serif;color:#1C1D1A;padding:16mm 14mm;font-size:12.5px}
+  .pdf-doc .pdf-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1C1D1A;padding-bottom:14px;margin-bottom:18px}
+  .pdf-doc .pdf-head h1{font-size:18px;margin:0 0 3px}
+  .pdf-doc .pdf-head .sub{font-size:11.5px;color:#555}
+  .pdf-doc .pdf-logo{max-height:38px;display:block}
+  .pdf-doc .pdf-logo-placeholder{font-weight:700;font-size:13px;letter-spacing:.09em;color:#555;text-transform:uppercase}
+  .pdf-doc h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5C2A34;border-bottom:1px solid #ddd;padding-bottom:4px;margin:20px 0 10px}
+  .pdf-doc .pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .pdf-doc .pf .pl{color:#777;font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+  .pdf-doc .pf .pv{color:#1C1D1A}
+  .pdf-doc table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+  .pdf-doc th,.pdf-doc td{border-bottom:1px solid #ddd;padding:6px 4px;text-align:left}
+  .pdf-doc .pdf-foot{margin-top:32px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#888;display:flex;justify-content:space-between}
+  .pdf-doc ul{margin:4px 0;padding-left:18px}
   .brand{display:flex;align-items:center;gap:12px;padding:0 4px}
   .brand .mark{width:32px;height:32px;border-radius:var(--r-xs);background:none;border:1px solid var(--side-ink);display:flex;align-items:center;justify-content:center;color:var(--side-ink);font-weight:600;font-family:"Lexend";font-size:14px;flex:0 0 auto}
   .brand h1{font-family:"Lexend";font-weight:500;font-size:14px;letter-spacing:.01em;margin:0;line-height:1.2;color:var(--side-ink)}
@@ -179,6 +202,8 @@
   .mcard .advance:hover{filter:brightness(.95)}
   .mcard .valorline{margin-top:6px;font-size:10.5px;color:var(--muted)}
   .mcard .valorline b{color:var(--ink)}
+  .mcard .briefing-resumo{display:flex;flex-direction:column;gap:2px;margin-top:6px;padding-top:6px;border-top:1px dashed var(--line-strong);font-size:10.5px;color:var(--ink-soft)}
+  .mcard .briefing-resumo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .mcard .joblinks{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
   .mcard .joblink{font-size:9.5px;font-weight:700;padding:2px 8px;border-radius:var(--r-xs);background:var(--accent-bg);color:var(--ink-soft);text-decoration:none;white-space:nowrap}
   .mcard .joblink:hover{background:var(--line-strong)}
@@ -359,6 +384,7 @@
 <body>
 <div class="shell">
   <aside class="side">
+    <div class="brand-logo" id="brandLogo"></div>
     <div class="brand">
       <div class="mark">J</div>
       <div>
@@ -414,7 +440,7 @@
     <div class="kpis" id="kpis" data-hide-executivo></div>
     <div class="kpis secondary" id="kpisComercial" data-hide-executivo></div>
 
-    <div id="viewJobs"><div id="board"></div></div>
+    <div id="viewJobs"><div id="prioridadesBox"></div><div id="board"></div></div>
     <div id="viewDashboard" style="display:none"><div id="dashboard"></div></div>
     <div id="viewExecutivo" style="display:none"></div>
   </main>
@@ -422,6 +448,7 @@
 
 <div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
 <div class="backdrop" id="scopeBackdrop"><div class="modal scopepick" id="scopeModal" style="max-width:420px"></div></div>
+<div id="printArea"></div>
 
 <script>
 const KEY="jobs-marketing-v2";
@@ -434,6 +461,12 @@ const PRACAS=["CAM","RIB","SCA","VAR","CE"];
 const ORIGENS=["Solicitação interna","Proativo"];
 const PRIORIDADES=["Alta","Média","Baixa"];
 const TIPOS_JOB=["Proposta comercial","Pós-venda","Fechamento direto"];
+const LOGO_GRUPO_EP=""; /* data URI do logo do Grupo EP — preencher quando o arquivo for enviado */
+function logoHtml(maxHeight){
+  return LOGO_GRUPO_EP
+    ? `<img src="${LOGO_GRUPO_EP}" alt="Grupo EP" style="max-height:${maxHeight}px;display:block">`
+    : `<div class="lp">Grupo EP</div>`;
+}
 const FASES=["Recebido","Em desenvolvimento","Entregue","Fechado","Declinado"];
 const FASE_PCT={"Recebido":.15,"Em desenvolvimento":.5,"Entregue":.85,"Fechado":1,"Declinado":1};
 const FASE_ORDEM=["Recebido","Em desenvolvimento","Entregue"];
@@ -541,6 +574,15 @@ async function initSample(){
   if(!window.claude||!window.claude.use)return;
   try{ sampleApi=await window.claude.use("sample"); }catch(e){ sampleApi=null; }
 }
+/* dispara automaticamente, sem botão "gerar" — cada IA roda sozinha quando os dados relevantes mudam,
+   usando uma assinatura simples pra não repetir a mesma chamada a cada render() */
+const aiAutoSig={};
+function aiShouldRun(key,sig){
+  if(!sampleApi)return false;
+  if(aiAutoSig[key]===sig)return false;
+  aiAutoSig[key]=sig;
+  return true;
+}
 
 /* ============ visão do executivo: só cria o briefing ============ */
 function executivoFormHtml(){
@@ -558,7 +600,10 @@ function executivoFormHtml(){
     </div>
     <div class="field"><label>Data do prazo</label><input id="ex_prazo" type="date"></div>
     <div class="field"><label>Seu nome (executivo)</label><input id="ex_executivo" list="dl_executivos_exec" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos_exec",data.config.executivos)}</div>
-    <div class="field"><label>Briefing</label><textarea id="ex_briefing" style="min-height:160px" placeholder="Cole aqui o briefing completo: o que o cliente pediu, contexto, verba se souber, prazo, tudo que o analista precisa saber..."></textarea></div>
+    <h3 style="font-family:'Lexend';font-weight:600;font-size:14px;margin:20px 0 8px;color:var(--ink)">Detalhamento da campanha</h3>
+    <p style="color:var(--muted);font-size:12.5px;margin:0 0 12px">Preencha o que souber — essas informações vão direto pro card do analista.</p>
+    ${briefingCamposHtml("ex",{})}
+    <div class="field"><label>Briefing (texto livre)</label><textarea id="ex_briefing" style="min-height:120px" placeholder="Cole aqui qualquer outra informação do briefing que não coube nos campos acima..."></textarea></div>
     <button class="save" data-act="exec-submit">Enviar briefing</button>
     <div id="execFeedback" style="margin-top:12px"></div>
   </div>`;
@@ -567,7 +612,6 @@ function submitExecutivoBriefing(){
   const cliente=document.getElementById("ex_cliente").value.trim();
   const briefing=document.getElementById("ex_briefing").value.trim();
   if(!cliente){toast("Informe o cliente.");return;}
-  if(!briefing){toast("Cole o briefing.");return;}
   const executivo=document.getElementById("ex_executivo").value.trim();
   const j={
     id:uid(),
@@ -586,6 +630,7 @@ function submitExecutivoBriefing(){
     dataEntrega:"",
     contaEspecial:false,
     briefing,
+    ...readBriefingCampos("ex"),
     checklist:[],
     proximosPassos:"",
     planoMidia:"",
@@ -604,10 +649,8 @@ function submitExecutivoBriefing(){
   if(executivo&&!data.config.executivos.includes(executivo))data.config.executivos.push(executivo);
   data.jobs.push(j);
   save();
+  document.getElementById("viewExecutivo").innerHTML=executivoFormHtml();
   document.getElementById("execFeedback").innerHTML=`<div style="background:var(--brand-bg);color:var(--brand);padding:12px 14px;border-radius:3px;font-weight:700;font-size:13.5px">Briefing enviado ✓ Número do job: ${esc(j.numero)}. Um analista vai assumir a partir daqui.</div>`;
-  document.getElementById("ex_cliente").value="";
-  document.getElementById("ex_briefing").value="";
-  document.getElementById("ex_prazo").value="";
   toast("Briefing enviado ✓");
 }
 
@@ -755,8 +798,7 @@ function resumoDoDiaHtml(jobs){
   return `<div class="breakdown">
     <h3>Resumo do dia</h3>
     <div class="kpis" style="margin-bottom:12px">${item("Recebidos hoje",recebidosHoje.length)+item("Fechados hoje",`${fechadosHoje.length} · ${fmtMoney(valorFechadoHoje)}`)+item("Parados (7+ dias)",parados.length)+item("Em andamento",emAndamento.length)}</div>
-    <button class="linha-add-btn" data-act="ai-resumo-dia" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>📋 Gerar resumo do dia (IA)</button>
-    <div id="resumoDiaResultado" style="margin-top:12px"></div>
+    <div id="resumoDiaResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Gerando resumo do dia...</div>`:`<div style="color:var(--muted);font-size:12px">Resumo por IA disponível só na versão online.</div>`}</div>
   </div>`;
 }
 function clienteVeiculoHtml(jobs){
@@ -784,63 +826,65 @@ function clienteVeiculoHtml(jobs){
 
 /* ============ iniciativas de IA (capacidade "sample" do artifact) ============ */
 async function gerarChecklistIA(){
-  if(!sampleApi){toast("IA não disponível aqui.");return;}
-  const briefing=document.getElementById("f_briefing").value.trim();
-  if(!briefing){toast("Preencha o briefing primeiro.");return;}
-  const btn=document.querySelector('[data-act="ai-checklist"]');
-  if(btn){btn.disabled=true;btn.textContent="Gerando...";}
+  if(!sampleApi)return;
+  const wrap=document.getElementById("checklistWrap");
+  if(!wrap||wrap.querySelector("[data-checklist-id]"))return;
+  const briefingEl=document.getElementById("f_briefing");
+  const briefing=briefingEl?briefingEl.value.trim():"";
+  if(!briefing)return;
+  const status=document.getElementById("checklistAiStatus");
+  if(status)status.textContent="✨ Gerando checklist a partir do briefing...";
   try{
     const out=await sampleApi.json(
       `Leia este briefing de um job de marketing e extraia uma lista curta e prática de tarefas que o analista precisa fazer para atender esse pedido. Responda em português, no formato {"tasks":["tarefa 1","tarefa 2"]}, com no máximo 8 itens, cada um curto e acionável.\n\nBriefing:\n${briefing}`,
       {modelTier:"quick"}
     );
     const tasks=(out&&Array.isArray(out.tasks))?out.tasks.filter(Boolean):[];
-    if(!tasks.length){toast("Não consegui extrair tarefas desse briefing.");return;}
-    const wrap=document.getElementById("checklistWrap");
-    if(wrap.children.length===1&&!wrap.children[0].dataset.checklistId)wrap.innerHTML="";
+    const wrap2=document.getElementById("checklistWrap");
+    if(!wrap2||wrap2.querySelector("[data-checklist-id]")){if(status)status.textContent="";return;}
+    if(!tasks.length){if(status)status.textContent="";return;}
+    wrap2.innerHTML="";
     tasks.forEach(t=>{
       const div=document.createElement("div");
       div.innerHTML=checklistItemHtml({id:uid(),texto:t,feito:false});
-      wrap.appendChild(div.firstElementChild);
+      wrap2.appendChild(div.firstElementChild);
     });
-    toast(`${tasks.length} tarefa(s) geradas ✓`);
+    if(status)status.textContent=`✨ ${tasks.length} tarefa(s) sugeridas pela IA a partir do briefing.`;
   }catch(e){
-    toast(e&&e.code==="not_granted"?"Permissão de IA não concedida.":"Não consegui gerar o checklist.");
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent="✨ Gerar do briefing";}
+    if(status)status.textContent="";
   }
 }
 async function sugerirVeiculosIA(){
-  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  if(!sampleApi)return;
+  const wrap=document.getElementById("veiculoSugestoes");
+  if(!wrap)return;
   const praca=document.getElementById("f_praca").value;
   const origem=document.getElementById("f_origem").value;
   const atuais=[...document.querySelectorAll("#linhasWrap .li-veiculo")].map(s=>s.value).filter(Boolean);
   const historico=[...new Set(data.jobs.filter(j=>j.faseAtual==="Fechado"&&j.praca===praca).flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))];
-  const btn=document.querySelector('[data-act="ai-sugerir-veiculos"]');
-  if(btn){btn.disabled=true;btn.textContent="Pensando...";}
+  wrap.innerHTML=`<span style="color:var(--muted);font-size:12px">💡 Pensando em veículos complementares...</span>`;
   try{
     const out=await sampleApi.json(
       `Sugira até 3 veículos de mídia complementares para este job, considerando o que já foi usado com sucesso em jobs fechados parecidos. Praça: ${praca}. Origem: ${origem}. Veículos já adicionados neste job: ${atuais.join(", ")||"nenhum"}. Veículos usados em jobs fechados dessa praça: ${historico.join(", ")||"sem histórico"}. Responda em português no formato {"sugestoes":["veiculo1","veiculo2"]}, sem repetir os já adicionados.`,
       {modelTier:"quick"}
     );
     const sugestoes=(out&&Array.isArray(out.sugestoes))?out.sugestoes.filter(s=>s&&!atuais.includes(s)):[];
-    const wrap=document.getElementById("veiculoSugestoes");
-    wrap.innerHTML=sugestoes.length
+    const wrap2=document.getElementById("veiculoSugestoes");
+    if(!wrap2)return;
+    wrap2.innerHTML=sugestoes.length
       ?sugestoes.map(s=>`<button type="button" class="scope-praca-btn" style="padding:6px 12px;font-size:12.5px" data-act="ai-add-veiculo" data-veiculo="${esc(s)}">+ ${esc(s)}</button>`).join("")
-      :`<span style="color:var(--muted);font-size:12px">Sem sugestões novas.</span>`;
+      :"";
   }catch(e){
-    toast("Não consegui sugerir agora.");
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent="💡 Sugerir";}
+    const wrap2=document.getElementById("veiculoSugestoes");
+    if(wrap2)wrap2.innerHTML="";
   }
 }
 async function analisarRiscosIA(){
-  if(!sampleApi){toast("IA não disponível aqui.");return;}
-  const jobs=filtered().filter(j=>!isTerminal(j.faseAtual)&&(j.proximosPassos||j.briefing));
+  if(!sampleApi)return;
   const el=document.getElementById("riscoResultado");
+  if(!el)return;
+  const jobs=filtered().filter(j=>!isTerminal(j.faseAtual)&&(j.proximosPassos||j.briefing));
   if(!jobs.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum job em aberto com texto pra analisar.</div>`;return;}
-  const btn=document.querySelector('[data-act="ai-risco"]');
-  if(btn){btn.disabled=true;btn.textContent="Analisando...";}
   const resumo=jobs.slice(0,30).map(j=>`- ${j.cliente} (${j.numero}): ${(j.proximosPassos||j.briefing||"").slice(0,400)}`).join("\n");
   try{
     const out=await sampleApi.json(
@@ -848,17 +892,20 @@ async function analisarRiscosIA(){
       {modelTier:"default"}
     );
     const riscos=(out&&Array.isArray(out.riscos))?out.riscos:[];
-    el.innerHTML=riscos.length
+    const el2=document.getElementById("riscoResultado");
+    if(!el2)return;
+    el2.innerHTML=riscos.length
       ?riscos.map(r=>`<div style="display:flex;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:12.5px"><b style="min-width:120px;flex:0 0 auto">${esc(r.cliente||"")}</b><span style="color:var(--ink-soft)">${esc(r.motivo||"")}</span></div>`).join("")
       :`<div style="color:var(--muted);font-size:13px">Nenhum sinal de risco encontrado ✓</div>`;
   }catch(e){
-    el.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui analisar agora. Tente de novo.</div>`;
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent="🔎 Analisar riscos agora";}
+    const el2=document.getElementById("riscoResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui analisar agora.</div>`;
   }
 }
 async function gerarResumoIA(){
-  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  if(!sampleApi)return;
+  const el=document.getElementById("resumoResultado");
+  if(!el)return;
   const jobs=filtered();
   const semanaAtras=new Date();semanaAtras.setDate(semanaAtras.getDate()-7);
   const recebidos=jobs.filter(j=>j.dataRecebimento&&pd(j.dataRecebimento)>=semanaAtras);
@@ -866,26 +913,26 @@ async function gerarResumoIA(){
   const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
   const valorFechadoSemana=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
   const dadosTexto=`Jobs recebidos nos últimos 7 dias: ${recebidos.length}.\nJobs fechados nos últimos 7 dias: ${fechados.length}, somando ${fmtMoney(valorFechadoSemana)}.\nJobs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de jobs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
-  const btn=document.querySelector('[data-act="ai-resumo"]');
-  if(btn){btn.disabled=true;btn.textContent="Gerando...";}
-  const el=document.getElementById("resumoResultado");
   try{
     const out=await sampleApi(
       `Escreva um resumo curto (3-5 frases, tom direto, em português) desses números da semana de um time de marketing de clientes, pronto pra colar num Slack ou e-mail. Não invente números, use só os que eu passar.\n\n${dadosTexto}`,
       {modelTier:"quick"}
     );
     const texto=(out&&out.text)||"";
-    el.innerHTML=texto
+    const el2=document.getElementById("resumoResultado");
+    if(!el2)return;
+    el2.innerHTML=texto
       ?`<textarea id="resumoTexto" style="width:100%;min-height:110px;border:1px solid var(--line-strong);border-radius:3px;padding:10px;background:var(--surface-2)">${esc(texto)}</textarea><button type="button" class="linha-add-btn" style="margin-top:8px" data-act="copiar-resumo">📋 Copiar</button>`
       :`<div style="color:var(--muted);font-size:13px">Não consegui gerar agora.</div>`;
   }catch(e){
-    el.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora. Tente de novo.</div>`;
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent="📋 Gerar resumo";}
+    const el2=document.getElementById("resumoResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora.</div>`;
   }
 }
 async function gerarResumoDoDiaIA(){
-  if(!sampleApi){toast("IA não disponível aqui.");return;}
+  if(!sampleApi)return;
+  const el=document.getElementById("resumoDiaResultado");
+  if(!el)return;
   const jobs=filtered();
   const hoje=today();
   const recebidosHoje=jobs.filter(j=>j.dataRecebimento===hoje);
@@ -893,23 +940,210 @@ async function gerarResumoDoDiaIA(){
   const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
   const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
   const dadosTexto=`Jobs recebidos hoje: ${recebidosHoje.length}.\nJobs fechados hoje: ${fechadosHoje.length}, somando ${fmtMoney(valorFechadoHoje)}.\nJobs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de jobs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
-  const btn=document.querySelector('[data-act="ai-resumo-dia"]');
-  if(btn){btn.disabled=true;btn.textContent="Gerando...";}
-  const el=document.getElementById("resumoDiaResultado");
   try{
     const out=await sampleApi(
       `Escreva um resumo curto (2-4 frases, tom direto, em português) do dia de hoje pra uma dupla de analista e estagiária de um time de marketing de clientes, pronto pra colar num Slack. Não invente números, use só os que eu passar.\n\n${dadosTexto}`,
       {modelTier:"quick"}
     );
     const texto=(out&&out.text)||"";
-    el.innerHTML=texto
+    const el2=document.getElementById("resumoDiaResultado");
+    if(!el2)return;
+    el2.innerHTML=texto
       ?`<textarea id="resumoDiaTexto" style="width:100%;min-height:90px;border:1px solid var(--line-strong);border-radius:3px;padding:10px;background:var(--surface-2)">${esc(texto)}</textarea><button type="button" class="linha-add-btn" style="margin-top:8px" data-act="copiar-resumo-dia">📋 Copiar</button>`
       :`<div style="color:var(--muted);font-size:13px">Não consegui gerar agora.</div>`;
   }catch(e){
-    el.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora. Tente de novo.</div>`;
-  }finally{
-    if(btn){btn.disabled=false;btn.textContent="📋 Gerar resumo do dia (IA)";}
+    const el2=document.getElementById("resumoDiaResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora.</div>`;
   }
+}
+async function gerarJobMastigadoIA(jobId){
+  if(!sampleApi)return;
+  const job=data.jobs.find(j=>j.id===jobId);
+  const el=document.getElementById("mastigadoResultado");
+  if(!job||!el)return;
+  const historico=data.jobs.filter(j=>j.cliente===job.cliente&&j.id!==job.id).slice(0,8)
+    .map(j=>`- ${j.tipo} · ${j.faseAtual}${j.faseAtual==="Fechado"?` (fechado em ${fmtMoney(j.valorFechado)})`:""} · veículos: ${(j.linhas||[]).map(l=>l.veiculo).filter(Boolean).join(", ")||"—"}`)
+    .join("\n");
+  const dadosJob=`Cliente: ${job.cliente}\nTipo: ${job.tipo}\nPraça: ${job.praca}\nBudget estimado: ${job.budget?fmtMoney(job.budget):"não informado"}\nPúblico-alvo: ${job.publicoAlvo||"não informado"}\nPeríodo: ${periodoCampanhaFmt(job)||"não informado"}\nObjetivo de comunicação: ${job.objetivoComunicacao||"não informado"}\nObjetivo de marketing: ${job.objetivoMarketing||"não informado"}\nSituação a ser comunicada: ${job.situacaoComunicar||"não informado"}\nDiferenciais do cliente: ${job.diferenciais||"não informado"}\nRestrições: ${job.restricoes||"nenhuma"}\nBriefing livre: ${(job.briefing||"").slice(0,600)||"nenhum"}`;
+  const historicoTexto=historico?`\n\nHistórico de jobs anteriores deste cliente:\n${historico}`:"\n\nSem histórico anterior deste cliente.";
+  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Pensando na melhor abordagem para este job...</div>`;
+  try{
+    const out=await sampleApi.json(
+      `Você é um estrategista sênior de uma agência de marketing de mídia. Com base neste briefing de campanha e no histórico do cliente, dê uma recomendação prática pro analista que vai montar a proposta. Responda em português, no formato JSON {"tom":"...","argumentoVenda":"...","veiculosSugeridos":["...","..."],"materiaisNecessarios":["...","..."]}. "tom" é 1-2 frases sobre o tom/conteúdo ideal da apresentação para essa atividade. "argumentoVenda" é 1-2 frases com o principal argumento de venda pra esse cliente/situação. "veiculosSugeridos" é uma lista curta (até 4) de veículos de mídia mais adequados. "materiaisNecessarios" é uma lista curta (até 5) do que o analista precisa reunir/produzir pra montar essa proposta (ex: cases, referências visuais, dados do cliente). Seja específico e prático, nunca genérico. Se faltar informação suficiente pra ser específico, responda com campos vazios em vez de inventar.\n\n${dadosJob}${historicoTexto}`,
+      {modelTier:"default"}
+    );
+    const el2=document.getElementById("mastigadoResultado");
+    if(!el2)return;
+    const temAlgo=out&&(out.tom||out.argumentoVenda||(out.veiculosSugeridos||[]).length||(out.materiaisNecessarios||[]).length);
+    if(!temAlgo){
+      el2.innerHTML=`<div style="color:var(--muted);font-size:12.5px">Preencha mais campos do detalhamento da campanha pra IA sugerir algo específico.</div>`;
+      return;
+    }
+    const li=arr=>(arr||[]).map(x=>`<li>${esc(x)}</li>`).join("");
+    el2.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px">
+      ${out.tom?`<div><b style="color:var(--ink)">Tom da apresentação:</b> <span style="color:var(--ink-soft)">${esc(out.tom)}</span></div>`:""}
+      ${out.argumentoVenda?`<div><b style="color:var(--ink)">Argumento de venda:</b> <span style="color:var(--ink-soft)">${esc(out.argumentoVenda)}</span></div>`:""}
+      ${(out.veiculosSugeridos||[]).length?`<div><b style="color:var(--ink)">Veículos sugeridos:</b><ul style="margin:4px 0 0 18px;padding:0;color:var(--ink-soft)">${li(out.veiculosSugeridos)}</ul></div>`:""}
+      ${(out.materiaisNecessarios||[]).length?`<div><b style="color:var(--ink)">Pra montar a proposta, reúna:</b><ul style="margin:4px 0 0 18px;padding:0;color:var(--ink-soft)">${li(out.materiaisNecessarios)}</ul></div>`:""}
+    </div>`;
+  }catch(e){
+    const el2=document.getElementById("mastigadoResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:12.5px">Não consegui gerar a recomendação agora.</div>`;
+  }
+}
+function coletarSinaisPrioridades(scopeJobs,praca){
+  const hoje=today();
+  const parados=scopeJobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j))
+    .map(j=>`${j.cliente} (${diasParadoJob(j)}d sem contato, executivo: ${j.executivo||"—"})`);
+  const atrasados=scopeJobs.filter(j=>alertaPrazo(j)==="Atrasado")
+    .map(j=>`${j.cliente} (prazo era ${fmtDate(j.prazoPrevisto)}, executivo: ${j.executivo||"—"})`);
+  const aguardando=scopeJobs.filter(j=>j.situacao==="Aguardando cliente").map(j=>j.cliente);
+  const mesAtual=hoje.slice(0,7);
+  const jobsPraca=praca?data.jobs.filter(j=>j.praca===praca):data.jobs;
+  const historicoVeiculos={};
+  jobsPraca.filter(j=>j.faseAtual==="Fechado").forEach(j=>(j.linhas||[]).forEach(l=>{if(l.veiculo)historicoVeiculos[l.veiculo]=(historicoVeiculos[l.veiculo]||0)+1;}));
+  const totalHist=Object.values(historicoVeiculos).reduce((s,v)=>s+v,0)||1;
+  const usoMes={};
+  jobsPraca.filter(j=>(j.dataRecebimento||"").slice(0,7)===mesAtual).forEach(j=>(j.linhas||[]).forEach(l=>{if(l.veiculo)usoMes[l.veiculo]=(usoMes[l.veiculo]||0)+1;}));
+  const totalMes=Object.values(usoMes).reduce((s,v)=>s+v,0)||1;
+  const subutilizados=Object.keys(historicoVeiculos)
+    .filter(v=>(historicoVeiculos[v]/totalHist)>0.12&&((usoMes[v]||0)/totalMes)<((historicoVeiculos[v]/totalHist)*0.4))
+    .slice(0,3);
+  let metaTexto="";
+  if(praca){
+    const meta=Number((data.config.metasPraca||{})[praca])||0;
+    if(meta>0){
+      const fechadoMes=jobsPraca.filter(j=>j.faseAtual==="Fechado"&&(j.dataFechamento||"").slice(0,7)===mesAtual).reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+      const diaDoMes=new Date().getDate();
+      const diasNoMes=new Date(new Date().getFullYear(),new Date().getMonth()+1,0).getDate();
+      const paceEsperado=meta*(diaDoMes/diasNoMes);
+      metaTexto=`Meta do mês: ${fmtMoney(meta)}. Fechado até agora: ${fmtMoney(fechadoMes)}. Hoje é dia ${diaDoMes} de ${diasNoMes}, então pra estar no ritmo o esperado seria ${fmtMoney(paceEsperado)} fechados.`;
+    }
+  }
+  const temSinal=parados.length||atrasados.length||aguardando.length||subutilizados.length||!!metaTexto;
+  return {
+    texto:`Jobs parados sem contato: ${parados.join("; ")||"nenhum"}.\nJobs atrasados: ${atrasados.join("; ")||"nenhum"}.\nJobs aguardando retorno do cliente: ${aguardando.join(", ")||"nenhum"}.\n${metaTexto||"Sem meta configurada pra essa praça."}\nVeículos historicamente relevantes e pouco usados neste mês: ${subutilizados.join(", ")||"nenhum sinal"}.`,
+    temSinal
+  };
+}
+async function gerarPrioridadesDoDiaIA(){
+  if(!sampleApi)return;
+  const el=document.getElementById("prioridadesResultado");
+  if(!el)return;
+  const jobs=filtered();
+  const praca=(viewerScope&&viewerScope.mode==="praca")?viewerScope.praca:(viewerScope&&viewerScope.mode==="contas-especiais"?"CE":null);
+  const {texto,temSinal}=coletarSinaisPrioridades(jobs,praca);
+  if(!temSinal){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum sinal de prioridade hoje ✓</div>`;return;}
+  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Priorizando o dia...</div>`;
+  try{
+    const out=await sampleApi.json(
+      `Você é um gestor de time de marketing de clientes revisando a operação do dia. Com base nestes sinais reais (não invente números nem clientes que não estão na lista), monte até 4 prioridades de ação pro time de hoje, da mais urgente pra menos urgente. Responda em português no formato {"prioridades":[{"titulo":"ação curta e direta","detalhe":"por quê, com o dado que embasa"}]}.\n\n${texto}`,
+      {modelTier:"quick"}
+    );
+    const prioridades=(out&&Array.isArray(out.prioridades))?out.prioridades.filter(p=>p&&p.titulo):[];
+    const el2=document.getElementById("prioridadesResultado");
+    if(!el2)return;
+    el2.innerHTML=prioridades.length
+      ?prioridades.map((p,i)=>`<div style="display:flex;gap:10px;padding:8px 0;${i>0?"border-top:1px solid var(--line);":""}"><b style="min-width:18px;color:var(--brand)">${i+1}.</b><div><div style="font-weight:600;font-size:13px;color:var(--ink)">${esc(p.titulo)}</div>${p.detalhe?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(p.detalhe)}</div>`:""}</div></div>`).join("")
+      :`<div style="color:var(--muted);font-size:13px">Nenhum sinal de prioridade hoje ✓</div>`;
+  }catch(e){
+    const el2=document.getElementById("prioridadesResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar as prioridades agora.</div>`;
+  }
+}
+function prioridadesDoDiaHtml(){
+  return `<div class="breakdown" style="border-color:var(--brand);border-width:1.5px">
+    <h3>🎯 Prioridades do dia (IA)</h3>
+    <div id="prioridadesResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Analisando prioridades do dia...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
+  </div>`;
+}
+function autoTriggerDashboardIA(jobs,isPracaOuCE){
+  if(!sampleApi)return;
+  const hoje=today();
+  const sigDia=JSON.stringify([hoje,jobs.filter(j=>j.dataRecebimento===hoje).length,jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje).length,jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j)).map(j=>j.id).sort()]);
+  if(isPracaOuCE&&aiShouldRun("resumoDia",sigDia))gerarResumoDoDiaIA();
+  const semanaAtras=new Date();semanaAtras.setDate(semanaAtras.getDate()-7);
+  const sigSemana=JSON.stringify([hoje,jobs.filter(j=>j.dataRecebimento&&pd(j.dataRecebimento)>=semanaAtras).length,jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento&&pd(j.dataFechamento)>=semanaAtras).length]);
+  if(aiShouldRun("resumoSemana",sigSemana))gerarResumoIA();
+  const sigRisco=JSON.stringify(jobs.filter(j=>!isTerminal(j.faseAtual)).map(j=>[j.id,j.proximosPassos,j.briefing]));
+  if(aiShouldRun("riscos",sigRisco))analisarRiscosIA();
+}
+function autoTriggerPrioridadesDoDia(jobs){
+  if(!sampleApi)return;
+  const hoje=today();
+  const sig=JSON.stringify([hoje,jobs.map(j=>[j.id,j.situacao,j.faseAtual,j.ultimoContatoEm]).sort()]);
+  if(aiShouldRun("prioridadesDia",sig))gerarPrioridadesDoDiaIA();
+}
+function jobPdfBodyHtml(job){
+  const linhas=job.linhas||[];
+  const totalOrcado=linhas.reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  const fechado=job.faseAtual==="Fechado";
+  const linhasRows=linhas.map(l=>`<tr><td>${esc(l.veiculo||"—")}</td><td style="text-align:right">${fmtMoney(l.valorOrcado)}</td>${fechado?`<td style="text-align:right">${fmtMoney(l.valorFechado)}</td>`:""}</tr>`).join("");
+  const campo=(label,value)=>value?`<div class="pf"><div class="pl">${esc(label)}</div><div class="pv">${esc(value)}</div></div>`:"";
+  return `<div class="pdf-doc">
+    <div class="pdf-head">
+      <div>
+        <h1>Ficha de Job — ${esc(job.cliente)}</h1>
+        <div class="sub">Nº ${esc(job.numero||"—")} · ${esc(job.tipo||"")} · Praça ${esc(job.praca==="CE"?"CE (Contas Especiais)":job.praca)}</div>
+      </div>
+      ${LOGO_GRUPO_EP?`<img class="pdf-logo" src="${LOGO_GRUPO_EP}" alt="Grupo EP">`:`<div class="pdf-logo-placeholder">Grupo EP</div>`}
+    </div>
+
+    <h2>Dados gerais</h2>
+    <div class="pdf-grid">
+      ${campo("Origem",job.origem)}
+      ${campo("Prioridade",job.prioridade)}
+      ${campo("Analista responsável",job.analista)}
+      ${campo("Executivo de conta",job.executivo)}
+      ${campo("Situação",job.situacao)}
+      ${campo("Fase atual",job.faseAtual)}
+      ${campo("Data da solicitação",job.dataRecebimento?fmtDate(job.dataRecebimento):"")}
+      ${campo("Prazo previsto",job.prazoPrevisto?fmtDate(job.prazoPrevisto):"")}
+      ${campo("Data de entrega",job.dataEntrega?fmtDate(job.dataEntrega):"")}
+      ${job.dataFechamento?campo("Data de fechamento",fmtDate(job.dataFechamento)):""}
+    </div>
+
+    <h2>Detalhamento da campanha</h2>
+    <div class="pdf-grid">
+      ${campo("Budget estimado",job.budget?fmtMoney(job.budget):"")}
+      ${campo("Público-alvo",job.publicoAlvo)}
+      ${campo("Período de campanha",periodoCampanhaFmt(job))}
+      ${campo("Objetivo de comunicação",job.objetivoComunicacao)}
+      ${campo("Objetivo de marketing",job.objetivoMarketing)}
+    </div>
+    ${job.situacaoComunicar?`<div class="pf" style="margin-top:10px">${campo("Situação a ser comunicada",job.situacaoComunicar)}</div>`:""}
+    ${job.diferenciais?`<div class="pf" style="margin-top:10px">${campo("Diferenciais / argumentos-chave",job.diferenciais)}</div>`:""}
+    ${job.restricoes?`<div class="pf" style="margin-top:10px">${campo("Restrições / obrigatórios",job.restricoes)}</div>`:""}
+
+    ${linhas.length?`<h2>Veículos e valores</h2>
+    <table><tr><th>Veículo</th><th style="text-align:right">Orçado</th>${fechado?'<th style="text-align:right">Fechado</th>':""}</tr>${linhasRows}
+      <tr><td><b>Total</b></td><td style="text-align:right"><b>${fmtMoney(totalOrcado)}</b></td>${fechado?`<td style="text-align:right"><b>${fmtMoney(job.valorFechado)}</b></td>`:""}</tr>
+    </table>`:""}
+
+    ${job.briefing?`<h2>Briefing</h2><div class="pv" style="white-space:pre-wrap">${esc(job.briefing)}</div>`:""}
+
+    ${(job.checklist||[]).length?`<h2>Checklist</h2><ul>${job.checklist.map(c=>`<li${c.feito?' style="text-decoration:line-through;color:#999"':""}>${esc(c.texto)}</li>`).join("")}</ul>`:""}
+
+    ${job.proximosPassos?`<h2>Próximos passos</h2><div class="pv" style="white-space:pre-wrap">${esc(job.proximosPassos)}</div>`:""}
+
+    <div class="pdf-foot">
+      <span>Documento gerado em ${fmtDate(today())} pelo Grupo EP — uso interno.</span>
+      <span>Job ${esc(job.numero||"")}</span>
+    </div>
+  </div>`;
+}
+function baixarPdfJob(id){
+  const job=data.jobs.find(j=>j.id===id);
+  if(!job){toast("Job não encontrado.");return;}
+  document.getElementById("printArea").innerHTML=jobPdfBodyHtml(job);
+  setTimeout(()=>window.print(),80);
+}
+function autoTriggerJobModalIA(jobId){
+  if(!sampleApi||!jobId)return;
+  gerarChecklistIA();
+  sugerirVeiculosIA();
+  const sig=JSON.stringify(data.jobs.find(j=>j.id===jobId));
+  if(aiShouldRun("mastigado:"+jobId,sig))gerarJobMastigadoIA(jobId);
 }
 
 /* ============ persistência (mesmo padrão do Painel do Leandro) ============ */
@@ -1023,6 +1257,15 @@ function migrateJob(j){
   j.atribuidoA=j.atribuidoA||"";
   if(!j.numero)j.numero=nextNumero(j.cliente);
   j.briefing=j.briefing||"";
+  j.budget=Number(j.budget)||0;
+  j.publicoAlvo=j.publicoAlvo||"";
+  j.periodoInicio=j.periodoInicio||"";
+  j.periodoFim=j.periodoFim||"";
+  j.objetivoComunicacao=j.objetivoComunicacao||"";
+  j.objetivoMarketing=j.objetivoMarketing||"";
+  j.situacaoComunicar=j.situacaoComunicar||"";
+  j.diferenciais=j.diferenciais||"";
+  j.restricoes=j.restricoes||"";
   j.checklist=(j.checklist||[]).map(c=>({id:c.id||uid(),texto:c.texto||"",feito:!!c.feito}));
   if(j.linkCanva!==undefined){ j.planoMidia=j.linkCanva; delete j.linkCanva; }
   j.planoMidia=j.planoMidia||"";
@@ -1186,7 +1429,15 @@ function render(){
   document.getElementById("pageTitle").textContent=mainView==="jobs"?"Jobs":"Dashboard";
   document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
   document.getElementById("viewDashboard").style.display=mainView==="dashboard"?"block":"none";
-  if(mainView==="jobs"){ if(isCE)renderBoardPorCliente(jobs); else renderBoard(jobs); }
+  if(mainView==="jobs"){
+    const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||isCE);
+    const prioBox=document.getElementById("prioridadesBox");
+    if(isPracaOuCE){
+      prioBox.innerHTML=prioridadesDoDiaHtml();
+      autoTriggerPrioridadesDoDia(jobs);
+    }else prioBox.innerHTML="";
+    if(isCE)renderBoardPorCliente(jobs); else renderBoard(jobs);
+  }
   else renderDashboard(jobs,pairs);
 }
 function fillFilterSelect(id,label,values,cur){
@@ -1472,15 +1723,13 @@ function riscoHtml(){
   return `<div class="breakdown">
     <h3>Radar de risco (IA)</h3>
     <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px">Lê o texto de "próximos passos"/briefing dos jobs em aberto e sinaliza possíveis riscos (cliente sumiu, objeção de preço, concorrência etc).</p>
-    <button class="linha-add-btn" data-act="ai-risco" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>🔎 Analisar riscos agora</button>
-    <div id="riscoResultado" style="margin-top:12px"></div>
+    <div id="riscoResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Analisando riscos...</div>`:`<div style="color:var(--muted);font-size:12px">Análise por IA disponível só na versão online.</div>`}</div>
   </div>`;
 }
 function resumoSemanalHtml(){
   return `<div class="breakdown">
     <h3>Resumo da semana (IA)</h3>
-    <button class="linha-add-btn" data-act="ai-resumo" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>📋 Gerar resumo</button>
-    <div id="resumoResultado" style="margin-top:12px"></div>
+    <div id="resumoResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Gerando resumo da semana...</div>`:`<div style="color:var(--muted);font-size:12px">Resumo por IA disponível só na versão online.</div>`}</div>
   </div>`;
 }
 function segmentacaoMensalHtml(jobs){
@@ -1569,6 +1818,7 @@ function renderDashboard(jobs,pairs){
     + conversaoDuplaHtml("Conversão e valor por executivo de conta",groupValorPorJob(jobsM,j=>j.executivo))
     + `</div>`;
   document.getElementById("dashboard").innerHTML=html;
+  autoTriggerDashboardIA(jobs,isPracaOuCE);
 }
 
 /* ============ quadro kanban ============ */
@@ -1579,8 +1829,35 @@ function linhaMiniHtml(l,fechado){
     ${valor?`<span class="lm-val">${fmtMoney(valor)}</span>`:""}
   </div>`;
 }
+function periodoCampanhaFmt(job){
+  if(job.periodoInicio&&job.periodoFim)return `${fmtDate(job.periodoInicio)}–${fmtDate(job.periodoFim)}`;
+  if(job.periodoInicio)return `a partir de ${fmtDate(job.periodoInicio)}`;
+  if(job.periodoFim)return `até ${fmtDate(job.periodoFim)}`;
+  return "";
+}
+function briefingResumoHtml(job){
+  const periodo=periodoCampanhaFmt(job);
+  const itens=[
+    job.budget?`💰 ${fmtMoney(job.budget)}`:"",
+    job.publicoAlvo?`🎯 ${esc(job.publicoAlvo)}`:"",
+    periodo?`📅 ${periodo}`:""
+  ].filter(Boolean);
+  if(!itens.length)return "";
+  return `<div class="briefing-resumo" title="Detalhamento da campanha, preenchido no briefing">${itens.map(i=>`<span>${i}</span>`).join("")}</div>`;
+}
+function lerpColor(a,b,t){return [0,1,2].map(i=>Math.round(a[i]+(b[i]-a[i])*t));}
+function prazoHeatColor(job){
+  if(isTerminal(job.faseAtual))return null;
+  const prazo=pd(job.prazoPrevisto);if(!prazo)return null;
+  const diff=Math.round((prazo-d0())/86400000);
+  const t=Math.max(0,Math.min(1,(diff+3)/17));
+  const vermelho=[156,82,51],amarelo=[147,118,47],verde=[76,122,99];
+  const c=t<0.5?lerpColor(vermelho,amarelo,t/0.5):lerpColor(amarelo,verde,(t-0.5)/0.5);
+  return `rgba(${c[0]},${c[1]},${c[2]},.13)`;
+}
 function mcardHtml(job){
   const alerta=alertaPrazo(job);
+  const heat=prazoHeatColor(job);
   const pct=Math.round(pctConcl(job)*100);
   const terminal=isTerminal(job.faseAtual);
   const podeAvancar=FASE_ORDEM.includes(job.faseAtual)&&FASE_ORDEM.indexOf(job.faseAtual)<FASE_ORDEM.length-1;
@@ -1590,7 +1867,7 @@ function mcardHtml(job){
   const totalOrcado=linhas.reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
   const dias=diasParadoJob(job);
   const lembrete=precisaLembreteJob(job);
-  return `<div class="mcard" style="--card-accent:${accent}" data-act="edit" data-id="${job.id}">
+  return `<div class="mcard" style="--card-accent:${accent}${heat?`;background-image:linear-gradient(${heat},${heat})`:""}" data-act="edit" data-id="${job.id}" title="${heat?`Prazo: ${fmtDate(job.prazoPrevisto)} — cor indica proximidade do prazo (verde = tranquilo, vermelho = urgente/atrasado)`:""}">
     <div class="jobnum">${esc(job.numero||"")}</div>
     <div class="cliente">${esc(job.cliente)}</div>
     <div class="tags">
@@ -1600,6 +1877,7 @@ function mcardHtml(job){
       ${lembrete?`<span class="tag-sm warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
       ${job.atribuidoA?`<span class="tag-sm" title="Atribuído a ${esc(job.atribuidoA)}">📌 ${esc(job.atribuidoA)}</span>`:""}
     </div>
+    ${briefingResumoHtml(job)}
     <div class="pbar"><i style="width:${pct}%"></i></div>
     ${linhas.length?`<div class="linhaslist">${linhas.map(l=>linhaMiniHtml(l,job.faseAtual==="Fechado")).join("")}</div>`:""}
     ${linhas.length?`<div class="valorline">${job.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(job.faseAtual==="Fechado"?(job.valorFechado||totalOrcado):totalOrcado)}</b></div>`:""}
@@ -1643,6 +1921,39 @@ function closeModal(){document.getElementById("backdrop").classList.remove("open
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
 function pracaOptionsHtml(val){return PRACAS.map(p=>`<option value="${esc(p)}" ${p===val?"selected":""}>${esc(p==="CE"?"CE (Contas Especiais)":p)}</option>`).join("");}
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
+function briefingCamposHtml(prefix,j){
+  j=j||{};
+  return `
+    <div class="row2">
+      <div class="field"><label>Budget estimado</label><input id="${prefix}_budget" type="number" step="0.01" min="0" value="${j.budget||""}" placeholder="0,00"></div>
+      <div class="field"><label>Público-alvo</label><input id="${prefix}_publicoAlvo" value="${esc(j.publicoAlvo||"")}" placeholder="Ex: mulheres 25-45, classe B/C, região..."></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Período de campanha — início</label><input id="${prefix}_periodoInicio" type="date" value="${j.periodoInicio||""}"></div>
+      <div class="field"><label>Período de campanha — fim</label><input id="${prefix}_periodoFim" type="date" value="${j.periodoFim||""}"></div>
+    </div>
+    <div class="field"><label>Objetivo de comunicação</label><input id="${prefix}_objetivoComunicacao" value="${esc(j.objetivoComunicacao||"")}" placeholder="O que a campanha precisa comunicar (ex: lançamento, reposicionamento, awareness...)"></div>
+    <div class="field"><label>Objetivo de marketing</label><input id="${prefix}_objetivoMarketing" value="${esc(j.objetivoMarketing||"")}" placeholder="Resultado de negócio esperado (ex: gerar leads, vender estoque, recompra...)"></div>
+    <div class="field"><label>Situação a ser comunicada</label><textarea id="${prefix}_situacaoComunicar" placeholder="Contexto/gancho: promoção, sazonalidade, concorrência, momento do cliente...">${esc(j.situacaoComunicar||"")}</textarea></div>
+    <div class="field"><label>Diferenciais / argumentos-chave do cliente</label><textarea id="${prefix}_diferenciais" placeholder="O que o cliente tem de diferente pra usar como argumento de venda...">${esc(j.diferenciais||"")}</textarea></div>
+    <div class="field"><label>Restrições / obrigatórios</label><textarea id="${prefix}_restricoes" placeholder="O que não pode faltar ou não pode ser usado (marca, tom, concorrência, aspecto legal)...">${esc(j.restricoes||"")}</textarea></div>
+  `;
+}
+function readBriefingCampos(prefix){
+  const num=id=>Number(document.getElementById(id).value)||0;
+  const str=id=>document.getElementById(id).value.trim();
+  return {
+    budget:num(`${prefix}_budget`),
+    publicoAlvo:str(`${prefix}_publicoAlvo`),
+    periodoInicio:document.getElementById(`${prefix}_periodoInicio`).value,
+    periodoFim:document.getElementById(`${prefix}_periodoFim`).value,
+    objetivoComunicacao:str(`${prefix}_objetivoComunicacao`),
+    objetivoMarketing:str(`${prefix}_objetivoMarketing`),
+    situacaoComunicar:str(`${prefix}_situacaoComunicar`),
+    diferenciais:str(`${prefix}_diferenciais`),
+    restricoes:str(`${prefix}_restricoes`)
+  };
+}
 function atribuidoOptionsHtml(val){
   const nomes=analistaNomes();
   return `<option value="">Ninguém</option>`
@@ -1680,7 +1991,7 @@ function planilhaRowHtml(p,idx){
 function jobForm(j){
   const linhas=(j.linhas&&j.linhas.length)?j.linhas:[null];
   return `
-    <header><h3>${j.id?"Editar job":"Novo job"}${j.numero?` · <span class="mono" style="font-size:13px;color:var(--muted)">${esc(j.numero)}</span>`:""}</h3><button class="x" data-act="close">×</button></header>
+    <header><h3>${j.id?"Editar job":"Novo job"}${j.numero?` · <span class="mono" style="font-size:13px;color:var(--muted)">${esc(j.numero)}</span>`:""}</h3><div style="display:flex;gap:6px;align-items:center">${j.id?`<button type="button" class="linha-add-btn" data-act="job-pdf" data-id="${j.id}">📄 Baixar PDF</button>`:""}<button class="x" data-act="close">×</button></div></header>
     <div class="form" id="jobForm" data-id="${j.id||""}">
       ${!j.id?`<div class="field"><label>Nº do job</label><input value="Gerado automaticamente ao salvar" disabled style="color:var(--muted)"></div>`:""}
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
@@ -1706,9 +2017,18 @@ function jobForm(j){
       <div class="field checkfield"><label><input type="checkbox" id="f_contaEspecial" ${j.contaEspecial?"checked":""}> Conta especial (estratégica)</label></div>
       <div class="field"><label>Briefing recebido</label><textarea id="f_briefing" placeholder="Cole aqui o briefing que foi enviado para o analista...">${esc(j.briefing||"")}</textarea></div>
 
+      <h3 style="font-family:'Lexend';font-weight:600;font-size:14px;margin:20px 0 8px;color:var(--ink)">Detalhamento da campanha</h3>
+      ${briefingCamposHtml("f",j)}
+
+      ${j.id?`<div class="linhas-section">
+        <div class="linhas-head"><label>🤖 Job mastigado (IA)</label></div>
+        <div id="mastigadoResultado" style="margin-top:2px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">Gerando recomendação...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
+      </div>`:""}
+
       <div class="linhas-section">
-        <div class="linhas-head"><label>Checklist</label><button type="button" class="linha-add-btn" data-act="ai-checklist" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>✨ Gerar do briefing</button></div>
+        <div class="linhas-head"><label>Checklist</label></div>
         <div id="checklistWrap">${(j.checklist&&j.checklist.length)?j.checklist.map(checklistItemHtml).join(""):`<div style="color:var(--muted);font-size:12.5px">Nenhum item ainda.</div>`}</div>
+        <div id="checklistAiStatus" style="font-size:11.5px;color:var(--muted);margin:4px 0 0"></div>
         <div class="addrow"><input id="checklistNovoInput" placeholder="Adicionar item manualmente..."><button type="button" data-act="checklist-add">Adicionar</button></div>
       </div>
 
@@ -1721,7 +2041,7 @@ function jobForm(j){
       </div>
 
       <div class="linhas-section">
-        <div class="linhas-head"><label>Veículos e valor orçado</label><div style="display:flex;gap:6px"><button type="button" class="linha-add-btn" data-act="ai-sugerir-veiculos" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>💡 Sugerir</button><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar veículo</button></div></div>
+        <div class="linhas-head"><label>Veículos e valor orçado</label><button type="button" class="linha-add-btn" data-act="linha-add">+ Adicionar veículo</button></div>
         <div id="linhasWrap">${linhas.map((l,i)=>linhaRowHtml(l,i,j.faseAtual==="Fechado")).join("")}</div>
         <div id="veiculoSugestoes" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
       </div>
@@ -1743,11 +2063,12 @@ function checklistItemHtml(c){
     <button type="button" class="linharow-del" data-act="checklist-del" style="margin-left:8px">✕</button>
   </div>`;
 }
-function openNewJobModal(){editId=null;openModal(jobForm({}));}
+function openNewJobModal(){editId=null;openModal(jobForm({}));sugerirVeiculosIA();}
 function openEditJobModal(id){
   const j=data.jobs.find(x=>x.id===id);if(!j)return;
   editId=id;
   openModal(jobForm(j));
+  autoTriggerJobModalIA(id);
 }
 function saveJobForm(){
   const cliente=document.getElementById("f_cliente").value.trim();
@@ -1794,6 +2115,7 @@ function saveJobForm(){
     dataEntrega:document.getElementById("f_entrega").value,
     contaEspecial:document.getElementById("f_contaEspecial").checked,
     briefing:document.getElementById("f_briefing").value.trim(),
+    ...readBriefingCampos("f"),
     checklist,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
     planoMidia:document.getElementById("f_planoMidia").value.trim(),
@@ -2131,8 +2453,6 @@ document.body.addEventListener("click",e=>{
   else if(act==="checklist-del"){
     b.closest("[data-checklist-id]").remove();
   }
-  else if(act==="ai-checklist")gerarChecklistIA();
-  else if(act==="ai-sugerir-veiculos")sugerirVeiculosIA();
   else if(act==="ai-add-veiculo"){
     const v=b.dataset.veiculo;
     if(v&&!data.config.veiculos.includes(v))data.config.veiculos.push(v);
@@ -2143,13 +2463,10 @@ document.body.addEventListener("click",e=>{
     wrap.appendChild(div.firstElementChild);
     b.remove();
   }
-  else if(act==="ai-risco")analisarRiscosIA();
-  else if(act==="ai-resumo")gerarResumoIA();
   else if(act==="copiar-resumo"){
     const el=document.getElementById("resumoTexto");
     if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
   }
-  else if(act==="ai-resumo-dia")gerarResumoDoDiaIA();
   else if(act==="copiar-resumo-dia"){
     const el=document.getElementById("resumoDiaTexto");
     if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
@@ -2163,6 +2480,7 @@ document.body.addEventListener("click",e=>{
     else{closeScopePicker();render();}
   }
   else if(act==="lock-unlock")tryUnlock();
+  else if(act==="job-pdf")baixarPdfJob(id);
   else if(act==="scope-change")openScopePicker();
   else if(act==="del"){
     if(confirm("Excluir este job? Essa ação não pode ser desfeita.")){
@@ -2228,7 +2546,7 @@ document.body.addEventListener("click",e=>{
 document.getElementById("backdrop").addEventListener("click",e=>{if(e.target.id==="backdrop")closeModal();});
 
 /* ============ boot ============ */
-(async function(){loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();else if(!isScopeUnlocked(viewerScope))openLockGate(viewerScope);await initSample();render();})();
+(async function(){document.getElementById("brandLogo").innerHTML=logoHtml(26);loadScope();await load();render();setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));if(!viewerScope)openScopePicker();else if(!isScopeUnlocked(viewerScope))openLockGate(viewerScope);await initSample();render();})();
 </script>
 </body>
 </html>
