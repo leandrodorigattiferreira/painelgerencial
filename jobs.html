@@ -1020,6 +1020,7 @@ function migrateJob(j){
   if(!j.tipo)j.tipo=j.fechamentoDireto?"Fechamento direto":"Proposta comercial";
   if(!TIPOS_JOB.includes(j.tipo))j.tipo="Proposta comercial";
   delete j.fechamentoDireto;
+  j.atribuidoA=j.atribuidoA||"";
   if(!j.numero)j.numero=nextNumero(j.cliente);
   j.briefing=j.briefing||"";
   j.checklist=(j.checklist||[]).map(c=>({id:c.id||uid(),texto:c.texto||"",feito:!!c.feito}));
@@ -1597,6 +1598,7 @@ function mcardHtml(job){
       <span class="tag-sm">${esc(job.prioridade)}</span>
       ${!terminal?`<span class="${situClass(job.situacao).replace('status','situ-sm')}" style="background:${SITU_COLOR[job.situacao]}22;color:${SITU_COLOR[job.situacao]}">${esc(job.situacao)}</span>`:""}
       ${lembrete?`<span class="tag-sm warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
+      ${job.atribuidoA?`<span class="tag-sm" title="Atribuído a ${esc(job.atribuidoA)}">📌 ${esc(job.atribuidoA)}</span>`:""}
     </div>
     <div class="pbar"><i style="width:${pct}%"></i></div>
     ${linhas.length?`<div class="linhaslist">${linhas.map(l=>linhaMiniHtml(l,job.faseAtual==="Fechado")).join("")}</div>`:""}
@@ -1641,6 +1643,12 @@ function closeModal(){document.getElementById("backdrop").classList.remove("open
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
 function pracaOptionsHtml(val){return PRACAS.map(p=>`<option value="${esc(p)}" ${p===val?"selected":""}>${esc(p==="CE"?"CE (Contas Especiais)":p)}</option>`).join("");}
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
+function atribuidoOptionsHtml(val){
+  const nomes=analistaNomes();
+  return `<option value="">Ninguém</option>`
+    +nomes.map(n=>`<option value="${esc(n)}" ${n===val?"selected":""}>${esc(n)}</option>`).join("")
+    +`<option value="Gestão" ${val==="Gestão"?"selected":""}>Gestão</option>`;
+}
 
 function linhaRowHtml(l,idx,mostrarFechado){
   l=l||{id:uid(),veiculo:"",valorOrcado:0,valorFechado:0};
@@ -1688,6 +1696,7 @@ function jobForm(j){
         <div class="field"><label>Analista responsável</label><input id="f_analista" list="dl_analistas" value="${esc(j.analista||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_analistas",analistaNomes())}</div>
         <div class="field"><label>Executivo de conta</label><input id="f_executivo" list="dl_executivos" value="${esc(j.executivo||"")}" placeholder="Selecione ou digite um nome">${datalistHtml("dl_executivos",data.config.executivos)}</div>
       </div>
+      <div class="field"><label>Atribuído a (próxima tarefa)</label><select id="f_atribuidoA">${atribuidoOptionsHtml(j.atribuidoA||"")}</select></div>
       <div class="field"><label>Situação</label><select id="f_situacao">${optionsHtml(SITUACOES,j.situacao||"No prazo")}</select></div>
       <div class="row2">
         <div class="field"><label>Data da solicitação</label><input id="f_recebimento" type="date" value="${j.dataRecebimento||today()}"></div>
@@ -1776,6 +1785,7 @@ function saveJobForm(){
     origem:document.getElementById("f_origem").value,
     analista,
     executivo,
+    atribuidoA:document.getElementById("f_atribuidoA").value,
     prioridade:document.getElementById("f_prioridade").value,
     situacao:document.getElementById("f_situacao").value,
     faseAtual:existing?existing.faseAtual:"Recebido",
@@ -1988,13 +1998,13 @@ function downloadCsv(filename,rows){
 }
 function exportCsv(){
   try{
-    const header=["Número","Cliente","Tipo","Praça","Origem","Analista","Papel da analista","Executivo","Prioridade","Fase","Conta especial","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
+    const header=["Número","Cliente","Tipo","Praça","Origem","Analista","Papel da analista","Executivo","Atribuído a","Prioridade","Fase","Conta especial","Data solicitação","Prazo","Entrega","Fechamento","Veículo","Valor orçado","Valor fechado","Motivo perda"];
     const rows=[header];
     data.jobs.forEach(j=>{
       const linhas=(j.linhas&&j.linhas.length)?j.linhas:[{veiculo:"",valorOrcado:j.valorOrcado||0,valorFechado:j.valorFechado||0}];
       linhas.forEach(l=>{
         rows.push([
-          j.numero||"",j.cliente||"",j.tipo||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",
+          j.numero||"",j.cliente||"",j.tipo||"",j.praca||"",j.origem||"",j.analista||"",analistaPapel(j.analista)||"",j.executivo||"",j.atribuidoA||"",j.prioridade||"",j.faseAtual||"",j.contaEspecial?"Sim":"Não",
           j.dataRecebimento||"",j.prazoPrevisto||"",j.dataEntrega||"",j.dataFechamento||"",
           l.veiculo||"",Number(l.valorOrcado)||0,Number(l.valorFechado)||0,j.motivoPerda||""
         ]);
