@@ -631,7 +631,6 @@ function submitExecutivoBriefing(){
     contaEspecial:false,
     briefing,
     ...readBriefingCampos("ex"),
-    checklist:[],
     proximosPassos:"",
     planoMidia:"",
     planilhas:[],
@@ -825,50 +824,24 @@ function clienteVeiculoHtml(jobs){
 }
 
 /* ============ iniciativas de IA (capacidade "sample" do artifact) ============ */
-async function gerarChecklistIA(){
-  if(!sampleApi)return;
-  const wrap=document.getElementById("checklistWrap");
-  if(!wrap||wrap.querySelector("[data-checklist-id]"))return;
-  const briefingEl=document.getElementById("f_briefing");
-  const briefing=briefingEl?briefingEl.value.trim():"";
-  if(!briefing)return;
-  const status=document.getElementById("checklistAiStatus");
-  if(status)status.textContent="✨ Gerando checklist a partir do briefing...";
-  try{
-    const out=await sampleApi.json(
-      `Leia este briefing de um job de marketing e extraia uma lista curta e prática de tarefas que o analista precisa fazer para atender esse pedido. Responda em português, no formato {"tasks":["tarefa 1","tarefa 2"]}, com no máximo 8 itens, cada um curto e acionável.\n\nBriefing:\n${briefing}`,
-      {modelTier:"quick"}
-    );
-    const tasks=(out&&Array.isArray(out.tasks))?out.tasks.filter(Boolean):[];
-    const wrap2=document.getElementById("checklistWrap");
-    if(!wrap2||wrap2.querySelector("[data-checklist-id]")){if(status)status.textContent="";return;}
-    if(!tasks.length){if(status)status.textContent="";return;}
-    wrap2.innerHTML="";
-    tasks.forEach(t=>{
-      const div=document.createElement("div");
-      div.innerHTML=checklistItemHtml({id:uid(),texto:t,feito:false});
-      wrap2.appendChild(div.firstElementChild);
-    });
-    if(status)status.textContent=`✨ ${tasks.length} tarefa(s) sugeridas pela IA a partir do briefing.`;
-  }catch(e){
-    if(status)status.textContent="";
-  }
-}
 async function sugerirVeiculosIA(){
   if(!sampleApi)return;
   const wrap=document.getElementById("veiculoSugestoes");
   if(!wrap)return;
+  const cliente=(document.getElementById("f_cliente").value||"").trim();
   const praca=document.getElementById("f_praca").value;
-  const origem=document.getElementById("f_origem").value;
   const atuais=[...document.querySelectorAll("#linhasWrap .li-veiculo")].map(s=>s.value).filter(Boolean);
-  const historico=[...new Set(data.jobs.filter(j=>j.faseAtual==="Fechado"&&j.praca===praca).flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))];
+  const catalogo=(data.config.veiculos||[]).filter(v=>v&&v!=="Outro");
+  if(!catalogo.length)return;
+  const historicoCliente=cliente?[...new Set(data.jobs.filter(j=>j.cliente===cliente&&j.faseAtual==="Fechado").flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))]:[];
+  const historicoPraca=[...new Set(data.jobs.filter(j=>j.faseAtual==="Fechado"&&j.praca===praca).flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))];
   wrap.innerHTML=`<span style="color:var(--muted);font-size:12px">💡 Pensando em veículos complementares...</span>`;
   try{
     const out=await sampleApi.json(
-      `Sugira até 3 veículos de mídia complementares para este job, considerando o que já foi usado com sucesso em jobs fechados parecidos. Praça: ${praca}. Origem: ${origem}. Veículos já adicionados neste job: ${atuais.join(", ")||"nenhum"}. Veículos usados em jobs fechados dessa praça: ${historico.join(", ")||"sem histórico"}. Responda em português no formato {"sugestoes":["veiculo1","veiculo2"]}, sem repetir os já adicionados.`,
+      `Sugira até 3 veículos de mídia complementares para este job. Você só pode escolher veículos que estejam no catálogo do Grupo EP listado abaixo — nunca sugira nada fora dessa lista, mesmo que pareça relevante. Priorize o que já foi usado com sucesso especificamente com este cliente; na falta de histórico do cliente, use o que costuma fechar nessa praça.\n\nCatálogo de veículos do Grupo EP: ${catalogo.join(", ")}.\nHistórico de veículos fechados com este cliente: ${historicoCliente.join(", ")||"nenhum ainda"}.\nHistórico de veículos fechados nessa praça: ${historicoPraca.join(", ")||"sem histórico"}.\nVeículos já adicionados neste job: ${atuais.join(", ")||"nenhum"}.\n\nResponda em português no formato {"sugestoes":["veiculo1","veiculo2"]}, sem repetir os já adicionados.`,
       {modelTier:"quick"}
     );
-    const sugestoes=(out&&Array.isArray(out.sugestoes))?out.sugestoes.filter(s=>s&&!atuais.includes(s)):[];
+    const sugestoes=(out&&Array.isArray(out.sugestoes))?out.sugestoes.filter(s=>catalogo.includes(s)&&!atuais.includes(s)):[];
     const wrap2=document.getElementById("veiculoSugestoes");
     if(!wrap2)return;
     wrap2.innerHTML=sugestoes.length
@@ -961,20 +934,25 @@ async function gerarJobMastigadoIA(jobId){
   const job=data.jobs.find(j=>j.id===jobId);
   const el=document.getElementById("mastigadoResultado");
   if(!job||!el)return;
-  const historico=data.jobs.filter(j=>j.cliente===job.cliente&&j.id!==job.id).slice(0,8)
+  const catalogo=(data.config.veiculos||[]).filter(v=>v&&v!=="Outro");
+  const jobsCliente=data.jobs.filter(j=>j.cliente===job.cliente&&j.id!==job.id);
+  const historico=jobsCliente.slice(0,8)
     .map(j=>`- ${j.tipo} · ${j.faseAtual}${j.faseAtual==="Fechado"?` (fechado em ${fmtMoney(j.valorFechado)})`:""} · veículos: ${(j.linhas||[]).map(l=>l.veiculo).filter(Boolean).join(", ")||"—"}`)
     .join("\n");
+  const veiculosCliente=[...new Set(jobsCliente.filter(j=>j.faseAtual==="Fechado").flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))];
   const dadosJob=`Cliente: ${job.cliente}\nTipo: ${job.tipo}\nPraça: ${job.praca}\nBudget estimado: ${job.budget?fmtMoney(job.budget):"não informado"}\nPúblico-alvo: ${job.publicoAlvo||"não informado"}\nPeríodo: ${periodoCampanhaFmt(job)||"não informado"}\nObjetivo de comunicação: ${job.objetivoComunicacao||"não informado"}\nObjetivo de marketing: ${job.objetivoMarketing||"não informado"}\nSituação a ser comunicada: ${job.situacaoComunicar||"não informado"}\nDiferenciais do cliente: ${job.diferenciais||"não informado"}\nRestrições: ${job.restricoes||"nenhuma"}\nBriefing livre: ${(job.briefing||"").slice(0,600)||"nenhum"}`;
   const historicoTexto=historico?`\n\nHistórico de jobs anteriores deste cliente:\n${historico}`:"\n\nSem histórico anterior deste cliente.";
+  const catalogoTexto=`\n\nCatálogo de veículos do Grupo EP: ${catalogo.join(", ")}.\nVeículos já fechados com este cliente: ${veiculosCliente.join(", ")||"nenhum ainda"}.`;
   el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Pensando na melhor abordagem para este job...</div>`;
   try{
     const out=await sampleApi.json(
-      `Você é um estrategista sênior de uma agência de marketing de mídia. Com base neste briefing de campanha e no histórico do cliente, dê uma recomendação prática pro analista que vai montar a proposta. Responda em português, no formato JSON {"tom":"...","argumentoVenda":"...","veiculosSugeridos":["...","..."],"materiaisNecessarios":["...","..."]}. "tom" é 1-2 frases sobre o tom/conteúdo ideal da apresentação para essa atividade. "argumentoVenda" é 1-2 frases com o principal argumento de venda pra esse cliente/situação. "veiculosSugeridos" é uma lista curta (até 4) de veículos de mídia mais adequados. "materiaisNecessarios" é uma lista curta (até 5) do que o analista precisa reunir/produzir pra montar essa proposta (ex: cases, referências visuais, dados do cliente). Seja específico e prático, nunca genérico. Se faltar informação suficiente pra ser específico, responda com campos vazios em vez de inventar.\n\n${dadosJob}${historicoTexto}`,
+      `Você é um estrategista sênior de uma agência de marketing de mídia. Com base neste briefing de campanha e no histórico do cliente, dê uma recomendação prática pro analista que vai montar a proposta. Responda em português, no formato JSON {"tom":"...","argumentoVenda":"...","veiculosSugeridos":["...","..."],"materiaisNecessarios":["...","..."]}. "tom" é 1-2 frases sobre o tom/conteúdo ideal da apresentação para essa atividade. "argumentoVenda" é 1-2 frases com o principal argumento de venda pra esse cliente/situação. "veiculosSugeridos" é uma lista curta (até 4) de veículos de mídia mais adequados — escolha OBRIGATORIAMENTE apenas entre os veículos do catálogo do Grupo EP informado abaixo, nunca sugira algo fora dessa lista, e priorize o que já fechou com esse cliente. "materiaisNecessarios" é uma lista curta (até 5) do que o analista precisa reunir/produzir pra montar essa proposta (ex: cases, referências visuais, dados do cliente). Seja específico e prático, nunca genérico. Se faltar informação suficiente pra ser específico, responda com campos vazios em vez de inventar.\n\n${dadosJob}${historicoTexto}${catalogoTexto}`,
       {modelTier:"default"}
     );
     const el2=document.getElementById("mastigadoResultado");
     if(!el2)return;
-    const temAlgo=out&&(out.tom||out.argumentoVenda||(out.veiculosSugeridos||[]).length||(out.materiaisNecessarios||[]).length);
+    const veiculosSugeridos=((out&&out.veiculosSugeridos)||[]).filter(v=>catalogo.includes(v));
+    const temAlgo=out&&(out.tom||out.argumentoVenda||veiculosSugeridos.length||(out.materiaisNecessarios||[]).length);
     if(!temAlgo){
       el2.innerHTML=`<div style="color:var(--muted);font-size:12.5px">Preencha mais campos do detalhamento da campanha pra IA sugerir algo específico.</div>`;
       return;
@@ -983,7 +961,7 @@ async function gerarJobMastigadoIA(jobId){
     el2.innerHTML=`<div style="display:flex;flex-direction:column;gap:10px;font-size:12.5px">
       ${out.tom?`<div><b style="color:var(--ink)">Tom da apresentação:</b> <span style="color:var(--ink-soft)">${esc(out.tom)}</span></div>`:""}
       ${out.argumentoVenda?`<div><b style="color:var(--ink)">Argumento de venda:</b> <span style="color:var(--ink-soft)">${esc(out.argumentoVenda)}</span></div>`:""}
-      ${(out.veiculosSugeridos||[]).length?`<div><b style="color:var(--ink)">Veículos sugeridos:</b><ul style="margin:4px 0 0 18px;padding:0;color:var(--ink-soft)">${li(out.veiculosSugeridos)}</ul></div>`:""}
+      ${veiculosSugeridos.length?`<div><b style="color:var(--ink)">Veículos sugeridos:</b><ul style="margin:4px 0 0 18px;padding:0;color:var(--ink-soft)">${li(veiculosSugeridos)}</ul></div>`:""}
       ${(out.materiaisNecessarios||[]).length?`<div><b style="color:var(--ink)">Pra montar a proposta, reúna:</b><ul style="margin:4px 0 0 18px;padding:0;color:var(--ink-soft)">${li(out.materiaisNecessarios)}</ul></div>`:""}
     </div>`;
   }catch(e){
@@ -1026,10 +1004,19 @@ function coletarSinaisPrioridades(scopeJobs,praca){
     temSinal
   };
 }
-function nomesEquipePraca(praca){
-  const nomes=[...new Set(data.jobs.filter(j=>j.praca===praca&&j.analista).map(j=>j.analista))];
-  if(!nomes.length)return praca==="CE"?"equipe de Contas Especiais":`equipe ${praca}`;
-  return nomes.join(" e ");
+function labelPraca(praca){
+  return praca==="CE"?"Contas Especiais":`praça ${praca}`;
+}
+function momentoDoMesTexto(d){
+  const diaDoMes=d.getDate();
+  const diasNoMes=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  const diasRestantes=diasNoMes-diaDoMes;
+  let momento="";
+  if(diaDoMes<=3)momento="início do mês";
+  else if(diasRestantes<=3)momento="reta final do mês";
+  else if(Math.abs(diaDoMes-Math.round(diasNoMes/2))<=2)momento="metade do mês";
+  const dataFmt=d.toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long"});
+  return `Hoje é ${dataFmt}${momento?` (${momento})`:""}. Faltam ${diasRestantes} dia(s) pra acabar o mês.`;
 }
 async function gerarRecadoDoDiaIA(){
   if(!sampleApi)return;
@@ -1037,18 +1024,18 @@ async function gerarRecadoDoDiaIA(){
   if(!el)return;
   const jobs=filtered();
   const praca=(viewerScope&&viewerScope.mode==="praca")?viewerScope.praca:(viewerScope&&viewerScope.mode==="contas-especiais"?"CE":null);
-  const nomeEquipe=praca?nomesEquipePraca(praca):"time";
+  const nomePraca=praca?labelPraca(praca):"time";
   const hoje=today();
   const recebidosHoje=jobs.filter(j=>j.dataRecebimento===hoje).length;
   const fechadosHoje=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje);
   const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
   const emAndamento=jobs.filter(j=>!isTerminal(j.faseAtual)).length;
   const {texto:sinaisTexto}=coletarSinaisPrioridades(jobs,praca);
-  const dadosTexto=`Recebidos hoje: ${recebidosHoje}. Fechados hoje: ${fechadosHoje.length} (${fmtMoney(valorFechadoHoje)}). Jobs em andamento: ${emAndamento}.\n${sinaisTexto}`;
+  const dadosTexto=`${momentoDoMesTexto(new Date())}\nRecebidos hoje: ${recebidosHoje}. Fechados hoje: ${fechadosHoje.length} (${fmtMoney(valorFechadoHoje)}). Jobs em andamento: ${emAndamento}.\n${sinaisTexto}`;
   el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Preparando o recado do dia...</div>`;
   try{
     const out=await sampleApi(
-      `Você está escrevendo um recado curto e caloroso pra abrir o dia de um time de marketing de clientes. Comece exatamente com "Olá, ${nomeEquipe}!" e escreva mais 2-4 frases diretas, tom de colega (não de robô), cobrindo o resumo do dia e — se houver — até 2 prioridades mais urgentes pra hoje. Não invente números nem clientes que não estejam nos dados abaixo. Se não houver nenhum sinal de risco/atraso/meta abaixo do ritmo, parabenize o andamento em vez de inventar um problema. Responda só com o texto do recado, em português, pronto pra ler — nada de explicação extra.\n\n${dadosTexto}`,
+      `Você está escrevendo um recado curto e caloroso pra abrir o dia da ${nomePraca}, de um time de marketing de clientes. O recado é pra praça inteira, nunca direcione a uma pessoa específica. Comece exatamente com "Olá, ${nomePraca}!" e escreva mais 2-4 frases diretas, tom de colega (não de robô). Varie o foco de acordo com o que for mais relevante nos dados de hoje — às vezes vai ser sobre o ritmo da meta do mês, às vezes sobre um job parado ou atrasado, às vezes sobre o volume do dia, às vezes sobre o momento do mês (início, metade, reta final) — não repita sempre a mesma estrutura de frase. Não invente números nem clientes que não estejam nos dados abaixo. Se não houver nenhum sinal de risco/atraso/meta abaixo do ritmo, parabenize o andamento em vez de inventar um problema. Responda só com o texto do recado, em português, pronto pra ler — nada de explicação extra.\n\n${dadosTexto}`,
       {modelTier:"quick"}
     );
     const texto=(out&&out.text)||"";
@@ -1133,8 +1120,6 @@ function jobPdfBodyHtml(job){
 
     ${job.briefing?`<h2>Briefing</h2><div class="pv" style="white-space:pre-wrap">${esc(job.briefing)}</div>`:""}
 
-    ${(job.checklist||[]).length?`<h2>Checklist</h2><ul>${job.checklist.map(c=>`<li${c.feito?' style="text-decoration:line-through;color:#999"':""}>${esc(c.texto)}</li>`).join("")}</ul>`:""}
-
     ${job.proximosPassos?`<h2>Próximos passos</h2><div class="pv" style="white-space:pre-wrap">${esc(job.proximosPassos)}</div>`:""}
 
     <div class="pdf-foot">
@@ -1178,7 +1163,6 @@ function baixarPdfJob(id){
 }
 function autoTriggerJobModalIA(jobId){
   if(!sampleApi||!jobId)return;
-  gerarChecklistIA();
   sugerirVeiculosIA();
   const sig=JSON.stringify(data.jobs.find(j=>j.id===jobId));
   if(aiShouldRun("mastigado:"+jobId,sig))gerarJobMastigadoIA(jobId);
@@ -2063,13 +2047,6 @@ function jobForm(j){
         <div id="mastigadoResultado" style="margin-top:2px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">Gerando recomendação...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
       </div>`:""}
 
-      <div class="linhas-section">
-        <div class="linhas-head"><label>Checklist</label></div>
-        <div id="checklistWrap">${(j.checklist&&j.checklist.length)?j.checklist.map(checklistItemHtml).join(""):`<div style="color:var(--muted);font-size:12.5px">Nenhum item ainda.</div>`}</div>
-        <div id="checklistAiStatus" style="font-size:11.5px;color:var(--muted);margin:4px 0 0"></div>
-        <div class="addrow"><input id="checklistNovoInput" placeholder="Adicionar item manualmente..."><button type="button" data-act="checklist-add">Adicionar</button></div>
-      </div>
-
       <div class="field"><label>Próximos passos / observações</label><textarea id="f_proximos" placeholder="O que falta, combinados com o cliente...">${esc(j.proximosPassos||"")}</textarea></div>
       <div class="field"><label>Plano de Mídia</label><input id="f_planoMidia" type="url" value="${esc(j.planoMidia||"")}" placeholder="https://www.canva.com/design/..."></div>
 
@@ -2094,12 +2071,6 @@ function jobForm(j){
       <button class="save" data-act="save-job">Salvar</button>
       ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
     </div>`;
-}
-function checklistItemHtml(c){
-  return `<div class="checkfield" data-checklist-id="${c.id}" style="justify-content:space-between;padding:4px 0">
-    <label style="flex:1;margin:0"><input type="checkbox" class="cl-feito" ${c.feito?"checked":""}> <span style="${c.feito?"text-decoration:line-through;color:var(--muted)":""}">${esc(c.texto)}</span></label>
-    <button type="button" class="linharow-del" data-act="checklist-del" style="margin-left:8px">✕</button>
-  </div>`;
 }
 function openNewJobModal(){editId=null;openModal(jobForm({}));sugerirVeiculosIA();}
 function openEditJobModal(id){
@@ -2127,11 +2098,6 @@ function saveJobForm(){
     nome:row.querySelector(".pl-nome").value.trim(),
     url:row.querySelector(".pl-url").value.trim()
   })).filter(p=>p.url);
-  const checklist=[...document.querySelectorAll("#checklistWrap [data-checklist-id]")].map(row=>({
-    id:row.dataset.checklistId,
-    texto:row.querySelector("span").textContent,
-    feito:row.querySelector(".cl-feito").checked
-  }));
   const analista=document.getElementById("f_analista").value.trim();
   const executivo=document.getElementById("f_executivo").value.trim();
   const existing=editId?data.jobs.find(x=>x.id===editId):null;
@@ -2154,7 +2120,6 @@ function saveJobForm(){
     contaEspecial:document.getElementById("f_contaEspecial").checked,
     briefing:document.getElementById("f_briefing").value.trim(),
     ...readBriefingCampos("f"),
-    checklist,
     proximosPassos:document.getElementById("f_proximos").value.trim(),
     planoMidia:document.getElementById("f_planoMidia").value.trim(),
     planilhas,
@@ -2477,19 +2442,6 @@ document.body.addEventListener("click",e=>{
   }
   else if(act==="planilha-del"){
     b.closest(".linharow").remove();
-  }
-  else if(act==="checklist-add"){
-    const input=document.getElementById("checklistNovoInput");
-    const v=input.value.trim();if(!v)return;
-    const wrap=document.getElementById("checklistWrap");
-    if(wrap.children.length===1&&wrap.children[0].tagName==="DIV"&&!wrap.children[0].dataset.checklistId)wrap.innerHTML="";
-    const div=document.createElement("div");
-    div.innerHTML=checklistItemHtml({id:uid(),texto:v,feito:false});
-    wrap.appendChild(div.firstElementChild);
-    input.value="";
-  }
-  else if(act==="checklist-del"){
-    b.closest("[data-checklist-id]").remove();
   }
   else if(act==="ai-add-veiculo"){
     const v=b.dataset.veiculo;
