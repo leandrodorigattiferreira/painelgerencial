@@ -1026,35 +1026,46 @@ function coletarSinaisPrioridades(scopeJobs,praca){
     temSinal
   };
 }
-async function gerarPrioridadesDoDiaIA(){
+function nomesEquipePraca(praca){
+  const nomes=[...new Set(data.jobs.filter(j=>j.praca===praca&&j.analista).map(j=>j.analista))];
+  if(!nomes.length)return praca==="CE"?"equipe de Contas Especiais":`equipe ${praca}`;
+  return nomes.join(" e ");
+}
+async function gerarRecadoDoDiaIA(){
   if(!sampleApi)return;
-  const el=document.getElementById("prioridadesResultado");
+  const el=document.getElementById("recadoDoDiaResultado");
   if(!el)return;
   const jobs=filtered();
   const praca=(viewerScope&&viewerScope.mode==="praca")?viewerScope.praca:(viewerScope&&viewerScope.mode==="contas-especiais"?"CE":null);
-  const {texto,temSinal}=coletarSinaisPrioridades(jobs,praca);
-  if(!temSinal){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum sinal de prioridade hoje ✓</div>`;return;}
-  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Priorizando o dia...</div>`;
+  const nomeEquipe=praca?nomesEquipePraca(praca):"time";
+  const hoje=today();
+  const recebidosHoje=jobs.filter(j=>j.dataRecebimento===hoje).length;
+  const fechadosHoje=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje);
+  const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
+  const emAndamento=jobs.filter(j=>!isTerminal(j.faseAtual)).length;
+  const {texto:sinaisTexto}=coletarSinaisPrioridades(jobs,praca);
+  const dadosTexto=`Recebidos hoje: ${recebidosHoje}. Fechados hoje: ${fechadosHoje.length} (${fmtMoney(valorFechadoHoje)}). Jobs em andamento: ${emAndamento}.\n${sinaisTexto}`;
+  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Preparando o recado do dia...</div>`;
   try{
-    const out=await sampleApi.json(
-      `Você é um gestor de time de marketing de clientes revisando a operação do dia. Com base nestes sinais reais (não invente números nem clientes que não estão na lista), monte até 4 prioridades de ação pro time de hoje, da mais urgente pra menos urgente. Responda em português no formato {"prioridades":[{"titulo":"ação curta e direta","detalhe":"por quê, com o dado que embasa"}]}.\n\n${texto}`,
+    const out=await sampleApi(
+      `Você está escrevendo um recado curto e caloroso pra abrir o dia de um time de marketing de clientes. Comece exatamente com "Olá, ${nomeEquipe}!" e escreva mais 2-4 frases diretas, tom de colega (não de robô), cobrindo o resumo do dia e — se houver — até 2 prioridades mais urgentes pra hoje. Não invente números nem clientes que não estejam nos dados abaixo. Se não houver nenhum sinal de risco/atraso/meta abaixo do ritmo, parabenize o andamento em vez de inventar um problema. Responda só com o texto do recado, em português, pronto pra ler — nada de explicação extra.\n\n${dadosTexto}`,
       {modelTier:"quick"}
     );
-    const prioridades=(out&&Array.isArray(out.prioridades))?out.prioridades.filter(p=>p&&p.titulo):[];
-    const el2=document.getElementById("prioridadesResultado");
+    const texto=(out&&out.text)||"";
+    const el2=document.getElementById("recadoDoDiaResultado");
     if(!el2)return;
-    el2.innerHTML=prioridades.length
-      ?prioridades.map((p,i)=>`<div style="display:flex;gap:10px;padding:8px 0;${i>0?"border-top:1px solid var(--line);":""}"><b style="min-width:18px;color:var(--brand)">${i+1}.</b><div><div style="font-weight:600;font-size:13px;color:var(--ink)">${esc(p.titulo)}</div>${p.detalhe?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${esc(p.detalhe)}</div>`:""}</div></div>`).join("")
-      :`<div style="color:var(--muted);font-size:13px">Nenhum sinal de prioridade hoje ✓</div>`;
+    el2.innerHTML=texto
+      ?`<div style="white-space:pre-wrap">${esc(texto)}</div>`
+      :`<div style="color:var(--muted);font-size:13px">Não consegui gerar o recado agora.</div>`;
   }catch(e){
-    const el2=document.getElementById("prioridadesResultado");
-    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar as prioridades agora.</div>`;
+    const el2=document.getElementById("recadoDoDiaResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar o recado agora.</div>`;
   }
 }
-function prioridadesDoDiaHtml(){
+function recadoDoDiaHtml(){
   return `<div class="breakdown" style="border-color:var(--brand);border-width:1.5px">
-    <h3>🎯 Prioridades do dia (IA)</h3>
-    <div id="prioridadesResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Analisando prioridades do dia...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
+    <h3>👋 Recado do dia</h3>
+    <div id="recadoDoDiaResultado" style="margin-top:4px;font-size:13px;line-height:1.5">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Preparando o recado do dia...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
   </div>`;
 }
 function autoTriggerDashboardIA(jobs,isPracaOuCE){
@@ -1068,11 +1079,11 @@ function autoTriggerDashboardIA(jobs,isPracaOuCE){
   const sigRisco=JSON.stringify(jobs.filter(j=>!isTerminal(j.faseAtual)).map(j=>[j.id,j.proximosPassos,j.briefing]));
   if(aiShouldRun("riscos",sigRisco))analisarRiscosIA();
 }
-function autoTriggerPrioridadesDoDia(jobs){
+function autoTriggerRecadoDoDia(jobs){
   if(!sampleApi)return;
   const hoje=today();
   const sig=JSON.stringify([hoje,jobs.map(j=>[j.id,j.situacao,j.faseAtual,j.ultimoContatoEm]).sort()]);
-  if(aiShouldRun("prioridadesDia",sig))gerarPrioridadesDoDiaIA();
+  if(aiShouldRun("recadoDoDia",sig))gerarRecadoDoDiaIA();
 }
 function jobPdfBodyHtml(job){
   const linhas=job.linhas||[];
@@ -1132,9 +1143,36 @@ function jobPdfBodyHtml(job){
     </div>
   </div>`;
 }
+const PDF_CSS_TEXT=`
+  body{margin:0;background:#fff}
+  .pdf-doc{font-family:Arial,Helvetica,sans-serif;color:#1C1D1A;padding:16mm 14mm;font-size:12.5px}
+  .pdf-doc .pdf-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid #1C1D1A;padding-bottom:14px;margin-bottom:18px}
+  .pdf-doc .pdf-head h1{font-size:18px;margin:0 0 3px}
+  .pdf-doc .pdf-head .sub{font-size:11.5px;color:#555}
+  .pdf-doc .pdf-logo{max-height:38px;display:block}
+  .pdf-doc .pdf-logo-placeholder{font-weight:700;font-size:13px;letter-spacing:.09em;color:#555;text-transform:uppercase}
+  .pdf-doc h2{font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:#5C2A34;border-bottom:1px solid #ddd;padding-bottom:4px;margin:20px 0 10px}
+  .pdf-doc .pdf-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px}
+  .pdf-doc .pf .pl{color:#777;font-size:10px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
+  .pdf-doc .pf .pv{color:#1C1D1A}
+  .pdf-doc table{width:100%;border-collapse:collapse;font-size:12px;margin-top:6px}
+  .pdf-doc th,.pdf-doc td{border-bottom:1px solid #ddd;padding:6px 4px;text-align:left}
+  .pdf-doc .pdf-foot{margin-top:32px;padding-top:10px;border-top:1px solid #ddd;font-size:10px;color:#888;display:flex;justify-content:space-between}
+  .pdf-doc ul{margin:4px 0;padding-left:18px}
+`;
+function jobPdfStandaloneHtml(job){
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Job ${esc(job.numero||"")} — ${esc(job.cliente)}</title><style>${PDF_CSS_TEXT}</style></head><body>${jobPdfBodyHtml(job)}<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body></html>`;
+}
 function baixarPdfJob(id){
   const job=data.jobs.find(j=>j.id===id);
   if(!job){toast("Job não encontrado.");return;}
+  if(typeof downloadsApi!=="undefined"&&downloadsApi){
+    const filename=`Ficha_${(job.numero||job.id).replace(/[^A-Za-z0-9_-]/g,"_")}.html`;
+    downloadsApi.save({filename,data:jobPdfStandaloneHtml(job)})
+      .then(()=>toast("Arquivo baixado ✓ Abra-o e escolha \"Salvar como PDF\" na impressão."))
+      .catch(e=>{ if(e&&e.code!=="declined")toast("Não consegui baixar o arquivo."); });
+    return;
+  }
   document.getElementById("printArea").innerHTML=jobPdfBodyHtml(job);
   setTimeout(()=>window.print(),80);
 }
@@ -1433,8 +1471,8 @@ function render(){
     const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||isCE);
     const prioBox=document.getElementById("prioridadesBox");
     if(isPracaOuCE){
-      prioBox.innerHTML=prioridadesDoDiaHtml();
-      autoTriggerPrioridadesDoDia(jobs);
+      prioBox.innerHTML=recadoDoDiaHtml();
+      autoTriggerRecadoDoDia(jobs);
     }else prioBox.innerHTML="";
     if(isCE)renderBoardPorCliente(jobs); else renderBoard(jobs);
   }
