@@ -394,7 +394,8 @@
     </div>
 
     <nav class="navlist" id="mainTabs" data-hide-executivo>
-      <button data-v="jobs" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>Jobs</button>
+      <button data-v="jobs" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>PIPs</button>
+      <button data-v="semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="1"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Minha semana</button>
       <button data-v="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>Dashboard</button>
     </nav>
 
@@ -410,7 +411,7 @@
     </div>
 
     <div class="side-actions" data-hide-executivo>
-      <button class="sbtn primary" data-act="new" data-writeonly>＋ Novo job</button>
+      <button class="sbtn primary" data-act="new" data-writeonly>＋ Novo PIP</button>
       <button class="sbtn" data-act="settings" data-writeonly>⚙ Cadastros</button>
       <button class="sbtn" data-act="eplabs">📋 EP Labs</button>
       <button class="sbtn" data-act="export">⬇ Backup (JSON)</button>
@@ -426,7 +427,7 @@
 
   <main class="main">
     <div class="mainhead">
-      <h2 id="pageTitle">Jobs</h2>
+      <h2 id="pageTitle">PIPs</h2>
       <span class="headerscope" id="scopeBadge"></span>
       <div class="seg" id="segStatus" data-hide-executivo>
         <button data-v="todos" class="on">Todos</button>
@@ -441,6 +442,7 @@
     <div class="kpis secondary" id="kpisComercial" data-hide-executivo></div>
 
     <div id="viewJobs"><div id="prioridadesBox"></div><div id="board"></div></div>
+    <div id="viewSemana" style="display:none"></div>
     <div id="viewDashboard" style="display:none"><div id="dashboard"></div></div>
     <div id="viewExecutivo" style="display:none"></div>
   </main>
@@ -461,6 +463,8 @@ const PRACAS=["CAM","RIB","SCA","VAR","CE"];
 const ORIGENS=["Solicitação interna","Proativo"];
 const PRIORIDADES=["Alta","Média","Baixa"];
 const TIPOS_JOB=["Proposta comercial","Pós-venda","Fechamento direto"];
+const PIP_NOME="Pedido Interno de Proposta Comercial";
+const PIP_SIGLA="PIP";
 const LOGO_GRUPO_EP=""; /* data URI do logo do Grupo EP — preencher quando o arquivo for enviado */
 function logoHtml(maxHeight){
   return LOGO_GRUPO_EP
@@ -588,7 +592,7 @@ function aiShouldRun(key,sig){
 function executivoFormHtml(){
   return `<div style="max-width:640px">
     <h2 style="font-family:'Lexend';font-weight:500;font-size:21px;margin:0 0 4px">Novo briefing</h2>
-    <p style="color:var(--muted);font-size:13.5px;margin:0 0 18px">Preencha o briefing do job. Assim que enviar, ele aparece pronto pra um analista assumir.</p>
+    <p style="color:var(--muted);font-size:13.5px;margin:0 0 18px">Preencha o briefing do Pedido Interno de Proposta Comercial (PIP). Assim que enviar, ele aparece pronto pra um analista assumir.</p>
     <div class="field"><label>Cliente</label><input id="ex_cliente" placeholder="Nome do cliente"></div>
     <div class="row2">
       <div class="field"><label>Tipo</label><select id="ex_tipo">${optionsHtml(TIPOS_JOB,TIPOS_JOB[0])}</select></div>
@@ -642,6 +646,7 @@ function submitExecutivoBriefing(){
     recuperavel:false,
     declinioAutomatico:false,
     faseAntesFechamento:null,
+    faseHistorico:[{fase:"Recebido",em:Date.now()}],
     createdAt:Date.now(),
     updatedAt:Date.now()
   };
@@ -649,14 +654,14 @@ function submitExecutivoBriefing(){
   data.jobs.push(j);
   save();
   document.getElementById("viewExecutivo").innerHTML=executivoFormHtml();
-  document.getElementById("execFeedback").innerHTML=`<div style="background:var(--brand-bg);color:var(--brand);padding:12px 14px;border-radius:3px;font-weight:700;font-size:13.5px">Briefing enviado ✓ Número do job: ${esc(j.numero)}. Um analista vai assumir a partir daqui.</div>`;
+  document.getElementById("execFeedback").innerHTML=`<div style="background:var(--brand-bg);color:var(--brand);padding:12px 14px;border-radius:3px;font-weight:700;font-size:13.5px">Briefing enviado ✓ Número do PIP: ${esc(j.numero)}. Um analista vai assumir a partir daqui.</div>`;
   toast("Briefing enviado ✓");
 }
 
 /* ============ visão de contas especiais (poucos clientes, acompanhamento individual) ============ */
 function renderBoardPorCliente(jobs){
   const el=document.getElementById("board");
-  if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum job de conta especial ainda.<br>Selecione a praça "CE (Contas Especiais)" num job pra ele aparecer aqui.</div>`;return;}
+  if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum PIP de conta especial ainda.<br>Selecione a praça "CE (Contas Especiais)" num PIP pra ele aparecer aqui.</div>`;return;}
   const clientes=[...new Set(jobs.map(j=>j.cliente))].sort();
   el.innerHTML=clientes.map(cliente=>{
     const jobsCliente=jobs.filter(j=>j.cliente===cliente);
@@ -695,13 +700,13 @@ function desempenhoPorClienteHtml(jobs){
   return `<div class="breakdown">
     <h3>Desempenho por cliente</h3>
     <div style="overflow-x:auto"><table class="yr-table">
-      <tr><th>Cliente</th><th>Jobs</th><th>Fechados</th><th>Orçado</th><th>Fechado</th><th>Ticket médio</th><th>Conversão</th></tr>
+      <tr><th>Cliente</th><th>PIPs</th><th>Fechados</th><th>Orçado</th><th>Fechado</th><th>Ticket médio</th><th>Conversão</th></tr>
       ${rows}
     </table></div>
   </div>`;
 }
-function metaMensalHtml(titulo,praca,jobs){
-  const meta=Number((data.config.metasPraca||{})[praca])||0;
+function metaMensalHtml(titulo,meta,jobs){
+  meta=Number(meta)||0;
   const months=last6Months();
   const porMes={};
   jobs.forEach(j=>{
@@ -740,7 +745,13 @@ function pracasEmEscopo(){
   return PRACAS.slice();
 }
 function metasHtml(jobs){
-  return pracasEmEscopo().map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,p,jobs.filter(j=>j.praca===p))).join("");
+  return pracasEmEscopo().map(p=>metaMensalHtml(`Meta da praça ${p==="CE"?"CE (Contas Especiais)":p} — mês a mês`,(data.config.metasPraca||{})[p],jobs.filter(j=>j.praca===p))).join("");
+}
+function metasIndividuaisHtml(jobsM){
+  const metas=data.config.metasAnalista||{};
+  const nomes=analistaNomes().filter(n=>Number(metas[n])>0);
+  if(!nomes.length)return "";
+  return nomes.map(n=>metaMensalHtml(`Meta individual — ${esc(n)} — mês a mês`,metas[n],jobsM.filter(j=>j.analista===n))).join("");
 }
 function heatmapMetaHtml(jobs){
   const pracasAlvo=pracasEmEscopo();
@@ -838,7 +849,7 @@ async function sugerirVeiculosIA(){
   wrap.innerHTML=`<span style="color:var(--muted);font-size:12px">💡 Pensando em veículos complementares...</span>`;
   try{
     const out=await sampleApi.json(
-      `Sugira até 3 veículos de mídia complementares para este job. Você só pode escolher veículos que estejam no catálogo do Grupo EP listado abaixo — nunca sugira nada fora dessa lista, mesmo que pareça relevante. Priorize o que já foi usado com sucesso especificamente com este cliente; na falta de histórico do cliente, use o que costuma fechar nessa praça.\n\nCatálogo de veículos do Grupo EP: ${catalogo.join(", ")}.\nHistórico de veículos fechados com este cliente: ${historicoCliente.join(", ")||"nenhum ainda"}.\nHistórico de veículos fechados nessa praça: ${historicoPraca.join(", ")||"sem histórico"}.\nVeículos já adicionados neste job: ${atuais.join(", ")||"nenhum"}.\n\nResponda em português no formato {"sugestoes":["veiculo1","veiculo2"]}, sem repetir os já adicionados.`,
+      `Sugira até 3 veículos de mídia complementares para este PIP. Você só pode escolher veículos que estejam no catálogo do Grupo EP listado abaixo — nunca sugira nada fora dessa lista, mesmo que pareça relevante. Priorize o que já foi usado com sucesso especificamente com este cliente; na falta de histórico do cliente, use o que costuma fechar nessa praça.\n\nCatálogo de veículos do Grupo EP: ${catalogo.join(", ")}.\nHistórico de veículos fechados com este cliente: ${historicoCliente.join(", ")||"nenhum ainda"}.\nHistórico de veículos fechados nessa praça: ${historicoPraca.join(", ")||"sem histórico"}.\nVeículos já adicionados neste PIP: ${atuais.join(", ")||"nenhum"}.\n\nResponda em português no formato {"sugestoes":["veiculo1","veiculo2"]}, sem repetir os já adicionados.`,
       {modelTier:"quick"}
     );
     const sugestoes=(out&&Array.isArray(out.sugestoes))?out.sugestoes.filter(s=>catalogo.includes(s)&&!atuais.includes(s)):[];
@@ -857,11 +868,11 @@ async function analisarRiscosIA(){
   const el=document.getElementById("riscoResultado");
   if(!el)return;
   const jobs=filtered().filter(j=>!isTerminal(j.faseAtual)&&(j.proximosPassos||j.briefing));
-  if(!jobs.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum job em aberto com texto pra analisar.</div>`;return;}
+  if(!jobs.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum PIP em aberto com texto pra analisar.</div>`;return;}
   const resumo=jobs.slice(0,30).map(j=>`- ${j.cliente} (${j.numero}): ${(j.proximosPassos||j.briefing||"").slice(0,400)}`).join("\n");
   try{
     const out=await sampleApi.json(
-      `Analise estas anotações de jobs de marketing em aberto e aponte quais parecem estar em risco de não fechar (cliente sumiu, objeção de preço, mencionou concorrente, sinal de desistência etc). Responda em português no formato {"riscos":[{"cliente":"...","motivo":"..."}]}, só com os jobs que realmente têm sinal de risco (pode ser lista vazia).\n\n${resumo}`,
+      `Analise estas anotações de PIPs de marketing em aberto e aponte quais parecem estar em risco de não fechar (cliente sumiu, objeção de preço, mencionou concorrente, sinal de desistência etc). Responda em português no formato {"riscos":[{"cliente":"...","motivo":"..."}]}, só com os PIPs que realmente têm sinal de risco (pode ser lista vazia).\n\n${resumo}`,
       {modelTier:"default"}
     );
     const riscos=(out&&Array.isArray(out.riscos))?out.riscos:[];
@@ -875,9 +886,12 @@ async function analisarRiscosIA(){
     if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui analisar agora.</div>`;
   }
 }
-async function gerarResumoIA(){
+async function gerarResumoIA(targetId,textareaId,copyAct){
+  targetId=targetId||"resumoResultado";
+  textareaId=textareaId||"resumoTexto";
+  copyAct=copyAct||"copiar-resumo";
   if(!sampleApi)return;
-  const el=document.getElementById("resumoResultado");
+  const el=document.getElementById(targetId);
   if(!el)return;
   const jobs=filtered();
   const semanaAtras=new Date();semanaAtras.setDate(semanaAtras.getDate()-7);
@@ -885,20 +899,20 @@ async function gerarResumoIA(){
   const fechados=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento&&pd(j.dataFechamento)>=semanaAtras);
   const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
   const valorFechadoSemana=fechados.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
-  const dadosTexto=`Jobs recebidos nos últimos 7 dias: ${recebidos.length}.\nJobs fechados nos últimos 7 dias: ${fechados.length}, somando ${fmtMoney(valorFechadoSemana)}.\nJobs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de jobs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
+  const dadosTexto=`PIPs recebidos nos últimos 7 dias: ${recebidos.length}.\nPIPs fechados nos últimos 7 dias: ${fechados.length}, somando ${fmtMoney(valorFechadoSemana)}.\nPIPs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de PIPs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
   try{
     const out=await sampleApi(
       `Escreva um resumo curto (3-5 frases, tom direto, em português) desses números da semana de um time de marketing de clientes, pronto pra colar num Slack ou e-mail. Não invente números, use só os que eu passar.\n\n${dadosTexto}`,
       {modelTier:"quick"}
     );
     const texto=(out&&out.text)||"";
-    const el2=document.getElementById("resumoResultado");
+    const el2=document.getElementById(targetId);
     if(!el2)return;
     el2.innerHTML=texto
-      ?`<textarea id="resumoTexto" style="width:100%;min-height:110px;border:1px solid var(--line-strong);border-radius:3px;padding:10px;background:var(--surface-2)">${esc(texto)}</textarea><button type="button" class="linha-add-btn" style="margin-top:8px" data-act="copiar-resumo">📋 Copiar</button>`
+      ?`<textarea id="${textareaId}" style="width:100%;min-height:110px;border:1px solid var(--line-strong);border-radius:3px;padding:10px;background:var(--surface-2)">${esc(texto)}</textarea><button type="button" class="linha-add-btn" style="margin-top:8px" data-act="${copyAct}">📋 Copiar</button>`
       :`<div style="color:var(--muted);font-size:13px">Não consegui gerar agora.</div>`;
   }catch(e){
-    const el2=document.getElementById("resumoResultado");
+    const el2=document.getElementById(targetId);
     if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui gerar agora.</div>`;
   }
 }
@@ -912,7 +926,7 @@ async function gerarResumoDoDiaIA(){
   const fechadosHoje=jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje);
   const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
   const parados=jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j));
-  const dadosTexto=`Jobs recebidos hoje: ${recebidosHoje.length}.\nJobs fechados hoje: ${fechadosHoje.length}, somando ${fmtMoney(valorFechadoHoje)}.\nJobs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de jobs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
+  const dadosTexto=`PIPs recebidos hoje: ${recebidosHoje.length}.\nPIPs fechados hoje: ${fechadosHoje.length}, somando ${fmtMoney(valorFechadoHoje)}.\nPIPs parados (sem contato há 7+ dias): ${parados.length} (${parados.map(j=>j.cliente).join(", ")||"nenhum"}).\nTotal de PIPs em andamento: ${jobs.filter(j=>!isTerminal(j.faseAtual)).length}.`;
   try{
     const out=await sampleApi(
       `Escreva um resumo curto (2-4 frases, tom direto, em português) do dia de hoje pra uma dupla de analista e estagiária de um time de marketing de clientes, pronto pra colar num Slack. Não invente números, use só os que eu passar.\n\n${dadosTexto}`,
@@ -941,9 +955,9 @@ async function gerarJobMastigadoIA(jobId){
     .join("\n");
   const veiculosCliente=[...new Set(jobsCliente.filter(j=>j.faseAtual==="Fechado").flatMap(j=>(j.linhas||[]).map(l=>l.veiculo)).filter(Boolean))];
   const dadosJob=`Cliente: ${job.cliente}\nTipo: ${job.tipo}\nPraça: ${job.praca}\nBudget estimado: ${job.budget?fmtMoney(job.budget):"não informado"}\nPúblico-alvo: ${job.publicoAlvo||"não informado"}\nPeríodo: ${periodoCampanhaFmt(job)||"não informado"}\nObjetivo de comunicação: ${job.objetivoComunicacao||"não informado"}\nObjetivo de marketing: ${job.objetivoMarketing||"não informado"}\nSituação a ser comunicada: ${job.situacaoComunicar||"não informado"}\nDiferenciais do cliente: ${job.diferenciais||"não informado"}\nRestrições: ${job.restricoes||"nenhuma"}\nBriefing livre: ${(job.briefing||"").slice(0,600)||"nenhum"}`;
-  const historicoTexto=historico?`\n\nHistórico de jobs anteriores deste cliente:\n${historico}`:"\n\nSem histórico anterior deste cliente.";
+  const historicoTexto=historico?`\n\nHistórico de PIPs anteriores deste cliente:\n${historico}`:"\n\nSem histórico anterior deste cliente.";
   const catalogoTexto=`\n\nCatálogo de veículos do Grupo EP: ${catalogo.join(", ")}.\nVeículos já fechados com este cliente: ${veiculosCliente.join(", ")||"nenhum ainda"}.`;
-  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Pensando na melhor abordagem para este job...</div>`;
+  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Pensando na melhor abordagem para este PIP...</div>`;
   try{
     const out=await sampleApi.json(
       `Você é um estrategista sênior de uma agência de marketing de mídia. Com base neste briefing de campanha e no histórico do cliente, dê uma recomendação prática pro analista que vai montar a proposta. Responda em português, no formato JSON {"tom":"...","argumentoVenda":"...","veiculosSugeridos":["...","..."],"materiaisNecessarios":["...","..."]}. "tom" é 1-2 frases sobre o tom/conteúdo ideal da apresentação para essa atividade. "argumentoVenda" é 1-2 frases com o principal argumento de venda pra esse cliente/situação. "veiculosSugeridos" é uma lista curta (até 4) de veículos de mídia mais adequados — escolha OBRIGATORIAMENTE apenas entre os veículos do catálogo do Grupo EP informado abaixo, nunca sugira algo fora dessa lista, e priorize o que já fechou com esse cliente. "materiaisNecessarios" é uma lista curta (até 5) do que o analista precisa reunir/produzir pra montar essa proposta (ex: cases, referências visuais, dados do cliente). Seja específico e prático, nunca genérico. Se faltar informação suficiente pra ser específico, responda com campos vazios em vez de inventar.\n\n${dadosJob}${historicoTexto}${catalogoTexto}`,
@@ -1000,7 +1014,7 @@ function coletarSinaisPrioridades(scopeJobs,praca){
   }
   const temSinal=parados.length||atrasados.length||aguardando.length||subutilizados.length||!!metaTexto;
   return {
-    texto:`Jobs parados sem contato: ${parados.join("; ")||"nenhum"}.\nJobs atrasados: ${atrasados.join("; ")||"nenhum"}.\nJobs aguardando retorno do cliente: ${aguardando.join(", ")||"nenhum"}.\n${metaTexto||"Sem meta configurada pra essa praça."}\nVeículos historicamente relevantes e pouco usados neste mês: ${subutilizados.join(", ")||"nenhum sinal"}.`,
+    texto:`PIPs parados sem contato: ${parados.join("; ")||"nenhum"}.\nPIPs atrasados: ${atrasados.join("; ")||"nenhum"}.\nPIPs aguardando retorno do cliente: ${aguardando.join(", ")||"nenhum"}.\n${metaTexto||"Sem meta configurada pra essa praça."}\nVeículos historicamente relevantes e pouco usados neste mês: ${subutilizados.join(", ")||"nenhum sinal"}.`,
     temSinal
   };
 }
@@ -1031,11 +1045,11 @@ async function gerarRecadoDoDiaIA(){
   const valorFechadoHoje=fechadosHoje.reduce((s,j)=>s+(Number(j.valorFechado)||0),0);
   const emAndamento=jobs.filter(j=>!isTerminal(j.faseAtual)).length;
   const {texto:sinaisTexto}=coletarSinaisPrioridades(jobs,praca);
-  const dadosTexto=`${momentoDoMesTexto(new Date())}\nRecebidos hoje: ${recebidosHoje}. Fechados hoje: ${fechadosHoje.length} (${fmtMoney(valorFechadoHoje)}). Jobs em andamento: ${emAndamento}.\n${sinaisTexto}`;
+  const dadosTexto=`${momentoDoMesTexto(new Date())}\nRecebidos hoje: ${recebidosHoje}. Fechados hoje: ${fechadosHoje.length} (${fmtMoney(valorFechadoHoje)}). PIPs em andamento: ${emAndamento}.\n${sinaisTexto}`;
   el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Preparando o recado do dia...</div>`;
   try{
     const out=await sampleApi(
-      `Você está escrevendo um recado curto e caloroso pra abrir o dia da ${nomePraca}, de um time de marketing de clientes. O recado é pra praça inteira, nunca direcione a uma pessoa específica. Comece exatamente com "Olá, ${nomePraca}!" e escreva mais 2-4 frases diretas, tom de colega (não de robô). Varie o foco de acordo com o que for mais relevante nos dados de hoje — às vezes vai ser sobre o ritmo da meta do mês, às vezes sobre um job parado ou atrasado, às vezes sobre o volume do dia, às vezes sobre o momento do mês (início, metade, reta final) — não repita sempre a mesma estrutura de frase. Não invente números nem clientes que não estejam nos dados abaixo. Se não houver nenhum sinal de risco/atraso/meta abaixo do ritmo, parabenize o andamento em vez de inventar um problema. Responda só com o texto do recado, em português, pronto pra ler — nada de explicação extra.\n\n${dadosTexto}`,
+      `Você está escrevendo um recado curto e caloroso pra abrir o dia da ${nomePraca}, de um time de marketing de clientes. O recado é pra praça inteira, nunca direcione a uma pessoa específica. Comece exatamente com "Olá, ${nomePraca}!" e escreva mais 2-4 frases diretas, tom de colega (não de robô). Varie o foco de acordo com o que for mais relevante nos dados de hoje — às vezes vai ser sobre o ritmo da meta do mês, às vezes sobre um PIP parado ou atrasado, às vezes sobre o volume do dia, às vezes sobre o momento do mês (início, metade, reta final) — não repita sempre a mesma estrutura de frase. Não invente números nem clientes que não estejam nos dados abaixo. Se não houver nenhum sinal de risco/atraso/meta abaixo do ritmo, parabenize o andamento em vez de inventar um problema. Responda só com o texto do recado, em português, pronto pra ler — nada de explicação extra.\n\n${dadosTexto}`,
       {modelTier:"quick"}
     );
     const texto=(out&&out.text)||"";
@@ -1055,6 +1069,33 @@ function recadoDoDiaHtml(){
     <div id="recadoDoDiaResultado" style="margin-top:4px;font-size:13px;line-height:1.5">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Preparando o recado do dia...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
   </div>`;
 }
+function isoWeekKey(d){
+  d=d||new Date();
+  const target=new Date(d.valueOf());
+  const dayNr=(d.getDay()+6)%7;
+  target.setDate(target.getDate()-dayNr+3);
+  const firstThursday=new Date(target.getFullYear(),0,4);
+  const diff=target-firstThursday;
+  const week=1+Math.round(diff/(7*86400000));
+  return `${target.getFullYear()}-W${String(week).padStart(2,"0")}`;
+}
+const RESUMO_SEMANAL_KEY="jobs-resumo-semanal-mostrado-v1";
+function resumoSemanalJaMostrado(){
+  try{ return localStorage.getItem(RESUMO_SEMANAL_KEY)===isoWeekKey(); }catch(e){ return false; }
+}
+function marcarResumoSemanalMostrado(){
+  try{ localStorage.setItem(RESUMO_SEMANAL_KEY,isoWeekKey()); }catch(e){}
+}
+function resumoSemanalBannerHtml(){
+  return `<div class="breakdown" style="border-color:var(--brand);border-width:1.5px;margin-top:12px">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <h3 style="margin:0">📅 Fechando a semana</h3>
+      <button type="button" class="linha-add-btn" data-act="dispensar-resumo-semanal">Dispensar</button>
+    </div>
+    <p style="margin:8px 0;color:var(--muted);font-size:12px">Hoje é sexta — aqui está o resumo da semana pronto pra compartilhar com o time.</p>
+    <div id="resumoSemanalBannerResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Gerando resumo da semana...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
+  </div>`;
+}
 function autoTriggerDashboardIA(jobs,isPracaOuCE){
   if(!sampleApi)return;
   const hoje=today();
@@ -1065,6 +1106,11 @@ function autoTriggerDashboardIA(jobs,isPracaOuCE){
   if(aiShouldRun("resumoSemana",sigSemana))gerarResumoIA();
   const sigRisco=JSON.stringify(jobs.filter(j=>!isTerminal(j.faseAtual)).map(j=>[j.id,j.proximosPassos,j.briefing]));
   if(aiShouldRun("riscos",sigRisco))analisarRiscosIA();
+}
+function autoTriggerResumoSemanalBanner(){
+  if(!sampleApi)return;
+  const sig=isoWeekKey();
+  if(aiShouldRun("resumoSemanalBanner",sig))gerarResumoIA("resumoSemanalBannerResultado","resumoSemanalBannerTexto","copiar-resumo-semanal-banner");
 }
 function autoTriggerRecadoDoDia(jobs){
   if(!sampleApi)return;
@@ -1081,7 +1127,7 @@ function jobPdfBodyHtml(job){
   return `<div class="pdf-doc">
     <div class="pdf-head">
       <div>
-        <h1>Ficha de Job — ${esc(job.cliente)}</h1>
+        <h1>Ficha de Pedido Interno de Proposta Comercial (PIP) — ${esc(job.cliente)}</h1>
         <div class="sub">Nº ${esc(job.numero||"—")} · ${esc(job.tipo||"")} · Praça ${esc(job.praca==="CE"?"CE (Contas Especiais)":job.praca)}</div>
       </div>
       ${LOGO_GRUPO_EP?`<img class="pdf-logo" src="${LOGO_GRUPO_EP}" alt="Grupo EP">`:`<div class="pdf-logo-placeholder">Grupo EP</div>`}
@@ -1124,7 +1170,7 @@ function jobPdfBodyHtml(job){
 
     <div class="pdf-foot">
       <span>Documento gerado em ${fmtDate(today())} pelo Grupo EP — uso interno.</span>
-      <span>Job ${esc(job.numero||"")}</span>
+      <span>PIP ${esc(job.numero||"")}</span>
     </div>
   </div>`;
 }
@@ -1146,11 +1192,11 @@ const PDF_CSS_TEXT=`
   .pdf-doc ul{margin:4px 0;padding-left:18px}
 `;
 function jobPdfStandaloneHtml(job){
-  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>Job ${esc(job.numero||"")} — ${esc(job.cliente)}</title><style>${PDF_CSS_TEXT}</style></head><body>${jobPdfBodyHtml(job)}<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body></html>`;
+  return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>PIP ${esc(job.numero||"")} — ${esc(job.cliente)}</title><style>${PDF_CSS_TEXT}</style></head><body>${jobPdfBodyHtml(job)}<script>window.addEventListener("load",function(){setTimeout(function(){window.print();},250);});<\/script></body></html>`;
 }
 function baixarPdfJob(id){
   const job=data.jobs.find(j=>j.id===id);
-  if(!job){toast("Job não encontrado.");return;}
+  if(!job){toast("PIP não encontrado.");return;}
   if(typeof downloadsApi!=="undefined"&&downloadsApi){
     const filename=`Ficha_${(job.numero||job.id).replace(/[^A-Za-z0-9_-]/g,"_")}.html`;
     downloadsApi.save({filename,data:jobPdfStandaloneHtml(job)})
@@ -1190,6 +1236,7 @@ async function load(){
   if(data.config.metaCEMensal&&!data.config.metasPraca.CE)data.config.metasPraca.CE=Number(data.config.metaCEMensal)||0;
   delete data.config.metaCEMensal;
   PRACAS.forEach(p=>{data.config.metasPraca[p]=Number(data.config.metasPraca[p])||0;});
+  data.config.metasAnalista=data.config.metasAnalista||{};
   data.config.senhasAcesso=data.config.senhasAcesso||{};
   data.config.senhasAcesso.praca=data.config.senhasAcesso.praca||{};
   data.jobs=data.jobs.map(migrateJob);
@@ -1296,7 +1343,27 @@ function migrateJob(j){
   }
   delete j.linkPlanilha;
   j.planilhas=j.planilhas.map(p=>({id:p.id||uid(),nome:p.nome||"",url:p.url||""}));
+  j.historicoValores=Array.isArray(j.historicoValores)?j.historicoValores:[];
+  if(!Array.isArray(j.faseHistorico)||!j.faseHistorico.length){
+    const backfill=[];
+    const criado=j.createdAt||(pd(j.dataRecebimento)?pd(j.dataRecebimento).getTime():null)||Date.now();
+    backfill.push({fase:"Recebido",em:criado});
+    if(j.dataEntrega&&pd(j.dataEntrega))backfill.push({fase:"Entregue",em:pd(j.dataEntrega).getTime()});
+    if(j.dataFechamento&&isTerminal(j.faseAtual)&&pd(j.dataFechamento))backfill.push({fase:j.faseAtual,em:pd(j.dataFechamento).getTime()});
+    j.faseHistorico=backfill;
+  }
   return j;
+}
+function registrarFase(job,em){
+  job.faseHistorico=job.faseHistorico||[];
+  job.faseHistorico.push({fase:job.faseAtual,em:em||Date.now()});
+}
+function registrarValor(job,orcadoAntes,fechadoAntes){
+  const orcadoDepois=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  const fechadoDepois=Number(job.valorFechado)||0;
+  if(orcadoAntes===orcadoDepois&&fechadoAntes===fechadoDepois)return;
+  job.historicoValores=job.historicoValores||[];
+  job.historicoValores.push({em:Date.now(),valorOrcadoAntes:orcadoAntes,valorOrcadoDepois:orcadoDepois,valorFechadoAntes:fechadoAntes,valorFechadoDepois:fechadoDepois});
 }
 function diasParadoJob(job){
   if(isTerminal(job.faseAtual))return null;
@@ -1319,6 +1386,7 @@ function applyAgingRules(){
         job.recuperavel=true;
         job.declinioAutomatico=true;
         job.updatedAt=Date.now();
+        registrarFase(job);
         changed=true;
       }
     }
@@ -1341,8 +1409,9 @@ function reabrirJob(id){
   job.motivoPerda="";
   job.ultimoContatoEm=Date.now();
   job.updatedAt=Date.now();
+  registrarFase(job);
   save();render();
-  toast("Job reaberto ✓");
+  toast("PIP reaberto ✓");
 }
 async function save(){
   try{
@@ -1394,7 +1463,7 @@ function alertaPrazo(job){
 }
 function inicialesCliente(cliente){
   const letras=(cliente||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z]/g,"").toUpperCase();
-  return letras.slice(0,3)||"JOB";
+  return letras.slice(0,3)||"PIP";
 }
 function nextNumero(cliente){
   const ini=inicialesCliente(cliente);
@@ -1448,17 +1517,26 @@ function render(){
   const jobs=filtered();
   const pairs=pairsFor(jobs);
   renderKpis(jobs,pairs);
-  document.getElementById("pageTitle").textContent=mainView==="jobs"?"Jobs":"Dashboard";
+  document.getElementById("pageTitle").textContent=mainView==="jobs"?"PIPs":mainView==="semana"?"Minha semana":"Dashboard";
   document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
+  document.getElementById("viewSemana").style.display=mainView==="semana"?"block":"none";
   document.getElementById("viewDashboard").style.display=mainView==="dashboard"?"block":"none";
+  document.getElementById("kpis").style.display=mainView==="semana"?"none":"";
+  document.getElementById("kpisComercial").style.display=mainView==="semana"?"none":"";
+  document.getElementById("segStatus").style.display=mainView==="semana"?"none":"";
   if(mainView==="jobs"){
     const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||isCE);
     const prioBox=document.getElementById("prioridadesBox");
     if(isPracaOuCE){
-      prioBox.innerHTML=recadoDoDiaHtml();
+      const mostrarResumoSemanal=new Date().getDay()===5&&!resumoSemanalJaMostrado();
+      prioBox.innerHTML=recadoDoDiaHtml()+(mostrarResumoSemanal?resumoSemanalBannerHtml():"");
       autoTriggerRecadoDoDia(jobs);
+      if(mostrarResumoSemanal)autoTriggerResumoSemanalBanner();
     }else prioBox.innerHTML="";
     if(isCE)renderBoardPorCliente(jobs); else renderBoard(jobs);
+  }
+  else if(mainView==="semana"){
+    document.getElementById("viewSemana").innerHTML=minhaSemanaHtml(jobs);
   }
   else renderDashboard(jobs,pairs);
 }
@@ -1501,7 +1579,7 @@ function renderKpis(jobs,pairs){
   const aguardando=jobs.filter(j=>j.situacao==="Aguardando cliente").length;
   const kpi=(cls,icon,label,value)=>`<div class="kpi ${cls}"><div class="icon">${icon}</div><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
   document.getElementById("kpis").innerHTML=
-    kpi("k-total",KPI_ICONS.total,"Total de jobs",total)
+    kpi("k-total",KPI_ICONS.total,"Total de PIPs",total)
     +kpi("k-andamento",KPI_ICONS.andamento,"Em andamento",andamento)
     +kpi("k-concluido",KPI_ICONS.concluido,"Fechados",fechados)
     +kpi("k-atrasado"+(atrasados>0?" k-alert":""),KPI_ICONS.atrasado,"Atrasados",atrasados)
@@ -1519,7 +1597,7 @@ function renderKpis(jobs,pairs){
     kpi2("Valor orçado",fmtMoney(valorOrcado))
     +kpi2("Valor fechado",fmtMoney(valorFechado))
     +kpi2("% fechado (por valor ofertado)",`${pctValor}<small>%</small>`)
-    +kpi2("% fechado (por qtd. de jobs)",`${pctQtd}<small>%</small>`)
+    +kpi2("% fechado (por qtd. de PIPs)",`${pctQtd}<small>%</small>`)
     +kpi2("Ticket médio fechado",fmtMoney(fechadas>0?valorFechado/fechadas:0));
 }
 
@@ -1602,7 +1680,7 @@ function donutHtml(list){
   const gradient=stops.length?stops.join(",") :"var(--track) 0deg 360deg";
   const legend=SITUACOES.filter(s=>counts[s]>0).map(s=>
     `<div class="li"><span class="dot" style="background:${SITU_HEX[s]}"></span>${esc(s)}<b>${counts[s]}</b></div>`
-  ).join("")||`<div class="li" style="color:var(--muted)">Sem jobs ainda</div>`;
+  ).join("")||`<div class="li" style="color:var(--muted)">Sem PIPs ainda</div>`;
   return `<div class="breakdown donutcard">
     <h3 style="align-self:flex-start">Distribuição por situação</h3>
     <div class="donut" style="background:conic-gradient(${gradient})"><div class="hole"><b>${list.length}</b><span>jobs</span></div></div>
@@ -1656,7 +1734,7 @@ function evolucaoHtml(jobs,pairs){
   const fechadoPorMes={};
   jobs.forEach(j=>{ if(j.faseAtual==="Fechado"){ const k=(j.dataFechamento||"").slice(0,7); if(k)fechadoPorMes[k]=(fechadoPorMes[k]||0)+(Number(j.valorFechado)||0); } });
   return `<div class="dash-grid">`
-    + timeSeriesHtml("Jobs recebidos por mês",months,recebidosPorMes,v=>String(v))
+    + timeSeriesHtml("PIPs recebidos por mês",months,recebidosPorMes,v=>String(v))
     + timeSeriesHtml("Valor fechado por mês",months,fechadoPorMes,v=>fmtMoney(v))
     + `</div>`;
 }
@@ -1692,7 +1770,7 @@ function comparativoAnualHtml(jobs,pairs){
   return `<div class="breakdown"><h3>Comparativo anual</h3>
     <div style="overflow-x:auto"><table class="yr-table">
       <tr><th>Métrica</th>${yearsSorted.map(y=>`<th>${y}</th>`).join("")}</tr>
-      ${metricRow("Jobs recebidos",d=>d.jobs)}
+      ${metricRow("PIPs recebidos",d=>d.jobs)}
       ${metricRow("Valor orçado",d=>fmtMoney(d.valorOrcado))}
       ${metricRow("Valor fechado",d=>fmtMoney(d.valorFechado))}
       ${metricRow("% fechado (valor)",d=>(d.valorOrcado>0?Math.round(d.valorFechado/d.valorOrcado*100):0)+"%")}
@@ -1711,7 +1789,7 @@ function dinheiroMesaHtml(jobs){
       rows.push({job,dias:null,recuperavel:true});
     }
   });
-  if(!rows.length)return `<div class="breakdown"><h3>Dinheiro na mesa</h3><div style="color:var(--muted);font-size:13px">Nenhum job parado no momento ✓</div></div>`;
+  if(!rows.length)return `<div class="breakdown"><h3>Dinheiro na mesa</h3><div style="color:var(--muted);font-size:13px">Nenhum PIP parado no momento ✓</div></div>`;
   rows.sort((a,b)=>(b.dias??999)-(a.dias??999));
   const html=rows.map(r=>{
     const valor=(r.job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
@@ -1727,7 +1805,7 @@ function dinheiroMesaHtml(jobs){
       ${btn}
     </div>`;
   }).join("");
-  return `<div class="breakdown"><h3>Dinheiro na mesa — jobs parados</h3>${html}</div>`;
+  return `<div class="breakdown"><h3>Dinheiro na mesa — PIPs parados</h3>${html}</div>`;
 }
 function tipoSectionHtml(titulo,descricao,lista){
   if(!lista.length)return "";
@@ -1741,10 +1819,56 @@ function tipoSectionHtml(titulo,descricao,lista){
     <div class="kpis">${item("Quantidade",lista.length)+item("Fechados",fechados.length)+item("Valor fechado",fmtMoney(valorTotal))+item("Ticket médio",fmtMoney(ticket))}</div>
   </div>`;
 }
+async function buscarSemanticaIA(){
+  if(!sampleApi)return;
+  const input=document.getElementById("buscaSemanticaInput");
+  const query=input?input.value.trim():"";
+  const el=document.getElementById("buscaSemanticaResultado");
+  if(!el)return;
+  if(!query){el.innerHTML="";return;}
+  const candidatos=filtered().filter(j=>j.briefing||j.objetivoComunicacao||j.objetivoMarketing||j.situacaoComunicar);
+  if(!candidatos.length){el.innerHTML=`<div style="color:var(--muted);font-size:13px">Nenhum PIP com briefing pra buscar.</div>`;return;}
+  el.innerHTML=`<div style="color:var(--muted);font-size:12.5px">🤖 Buscando...</div>`;
+  const lista=candidatos.slice(0,60).map(j=>`- id:${j.id} | cliente:${j.cliente} | tipo:${j.tipo} | praça:${j.praca} | fase:${j.faseAtual} | objetivo comunicação:${(j.objetivoComunicacao||"").slice(0,150)} | objetivo marketing:${(j.objetivoMarketing||"").slice(0,150)} | situação:${(j.situacaoComunicar||"").slice(0,150)} | briefing:${(j.briefing||"").slice(0,300)}`).join("\n");
+  try{
+    const out=await sampleApi.json(
+      `Você é um buscador semântico sobre PIPs (Pedidos Internos de Proposta Comercial) de uma agência de marketing. Dada a pergunta do usuário e a lista de PIPs abaixo, retorne os mais relevantes pra essa busca, mesmo que as palavras não sejam exatamente iguais (busca por significado, não só texto literal). Responda em português no formato {"resultados":[{"id":"...","porque":"1 frase curta explicando a relevância"}]}, no máximo 8 resultados, do mais pro menos relevante, usando só ids que estão na lista. Se nada for relevante, responda lista vazia.\n\nPergunta: "${query}"\n\nPIPs:\n${lista}`,
+      {modelTier:"default"}
+    );
+    const resultados=(out&&Array.isArray(out.resultados))?out.resultados.filter(r=>r&&r.id&&candidatos.some(j=>j.id===r.id)):[];
+    const el2=document.getElementById("buscaSemanticaResultado");
+    if(!el2)return;
+    el2.innerHTML=resultados.length
+      ?resultados.map(r=>{
+        const j=data.jobs.find(x=>x.id===r.id);
+        if(!j)return "";
+        return `<div class="mcard" style="margin-bottom:8px" data-act="edit" data-id="${j.id}">
+          <div class="jobnum">${esc(j.numero||"")}</div>
+          <div class="cliente">${esc(j.cliente)}</div>
+          <div style="font-size:12px;color:var(--ink-soft);margin-top:4px">${esc(r.porque||"")}</div>
+        </div>`;
+      }).join("")
+      :`<div style="color:var(--muted);font-size:13px">Nada encontrado pra essa busca.</div>`;
+  }catch(e){
+    const el2=document.getElementById("buscaSemanticaResultado");
+    if(el2)el2.innerHTML=`<div style="color:var(--atrasado);font-size:13px">Não consegui buscar agora.</div>`;
+  }
+}
+function buscaSemanticaHtml(){
+  return `<div class="breakdown">
+    <h3>🔎 Busca semântica (IA)</h3>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:12px">Busque PIPs por significado, não só por texto exato — ex: "clientes que pediram campanha de lançamento" ou "propostas que mencionaram concorrência".</p>
+    <div style="display:flex;gap:8px">
+      <input id="buscaSemanticaInput" placeholder="${sampleApi?"O que você está procurando?":"Disponível só na versão online"}" style="flex:1;border:1px solid var(--line-strong);border-radius:var(--r-xs);padding:9px 11px;background:var(--surface-2)" ${sampleApi?"":"disabled"}>
+      <button type="button" class="linha-add-btn" data-act="buscar-semantica" ${sampleApi?"":'disabled style="opacity:.5;cursor:not-allowed"'}>Buscar</button>
+    </div>
+    <div id="buscaSemanticaResultado" style="margin-top:12px"></div>
+  </div>`;
+}
 function riscoHtml(){
   return `<div class="breakdown">
     <h3>Radar de risco (IA)</h3>
-    <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px">Lê o texto de "próximos passos"/briefing dos jobs em aberto e sinaliza possíveis riscos (cliente sumiu, objeção de preço, concorrência etc).</p>
+    <p style="color:var(--muted);font-size:12.5px;margin:0 0 10px">Lê o texto de "próximos passos"/briefing dos PIPs em aberto e sinaliza possíveis riscos (cliente sumiu, objeção de preço, concorrência etc).</p>
     <div id="riscoResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Analisando riscos...</div>`:`<div style="color:var(--muted);font-size:12px">Análise por IA disponível só na versão online.</div>`}</div>
   </div>`;
 }
@@ -1802,8 +1926,35 @@ function funilHtml(jobs){
     ${declinados?`<div style="text-align:center;margin-top:10px;font-size:12px;color:var(--cancelado)">✕ ${declinados} declinado(s) fora do funil</div>`:""}
   </div>`;
 }
+function tempoMedioPorFaseHtml(jobs){
+  const fases=["Recebido","Em desenvolvimento","Entregue"];
+  const soma={},cont={};
+  fases.forEach(f=>{soma[f]=0;cont[f]=0;});
+  jobs.forEach(j=>{
+    const hist=(j.faseHistorico||[]).slice().sort((a,b)=>a.em-b.em);
+    for(let i=0;i<hist.length-1;i++){
+      const fase=hist[i].fase;
+      if(!(fase in soma))continue;
+      const dias=(hist[i+1].em-hist[i].em)/86400000;
+      if(dias>=0){soma[fase]+=dias;cont[fase]++;}
+    }
+  });
+  const medias=fases.map(f=>cont[f]?soma[f]/cont[f]:null);
+  if(medias.every(m=>m==null))return `<div class="breakdown"><h3>Tempo médio por fase</h3><div style="color:var(--muted);font-size:13px">Ainda sem dados suficientes de transição de fase.</div></div>`;
+  const max=Math.max(1,...medias.filter(m=>m!=null));
+  const rows=fases.map((f,i)=>{
+    const m=medias[i];
+    const pct=m!=null?Math.max(6,Math.round(m/max*100)):0;
+    return `<div class="brow"><div class="name">${esc(f)}</div><div class="bar">${m!=null?`<i style="width:${pct}%"></i>`:""}</div><div class="pct">${m!=null?m.toFixed(1)+"d":"—"}</div></div>`;
+  }).join("");
+  return `<div class="breakdown">
+    <h3>Tempo médio por fase</h3>
+    <p style="margin:0 0 8px;color:var(--muted);font-size:12px">Quantos dias, em média, um PIP fica em cada fase antes de avançar, fechar ou ser declinado. Pra PIPs antigos é uma aproximação a partir das datas conhecidas; a partir de agora fica exato.</p>
+    ${rows}
+  </div>`;
+}
 function renderDashboard(jobs,pairs){
-  if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem jobs para exibir com esses filtros ainda.</div>`;return;}
+  if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem PIPs para exibir com esses filtros ainda.</div>`;return;}
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
   const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||viewerScope.mode==="contas-especiais");
   const jobsM=jobs.filter(j=>j.tipo==="Proposta comercial");
@@ -1815,11 +1966,13 @@ function renderDashboard(jobs,pairs){
     + (isPracaOuCE?resumoDoDiaHtml(jobs):"")
     + (isCE?desempenhoPorClienteHtml(jobsM)+clienteVeiculoHtml(jobsM):"")
     + metasHtml(jobsM)
+    + metasIndividuaisHtml(jobsM)
     + heatmapMetaHtml(jobsM)
     + heatmapVerbaHtml(jobsM)
     + dinheiroMesaHtml(jobs)
-    + tipoSectionHtml("Pós-venda","Jobs classificados como pós-venda (acompanhamento/atendimento de cliente já fechado) — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",posVenda)
-    + tipoSectionHtml("Fechamentos diretos (sem proposta customizada)","Jobs de mídia fechada direto, sem passar por uma proposta customizada da marketing — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",diretos)
+    + tipoSectionHtml("Pós-venda","PIPs classificados como pós-venda (acompanhamento/atendimento de cliente já fechado) — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",posVenda)
+    + tipoSectionHtml("Fechamentos diretos (sem proposta customizada)","PIPs de mídia fechada direto, sem passar por uma proposta customizada da marketing — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",diretos)
+    + buscaSemanticaHtml()
     + riscoHtml()
     + evolucaoHtml(jobsM,pairsM)
     + resumoSemanalHtml()
@@ -1829,12 +1982,13 @@ function renderDashboard(jobs,pairs){
     + donutHtml(jobsM)
     + funilHtml(jobsM)
     + `</div>`
+    + tempoMedioPorFaseHtml(jobsM)
     +`<div class="dash-grid">`
-    + countBreakdownHtml("Jobs por tipo",TIPOS_JOB,jobs,j=>j.tipo)
-    + countBreakdownHtml("Jobs por praça",PRACAS,jobsM,j=>j.praca)
-    + countBreakdownHtml("Jobs por origem",ORIGENS,jobsM,j=>j.origem)
-    + countBreakdownHtml("Jobs por prioridade",PRIORIDADES,jobsM,j=>j.prioridade)
-    + countBreakdownHtml("Jobs por papel (analista/estagiária)",["Analista","Estagiária"],jobsM,j=>analistaPapel(j.analista)||null)
+    + countBreakdownHtml("PIPs por tipo",TIPOS_JOB,jobs,j=>j.tipo)
+    + countBreakdownHtml("PIPs por praça",PRACAS,jobsM,j=>j.praca)
+    + countBreakdownHtml("PIPs por origem",ORIGENS,jobsM,j=>j.origem)
+    + countBreakdownHtml("PIPs por prioridade",PRIORIDADES,jobsM,j=>j.prioridade)
+    + countBreakdownHtml("PIPs por papel (analista/estagiária)",["Analista","Estagiária"],jobsM,j=>analistaPapel(j.analista)||null)
     + valorBreakdownHtml("Valor fechado por veículo",valorPorVeiculoMap(jobsM),"share")
     + conversaoDuplaHtml("Conversão e valor por analista",groupValorPorJob(jobsM,j=>j.analista))
     + conversaoDuplaHtml("Conversão e valor por executivo de conta",groupValorPorJob(jobsM,j=>j.executivo))
@@ -1915,15 +2069,15 @@ function mcardHtml(job){
       ${lembrete?`<button class="cbtn warn" data-act="job-contato" data-id="${job.id}" title="Marcar contato feito hoje">🔔</button>`:""}
       ${!terminal?`
         ${proxFase?`<button class="cbtn ok" data-act="avancar" data-id="${job.id}" title="Avançar para ${esc(proxFase)}">▶</button>`:""}
-        <button class="cbtn ok" data-act="job-fechar" data-id="${job.id}" title="Fechar job">✓</button>
-        <button class="cbtn no" data-act="job-declinar" data-id="${job.id}" title="Declinar job">✕</button>
-      `:`<button class="cbtn ok" data-act="job-reabrir" data-id="${job.id}" title="Reabrir job">↺</button>`}
+        <button class="cbtn ok" data-act="job-fechar" data-id="${job.id}" title="Fechar PIP">✓</button>
+        <button class="cbtn no" data-act="job-declinar" data-id="${job.id}" title="Declinar PIP">✕</button>
+      `:`<button class="cbtn ok" data-act="job-reabrir" data-id="${job.id}" title="Reabrir PIP">↺</button>`}
     </div>
   </div>`;
 }
 function renderBoard(jobs){
   const el=document.getElementById("board");
-  if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum job por aqui ainda.<br>Clique em <b>＋ Novo job</b> assim que receber o primeiro.</div>`;return;}
+  if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum PIP por aqui ainda.<br>Clique em <b>＋ Novo PIP</b> assim que receber o primeiro.</div>`;return;}
   el.innerHTML=`<div class="board">`+FASES.map(fase=>{
     const items=jobs.filter(j=>j.faseAtual===fase);
     return `<div class="col" data-fase="${esc(fase)}">
@@ -1931,6 +2085,48 @@ function renderBoard(jobs){
       <div class="colstack">${items.length?items.map(mcardHtml).join(""):`<div class="colempty">Vazio</div>`}</div>
     </div>`;
   }).join("")+`</div>`;
+}
+
+/* ============ minha semana (agenda semanal por identidade escolhida no navegador) ============ */
+const MEU_NOME_KEY="jobs-meu-nome-v1";
+function meuNome(){ try{ return localStorage.getItem(MEU_NOME_KEY)||""; }catch(e){ return ""; } }
+function setMeuNome(n){ try{ if(n)localStorage.setItem(MEU_NOME_KEY,n); else localStorage.removeItem(MEU_NOME_KEY); }catch(e){} }
+function ymd(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function semanaAtualDias(){
+  const hoje=d0();
+  const diaSemana=hoje.getDay();
+  const offsetSegunda=diaSemana===0?-6:1-diaSemana;
+  const segunda=new Date(hoje);segunda.setDate(hoje.getDate()+offsetSegunda);
+  const dias=[];
+  for(let i=0;i<7;i++){ const d=new Date(segunda);d.setDate(segunda.getDate()+i);dias.push(d); }
+  return dias;
+}
+function minhaSemanaHtml(jobs){
+  const nome=meuNome();
+  const nomesDisponiveis=analistaNomes();
+  const picker=`<div class="field" style="max-width:320px;margin:0"><label>Quem é você?</label><select id="meuNomeSelect"><option value="">Selecione...</option>${nomesDisponiveis.map(n=>`<option value="${esc(n)}" ${n===nome?"selected":""}>${esc(n)}</option>`).join("")}</select></div>`;
+  if(!nome||!nomesDisponiveis.includes(nome)){
+    return `<div class="breakdown">${picker}<p style="margin:10px 0 0;color:var(--muted);font-size:13px">Escolha seu nome pra ver sua semana — prazos e PIPs atribuídos a você. Fica salvo só neste navegador.</p></div>`;
+  }
+  const meusJobs=jobs.filter(j=>!isTerminal(j.faseAtual)&&(j.analista===nome||j.atribuidoA===nome));
+  const dias=semanaAtualDias();
+  const hojeStr=today();
+  const atrasados=meusJobs.filter(j=>alertaPrazo(j)==="Atrasado");
+  const semPrazo=meusJobs.filter(j=>!j.prazoPrevisto);
+  const colunas=dias.map(d=>{
+    const dStr=ymd(d);
+    const isHoje=dStr===hojeStr;
+    const items=meusJobs.filter(j=>j.prazoPrevisto===dStr&&alertaPrazo(j)!=="Atrasado");
+    const label=d.toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"});
+    return `<div class="col" ${isHoje?'style="border-color:var(--brand);border-width:1.5px"':""}>
+      <h3>${esc(label)}${isHoje?` · <span style="color:var(--brand)">hoje</span>`:""}<span class="cnt">${items.length}</span></h3>
+      <div class="colstack">${items.length?items.map(mcardHtml).join(""):`<div class="colempty">Livre</div>`}</div>
+    </div>`;
+  }).join("");
+  return `<div class="breakdown" style="margin-bottom:16px">${picker}<p style="margin:10px 0 0;color:var(--muted);font-size:12.5px">Mostra PIPs em aberto onde você é a analista responsável ou está atribuída (📌). Prazo é o que organiza os dias abaixo.</p></div>
+    ${atrasados.length?`<div class="breakdown" style="border-color:var(--atrasado);border-width:1.5px"><h3>⚠ Atrasados</h3><div class="board">${atrasados.map(mcardHtml).join("")}</div></div>`:""}
+    <div class="board">${colunas}</div>
+    ${semPrazo.length?`<div class="breakdown" style="margin-top:16px"><h3>Sem prazo definido</h3><div class="board">${semPrazo.map(mcardHtml).join("")}</div></div>`:""}`;
 }
 
 /* ============ modal: novo / editar job ============ */
@@ -1943,9 +2139,46 @@ function closeModal(){document.getElementById("backdrop").classList.remove("open
 function optionsHtml(arr,val){return arr.map(o=>`<option value="${esc(o)}" ${o===val?"selected":""}>${esc(o)}</option>`).join("");}
 function pracaOptionsHtml(val){return PRACAS.map(p=>`<option value="${esc(p)}" ${p===val?"selected":""}>${esc(p==="CE"?"CE (Contas Especiais)":p)}</option>`).join("");}
 function datalistHtml(id,arr){return `<datalist id="${id}">${(arr||[]).map(o=>`<option value="${esc(o)}">`).join("")}</datalist>`;}
+const BRIEFING_TEMPLATES={
+  "Lançamento de produto/serviço":{
+    objetivoComunicacao:"Apresentar o novo produto/serviço, gerar curiosidade e reconhecimento inicial.",
+    objetivoMarketing:"Gerar tráfego/interesse imediato e primeiras conversões no período de lançamento.",
+    situacaoComunicar:"Lançamento — descreva aqui o que está sendo lançado, a data e o diferencial principal."
+  },
+  "Institucional/Reposicionamento":{
+    objetivoComunicacao:"Reforçar a percepção e os valores da marca, comunicando um novo posicionamento.",
+    objetivoMarketing:"Fortalecer a marca e a confiança do público a médio/longo prazo (não é campanha de conversão direta).",
+    situacaoComunicar:"Reposicionamento — descreva aqui o que muda na percepção que o cliente quer construir."
+  },
+  "Promocional/Sazonal":{
+    objetivoComunicacao:"Comunicar a oferta/promoção de forma direta, com urgência e clareza da vantagem.",
+    objetivoMarketing:"Gerar vendas/fluxo no período promocional específico.",
+    situacaoComunicar:"Promoção sazonal — descreva aqui a data comemorativa/período e a oferta."
+  },
+  "Recuperação/Retenção de cliente":{
+    objetivoComunicacao:"Reaproximar o público que já conhece a marca, reforçando benefícios e novidades.",
+    objetivoMarketing:"Recuperar clientes inativos ou aumentar a frequência/recompra da base atual.",
+    situacaoComunicar:"Recuperação de base — descreva aqui o motivo do afastamento e o gancho de volta."
+  },
+  "Resposta à concorrência":{
+    objetivoComunicacao:"Reforçar diferenciais competitivos frente a um movimento recente da concorrência.",
+    objetivoMarketing:"Proteger participação de mercado / evitar perda de clientes para a concorrência.",
+    situacaoComunicar:"Resposta a concorrência — descreva aqui o movimento do concorrente e o diferencial a destacar."
+  }
+};
+function aplicarTemplateBriefing(prefix,nomeTemplate){
+  const t=BRIEFING_TEMPLATES[nomeTemplate];
+  if(!t)return;
+  const campos=["objetivoComunicacao","objetivoMarketing","situacaoComunicar"];
+  const preenchidos=campos.filter(c=>document.getElementById(`${prefix}_${c}`).value.trim());
+  if(preenchidos.length&&!confirm("Já tem texto preenchido em algum desses campos. Substituir pelo template?"))return;
+  campos.forEach(c=>{ document.getElementById(`${prefix}_${c}`).value=t[c]; });
+  toast("Template aplicado ✓ — ajuste os detalhes específicos do cliente.");
+}
 function briefingCamposHtml(prefix,j){
   j=j||{};
   return `
+    <div class="field"><label>Template de campanha (opcional)</label><select id="${prefix}_template" data-act="template-briefing-pick" data-prefix="${prefix}"><option value="">Nenhum (preencher manualmente)</option>${Object.keys(BRIEFING_TEMPLATES).map(t=>`<option value="${esc(t)}">${esc(t)}</option>`).join("")}</select></div>
     <div class="row2">
       <div class="field"><label>Budget estimado</label><input id="${prefix}_budget" type="number" step="0.01" min="0" value="${j.budget||""}" placeholder="0,00"></div>
       <div class="field"><label>Público-alvo</label><input id="${prefix}_publicoAlvo" value="${esc(j.publicoAlvo||"")}" placeholder="Ex: mulheres 25-45, classe B/C, região..."></div>
@@ -2013,9 +2246,9 @@ function planilhaRowHtml(p,idx){
 function jobForm(j){
   const linhas=(j.linhas&&j.linhas.length)?j.linhas:[null];
   return `
-    <header><h3>${j.id?"Editar job":"Novo job"}${j.numero?` · <span class="mono" style="font-size:13px;color:var(--muted)">${esc(j.numero)}</span>`:""}</h3><div style="display:flex;gap:6px;align-items:center">${j.id?`<button type="button" class="linha-add-btn" data-act="job-pdf" data-id="${j.id}">📄 Baixar PDF</button>`:""}<button class="x" data-act="close">×</button></div></header>
+    <header><h3>${j.id?"Editar PIP":"Novo PIP"}${j.numero?` · <span class="mono" style="font-size:13px;color:var(--muted)">${esc(j.numero)}</span>`:""}</h3><div style="display:flex;gap:6px;align-items:center">${j.id?`<button type="button" class="linha-add-btn" data-act="job-pdf" data-id="${j.id}">📄 Baixar PDF</button>`:""}<button class="x" data-act="close">×</button></div></header>
     <div class="form" id="jobForm" data-id="${j.id||""}">
-      ${!j.id?`<div class="field"><label>Nº do job</label><input value="Gerado automaticamente ao salvar" disabled style="color:var(--muted)"></div>`:""}
+      ${!j.id?`<div class="field"><label>Nº do PIP</label><input value="Gerado automaticamente ao salvar" disabled style="color:var(--muted)"></div>`:""}
       <div class="field"><label>Cliente</label><input id="f_cliente" value="${esc(j.cliente||"")}" placeholder="Nome do cliente" autofocus></div>
       <div class="row2">
         <div class="field"><label>Tipo</label><select id="f_tipo">${optionsHtml(TIPOS_JOB,j.tipo||TIPOS_JOB[0])}</select></div>
@@ -2043,7 +2276,7 @@ function jobForm(j){
       ${briefingCamposHtml("f",j)}
 
       ${j.id?`<div class="linhas-section">
-        <div class="linhas-head"><label>🤖 Job mastigado (IA)</label></div>
+        <div class="linhas-head"><label>🤖 PIP mastigado (IA)</label></div>
         <div id="mastigadoResultado" style="margin-top:2px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">Gerando recomendação...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
       </div>`:""}
 
@@ -2061,15 +2294,27 @@ function jobForm(j){
         <div id="veiculoSugestoes" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
       </div>
 
+      ${(j.historicoValores&&j.historicoValores.length)?`
+      <div class="linhas-section">
+        <div class="linhas-head"><label>Histórico de valores</label></div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:12px;color:var(--ink-soft)">
+          ${j.historicoValores.slice().reverse().map(h=>`<div style="padding:6px 0;border-top:1px dashed var(--line-strong)">
+            <span style="color:var(--muted)">${fmtDate(new Date(h.em).toISOString().slice(0,10))}</span> —
+            ${h.valorOrcadoAntes!==h.valorOrcadoDepois?`Orçado: ${fmtMoney(h.valorOrcadoAntes)} → <b>${fmtMoney(h.valorOrcadoDepois)}</b>. `:""}
+            ${h.valorFechadoAntes!==h.valorFechadoDepois?`Fechado: ${fmtMoney(h.valorFechadoAntes)} → <b>${fmtMoney(h.valorFechadoDepois)}</b>.`:""}
+          </div>`).join("")}
+        </div>
+      </div>`:""}
+
       ${j.id&&isTerminal(j.faseAtual)?`
       <div class="linhas-section">
-        <div class="linhas-head"><label>${j.faseAtual==="Fechado"?"Job fechado":"Job declinado"}</label></div>
-        ${j.faseAtual==="Declinado"?`<div class="field"><label>Motivo</label><select id="f_motivoPerda">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>`:`<p style="margin:0 0 8px;color:var(--muted);font-size:12.5px">O valor fechado é editado por veículo, acima. A data de fechamento é única para o job.</p>`}
+        <div class="linhas-head"><label>${j.faseAtual==="Fechado"?"PIP fechado":"PIP declinado"}</label></div>
+        ${j.faseAtual==="Declinado"?`<div class="field"><label>Motivo</label><select id="f_motivoPerda">${optionsHtml(MOTIVOS,j.motivoPerda)}</select></div>`:`<p style="margin:0 0 8px;color:var(--muted);font-size:12.5px">O valor fechado é editado por veículo, acima. A data de fechamento é única para o PIP.</p>`}
         <div class="field"><label>Data de fechamento</label><input id="f_dataFechamento" type="date" value="${j.dataFechamento||""}"></div>
       </div>`:""}
 
       <button class="save" data-act="save-job">Salvar</button>
-      ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir job</button></div>`:""}
+      ${j.id?`<div class="delrow"><button data-act="del" data-id="${j.id}">Excluir PIP</button></div>`:""}
     </div>`;
 }
 function openNewJobModal(){editId=null;openModal(jobForm({}));sugerirVeiculosIA();}
@@ -2131,6 +2376,8 @@ function saveJobForm(){
     recuperavel:existing?existing.recuperavel:false,
     declinioAutomatico:existing?existing.declinioAutomatico:false,
     faseAntesFechamento:existing?existing.faseAntesFechamento:null,
+    faseHistorico:existing?existing.faseHistorico:[{fase:"Recebido",em:Date.now()}],
+    historicoValores:existing?existing.historicoValores:[],
     updatedAt:Date.now()
   };
   if(j.faseAtual==="Fechado")j.valorFechado=linhas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
@@ -2138,13 +2385,18 @@ function saveJobForm(){
   if(fMotivo)j.motivoPerda=fMotivo.value;
   const fDataFechamento=document.getElementById("f_dataFechamento");
   if(fDataFechamento)j.dataFechamento=fDataFechamento.value;
+  if(existing){
+    const orcadoAntes=(existing.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+    const fechadoAntes=(existing.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
+    registrarValor(j,orcadoAntes,fechadoAntes);
+  }
   if(analista&&!analistaNomes().includes(analista))data.config.analistas.push({nome:analista,papel:"Analista"});
   if(executivo&&!data.config.executivos.includes(executivo))data.config.executivos.push(executivo);
   const idx=data.jobs.findIndex(x=>x.id===j.id);
   if(idx>=0)data.jobs[idx]=Object.assign({},data.jobs[idx],j);
   else{j.createdAt=Date.now();data.jobs.push(j);}
   save();closeModal();render();
-  toast("Job salvo ✓");
+  toast("PIP salvo ✓");
 }
 function avancarJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
@@ -2155,6 +2407,7 @@ function avancarJob(id){
   if(campoData)job[campoData]=today();
   job.faseAtual=proxima;
   job.updatedAt=Date.now();
+  registrarFase(job);
   save();render();
   toast(`Avançou para ${proxima} ✓`);
 }
@@ -2162,9 +2415,9 @@ function abrirFechamentoModal(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
   if(isTerminal(job.faseAtual))return;
   const linhas=(job.linhas&&job.linhas.length)?job.linhas:[{id:uid(),veiculo:"",valorOrcado:0,valorFechado:0}];
-  openModal(`<header><h3>Fechar job — ${esc(job.cliente)}</h3><button class="x" data-act="close">×</button></header>
+  openModal(`<header><h3>Fechar PIP — ${esc(job.cliente)}</h3><button class="x" data-act="close">×</button></header>
     <div class="form">
-      <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Confirme o valor fechado de cada veículo antes de encerrar o job. Vem preenchido com o valor orçado — ajuste se houve negociação por canal.</p>
+      <p style="margin:0 0 10px;color:var(--muted);font-size:13px">Confirme o valor fechado de cada veículo antes de encerrar o PIP. Vem preenchido com o valor orçado — ajuste se houve negociação por canal.</p>
       <div id="fechamentoLinhas">${linhas.map((l,i)=>`
         <div class="row2" data-fechamento-linha-id="${l.id}">
           <div class="field"><label>${esc(l.veiculo||`Veículo ${i+1}`)}</label><div style="font-size:12.5px;color:var(--muted);padding:9px 0">Orçado: ${fmtMoney(l.valorOrcado||0)}</div></div>
@@ -2186,6 +2439,8 @@ function confirmarFechamento(id){
 function fecharJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
   if(isTerminal(job.faseAtual))return;
+  const orcadoAntes=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  const fechadoAntes=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   job.faseAntesFechamento=job.faseAtual;
   job.faseAtual="Fechado";
   job.dataFechamento=today();
@@ -2193,8 +2448,10 @@ function fecharJob(id){
   job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
   job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
+  registrarFase(job);
+  registrarValor(job,orcadoAntes,fechadoAntes);
   save();render();
-  toast(`Job fechado ✓ — ${fmtMoney(job.valorFechado)}`);
+  toast(`PIP fechado ✓ — ${fmtMoney(job.valorFechado)}`);
 }
 function declinarJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
@@ -2204,8 +2461,9 @@ function declinarJob(id){
   job.dataFechamento=today();
   job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
+  registrarFase(job);
   save();render();
-  toast("Job declinado");
+  toast("PIP declinado");
 }
 
 /* ============ cadastros (analistas / executivos / veículos) ============ */
@@ -2240,7 +2498,7 @@ function settingsHtml(){
     </div>`;
   return `<header><h3>Cadastros</h3><button class="x" data-act="close">×</button></header>
     <div class="form">
-      <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Esses nomes viram sugestão nos campos do job. Um nome novo digitado ali também entra pra cá automaticamente. Praça, prioridade, fase e situação já vêm fixas.</p>
+      <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Esses nomes viram sugestão nos campos do PIP. Um nome novo digitado ali também entra pra cá automaticamente. Praça, prioridade, fase e situação já vêm fixas.</p>
       ${analistasSecHtml()}
       ${sec("Executivos de conta","executivos","Nome do executivo")}
       ${sec("Veículos de mídia","veiculos","Nome do veículo")}
@@ -2248,6 +2506,11 @@ function settingsHtml(){
         <h4>Metas mensais por praça</h4>
         <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Usadas pra calcular o % de atingimento no gráfico "Meta — mês a mês" do Dashboard.</p>
         ${PRACAS.map(p=>`<div class="addrow"><input class="cfg-meta-praca-input" data-praca="${esc(p)}" type="number" step="0.01" min="0" value="${(data.config.metasPraca&&data.config.metasPraca[p])||""}" placeholder="Meta ${esc(p==="CE"?"CE (Contas Especiais)":p)}"><button data-act="cfg-meta-praca" data-praca="${esc(p)}">Salvar</button></div>`).join("")}
+      </div>
+      <div class="cfgsection">
+        <h4>Metas mensais individuais</h4>
+        <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Opcional — meta de valor fechado por analista/estagiária no mês, além da meta da praça. Aparece no Dashboard como progresso individual.</p>
+        ${analistaNomes().map(n=>`<div class="addrow"><input class="cfg-meta-analista-input" data-nome="${esc(n)}" type="number" step="0.01" min="0" value="${(data.config.metasAnalista&&data.config.metasAnalista[n])||""}" placeholder="Meta de ${esc(n)}"><button data-act="cfg-meta-analista" data-nome="${esc(n)}">Salvar</button></div>`).join("")||`<p style="margin:8px 0 0;color:var(--muted);font-size:12.5px">Cadastre analistas acima primeiro.</p>`}
       </div>
       ${senhasSecHtml()}
     </div>`;
@@ -2352,10 +2615,10 @@ function importData(file){
   r.onload=()=>{
     let obj;
     try{obj=JSON.parse(r.result);}catch(e){toast("Arquivo inválido.");return;}
-    if(!obj||!Array.isArray(obj.jobs)){toast("Não parece um backup de Jobs.");return;}
+    if(!obj||!Array.isArray(obj.jobs)){toast("Não parece um backup de PIPs.");return;}
     pendingImport=obj.jobs;
     openModal(`<header><h3>Importar backup</h3><button class="x" data-act="close">×</button></header>
-      <div class="form"><p style="color:var(--ink-soft);font-size:14.5px;line-height:1.55;margin:8px 0 0">O arquivo contém <b>${pendingImport.length} job(s)</b>.</p>
+      <div class="form"><p style="color:var(--ink-soft);font-size:14.5px;line-height:1.55;margin:8px 0 0">O arquivo contém <b>${pendingImport.length} PIP(s)</b>.</p>
       <button class="save" data-act="do-import-merge">Somar ao que já existe</button>
       <button class="save" data-act="do-import-replace" style="background:var(--cancelado);margin-top:9px">Substituir tudo</button>
       <div class="delrow"><button data-act="close">Cancelar</button></div></div>`);
@@ -2394,10 +2657,14 @@ document.getElementById("fDe").addEventListener("change",e=>{filters.de=e.target
 document.getElementById("fAte").addEventListener("change",e=>{filters.ate=e.target.value;render();});
 document.getElementById("fileImport").addEventListener("change",e=>{if(e.target.files[0])importData(e.target.files[0]);e.target.value="";});
 document.body.addEventListener("change",e=>{
-  if(e.target.classList.contains("cl-feito")){
-    const span=e.target.closest("label").querySelector("span");
-    span.style.textDecoration=e.target.checked?"line-through":"";
-    span.style.color=e.target.checked?"var(--muted)":"";
+  if(e.target.matches('[data-act="template-briefing-pick"]')){
+    const nome=e.target.value;
+    if(nome)aplicarTemplateBriefing(e.target.dataset.prefix,nome);
+    e.target.value="";
+  }
+  if(e.target.id==="meuNomeSelect"){
+    setMeuNome(e.target.value);
+    render();
   }
 });
 document.body.addEventListener("keydown",e=>{
@@ -2408,6 +2675,10 @@ document.body.addEventListener("keydown",e=>{
   if(e.key==="Enter"&&e.target.id==="lockPassword"){
     e.preventDefault();
     tryUnlock();
+  }
+  if(e.key==="Enter"&&e.target.id==="buscaSemanticaInput"){
+    e.preventDefault();
+    buscarSemanticaIA();
   }
   if(e.key==="Escape")closeModal();
 });
@@ -2461,6 +2732,14 @@ document.body.addEventListener("click",e=>{
     const el=document.getElementById("resumoDiaTexto");
     if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
   }
+  else if(act==="copiar-resumo-semanal-banner"){
+    const el=document.getElementById("resumoSemanalBannerTexto");
+    if(el)navigator.clipboard.writeText(el.value).then(()=>toast("Copiado ✓")).catch(()=>toast("Não consegui copiar."));
+  }
+  else if(act==="dispensar-resumo-semanal"){
+    marcarResumoSemanalMostrado();
+    render();
+  }
   else if(act==="exec-submit")submitExecutivoBriefing();
   else if(act==="scope-pick"){
     const mode=b.dataset.scopeMode;
@@ -2471,11 +2750,12 @@ document.body.addEventListener("click",e=>{
   }
   else if(act==="lock-unlock")tryUnlock();
   else if(act==="job-pdf")baixarPdfJob(id);
+  else if(act==="buscar-semantica")buscarSemanticaIA();
   else if(act==="scope-change")openScopePicker();
   else if(act==="del"){
-    if(confirm("Excluir este job? Essa ação não pode ser desfeita.")){
+    if(confirm("Excluir este PIP? Essa ação não pode ser desfeita.")){
       data.jobs=data.jobs.filter(j=>j.id!==id);
-      save();closeModal();render();toast("Job excluído");
+      save();closeModal();render();toast("PIP excluído");
     }
   }
   else if(act==="export")exportData();
@@ -2503,6 +2783,14 @@ document.body.addEventListener("click",e=>{
     const input=document.querySelector(`.cfg-meta-praca-input[data-praca="${p}"]`);
     data.config.metasPraca=data.config.metasPraca||{};
     data.config.metasPraca[p]=Number(input.value)||0;
+    save();openModal(settingsHtml());render();
+    toast("Meta salva ✓");
+  }
+  else if(act==="cfg-meta-analista"){
+    const n=b.dataset.nome;
+    const input=document.querySelector(`.cfg-meta-analista-input[data-nome="${CSS.escape(n)}"]`);
+    data.config.metasAnalista=data.config.metasAnalista||{};
+    data.config.metasAnalista[n]=Number(input.value)||0;
     save();openModal(settingsHtml());render();
     toast("Meta salva ✓");
   }
