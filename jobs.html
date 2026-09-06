@@ -184,6 +184,9 @@
   .col h3{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);margin:0 0 10px;padding:0 2px}
   .col h3 .cnt{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-xs);padding:1px 8px;font-size:11px;color:var(--muted);font-weight:700}
   .colstack{display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-right:2px}
+  .praca-group{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line-strong);padding-top:8px;margin-top:2px}
+  .praca-group:first-child{border-top:0;padding-top:0;margin-top:0}
+  .praca-group-label{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
   .colempty{color:var(--faint);font-size:12px;text-align:center;padding:16px 6px;border:1px dashed var(--line-strong);border-radius:var(--r-xs)}
   .mcard{background:var(--surface);border:1px solid var(--line);border-left:2px solid var(--card-accent,var(--line-strong));border-radius:var(--r-xs);padding:10px 11px;box-shadow:var(--sh);cursor:pointer;animation:cardin .25s ease backwards}
   @keyframes cardin{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -386,10 +389,10 @@
   <aside class="side">
     <div class="brand-logo" id="brandLogo"></div>
     <div class="brand">
-      <div class="mark">J</div>
+      <div class="mark">G</div>
       <div>
-        <h1>Jobs de Marketing</h1>
-        <div class="sub">Acompanhamento por fase</div>
+        <h1>Gestão de Trabalho</h1>
+        <div class="sub">Marketing Clientes</div>
       </div>
     </div>
 
@@ -397,7 +400,14 @@
       <button data-v="jobs" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><rect x="3" y="10" width="18" height="4" rx="1"/><rect x="3" y="16" width="18" height="4" rx="1"/></svg>PIPs</button>
       <button data-v="semana"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="1"/><path d="M3 9h18M8 3v3M16 3v3"/></svg>Minha semana</button>
       <button data-v="dashboard"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V10M12 19V5M20 19v-7"/></svg>Dashboard</button>
+      <button data-v="cases"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2.5l2.9 6 6.6.7-5 4.5 1.4 6.5-5.9-3.4-5.9 3.4 1.4-6.5-5-4.5 6.6-.7z"/></svg>Cases</button>
     </nav>
+
+    <div class="side-actions primary-actions" data-hide-executivo>
+      <button class="sbtn primary" data-act="new" data-writeonly>＋ Novo PIP</button>
+      <button class="sbtn primary" data-act="eplabs" data-writeonly>＋ Novo EP Labs</button>
+      <button class="sbtn primary" data-act="voceep" data-writeonly>＋ Novo Você na EP</button>
+    </div>
 
     <div class="side-section" data-hide-executivo>
       <div class="side-label">Filtros</div>
@@ -411,9 +421,7 @@
     </div>
 
     <div class="side-actions" data-hide-executivo>
-      <button class="sbtn primary" data-act="new" data-writeonly>＋ Novo PIP</button>
       <button class="sbtn" data-act="settings" data-writeonly>⚙ Cadastros</button>
-      <button class="sbtn" data-act="eplabs">📋 EP Labs</button>
       <button class="sbtn" data-act="export">⬇ Backup (JSON)</button>
       <button class="sbtn" data-act="export-csv">📊 Exportar Excel</button>
       <label class="sbtn" data-writeonly>⬆ Importar<input type="file" id="fileImport" accept="application/json"></label>
@@ -438,12 +446,14 @@
       </div>
     </div>
 
+    <div id="prioridadesBox" data-hide-executivo></div>
     <div class="kpis" id="kpis" data-hide-executivo></div>
     <div class="kpis secondary" id="kpisComercial" data-hide-executivo></div>
 
-    <div id="viewJobs"><div id="prioridadesBox"></div><div id="board"></div></div>
+    <div id="viewJobs"><div id="board"></div></div>
     <div id="viewSemana" style="display:none"></div>
     <div id="viewDashboard" style="display:none"><div id="dashboard"></div></div>
+    <div id="viewCases" style="display:none"></div>
     <div id="viewExecutivo" style="display:none"></div>
   </main>
 </div>
@@ -1096,11 +1106,15 @@ function resumoSemanalBannerHtml(){
     <div id="resumoSemanalBannerResultado" style="margin-top:4px">${sampleApi?`<div style="color:var(--muted);font-size:12.5px">🤖 Gerando resumo da semana...</div>`:`<div style="color:var(--muted);font-size:12px">Disponível só na versão online.</div>`}</div>
   </div>`;
 }
-function autoTriggerDashboardIA(jobs,isPracaOuCE){
+function autoTriggerResumoDoDia(jobs){
   if(!sampleApi)return;
   const hoje=today();
   const sigDia=JSON.stringify([hoje,jobs.filter(j=>j.dataRecebimento===hoje).length,jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento===hoje).length,jobs.filter(j=>!isTerminal(j.faseAtual)&&precisaLembreteJob(j)).map(j=>j.id).sort()]);
-  if(isPracaOuCE&&aiShouldRun("resumoDia",sigDia))gerarResumoDoDiaIA();
+  if(aiShouldRun("resumoDia",sigDia))gerarResumoDoDiaIA();
+}
+function autoTriggerDashboardIA(jobs,isPracaOuCE){
+  if(!sampleApi)return;
+  const hoje=today();
   const semanaAtras=new Date();semanaAtras.setDate(semanaAtras.getDate()-7);
   const sigSemana=JSON.stringify([hoje,jobs.filter(j=>j.dataRecebimento&&pd(j.dataRecebimento)>=semanaAtras).length,jobs.filter(j=>j.faseAtual==="Fechado"&&j.dataFechamento&&pd(j.dataFechamento)>=semanaAtras).length]);
   if(aiShouldRun("resumoSemana",sigSemana))gerarResumoIA();
@@ -1163,6 +1177,9 @@ function jobPdfBodyHtml(job){
     <table><tr><th>Veículo</th><th style="text-align:right">Orçado</th>${fechado?'<th style="text-align:right">Fechado</th>':""}</tr>${linhasRows}
       <tr><td><b>Total</b></td><td style="text-align:right"><b>${fmtMoney(totalOrcado)}</b></td>${fechado?`<td style="text-align:right"><b>${fmtMoney(job.valorFechado)}</b></td>`:""}</tr>
     </table>`:""}
+
+    ${(job.produtosProntos&&job.produtosProntos.length)?`<h2>Produtos prontos utilizados</h2>
+    <table><tr><th>Produto</th><th style="text-align:right">Valor</th></tr>${job.produtosProntos.map(p=>`<tr><td>${esc(p.nome)}</td><td style="text-align:right">${fmtMoney(p.valor)}</td></tr>`).join("")}</table>`:""}
 
     ${job.briefing?`<h2>Briefing</h2><div class="pv" style="white-space:pre-wrap">${esc(job.briefing)}</div>`:""}
 
@@ -1239,6 +1256,9 @@ async function load(){
   data.config.metasAnalista=data.config.metasAnalista||{};
   data.config.senhasAcesso=data.config.senhasAcesso||{};
   data.config.senhasAcesso.praca=data.config.senhasAcesso.praca||{};
+  data.config.produtosProntos=(data.config.produtosProntos||[]).map(p=>({id:p.id||uid(),nome:p.nome||"",valor:Number(p.valor)||0,composicao:p.composicao||""}));
+  data.voceNaEp=data.voceNaEp||[];
+  data.cases=data.cases||[];
   data.jobs=data.jobs.map(migrateJob);
   data.jobs.forEach(j=>{
     if(j.analista&&!analistaNomes().includes(j.analista))data.config.analistas.push({nome:j.analista,papel:"Analista"});
@@ -1344,6 +1364,10 @@ function migrateJob(j){
   delete j.linkPlanilha;
   j.planilhas=j.planilhas.map(p=>({id:p.id||uid(),nome:p.nome||"",url:p.url||""}));
   j.historicoValores=Array.isArray(j.historicoValores)?j.historicoValores:[];
+  j.retrabalhos=Number(j.retrabalhos)||0;
+  j.tempoEstimadoHoras=Number(j.tempoEstimadoHoras)||0;
+  j.apontamentos=Array.isArray(j.apontamentos)?j.apontamentos:[];
+  j.produtosProntos=Array.isArray(j.produtosProntos)?j.produtosProntos.map(p=>({id:p.id,nome:p.nome||"",valor:Number(p.valor)||0})):[];
   if(!Array.isArray(j.faseHistorico)||!j.faseHistorico.length){
     const backfill=[];
     const criado=j.createdAt||(pd(j.dataRecebimento)?pd(j.dataRecebimento).getTime():null)||Date.now();
@@ -1365,6 +1389,41 @@ function registrarValor(job,orcadoAntes,fechadoAntes){
   job.historicoValores=job.historicoValores||[];
   job.historicoValores.push({em:Date.now(),valorOrcadoAntes:orcadoAntes,valorOrcadoDepois:orcadoDepois,valorFechadoAntes:fechadoAntes,valorFechadoDepois:fechadoDepois});
 }
+function voltarJob(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(job.faseAtual!=="Entregue")return;
+  job.faseAtual="Em desenvolvimento";
+  job.retrabalhos=(job.retrabalhos||0)+1;
+  job.updatedAt=Date.now();
+  registrarFase(job);
+  save();render();
+  toast("PIP voltou para Em desenvolvimento (retrabalho registrado)");
+}
+function apontamentoAberto(job){ return (job.apontamentos||[]).find(a=>!a.fim); }
+function horasApontadas(job){ return (job.apontamentos||[]).reduce((s,a)=>s+((a.fim||Date.now())-a.inicio),0)/3600000; }
+function fmtHoras(h){ return (Number(h)||0).toFixed(1).replace(".",",")+"h"; }
+function iniciarApontamento(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  if(apontamentoAberto(job))return;
+  job.apontamentos=job.apontamentos||[];
+  job.apontamentos.push({id:uid(),inicio:Date.now(),fim:null});
+  save();
+  const statusEl=document.getElementById("apontamentoStatus");
+  if(statusEl&&editId===id)statusEl.innerHTML=apontamentoStatusHtml(job);
+  render();
+  toast("Apontamento iniciado ✓");
+}
+function finalizarApontamento(id){
+  const job=data.jobs.find(x=>x.id===id);if(!job)return;
+  const ab=apontamentoAberto(job);if(!ab)return;
+  ab.fim=Date.now();
+  save();
+  const statusEl=document.getElementById("apontamentoStatus");
+  if(statusEl&&editId===id)statusEl.innerHTML=apontamentoStatusHtml(job);
+  render();
+  toast("Apontamento finalizado ✓");
+}
+function valorProdutosProntosDe(job){ return (job.produtosProntos||[]).reduce((s,p)=>s+(Number(p.valor)||0),0); }
 function diasParadoJob(job){
   if(isTerminal(job.faseAtual))return null;
   return Math.floor((Date.now()-(job.ultimoContatoEm||Date.now()))/86400000);
@@ -1517,26 +1576,38 @@ function render(){
   const jobs=filtered();
   const pairs=pairsFor(jobs);
   renderKpis(jobs,pairs);
-  document.getElementById("pageTitle").textContent=mainView==="jobs"?"PIPs":mainView==="semana"?"Minha semana":"Dashboard";
+  document.getElementById("pageTitle").textContent=mainView==="jobs"?"PIPs":mainView==="semana"?"Minha semana":mainView==="cases"?"Banco de cases":"Dashboard";
   document.getElementById("viewJobs").style.display=mainView==="jobs"?"block":"none";
   document.getElementById("viewSemana").style.display=mainView==="semana"?"block":"none";
   document.getElementById("viewDashboard").style.display=mainView==="dashboard"?"block":"none";
-  document.getElementById("kpis").style.display=mainView==="semana"?"none":"";
-  document.getElementById("kpisComercial").style.display=mainView==="semana"?"none":"";
-  document.getElementById("segStatus").style.display=mainView==="semana"?"none":"";
+  document.getElementById("viewCases").style.display=mainView==="cases"?"block":"none";
+  document.getElementById("kpis").style.display=(mainView==="semana"||mainView==="cases")?"none":"";
+  document.getElementById("kpisComercial").style.display=(mainView==="semana"||mainView==="cases")?"none":"";
+  document.getElementById("segStatus").style.display=(mainView==="semana"||mainView==="cases")?"none":"";
+  document.getElementById("prioridadesBox").style.display=mainView==="jobs"?"":"none";
   if(mainView==="jobs"){
     const isPracaOuCE=viewerScope&&(viewerScope.mode==="praca"||isCE);
+    const jobsM=jobs.filter(j=>j.tipo==="Proposta comercial");
+    const pairsM=pairsFor(jobsM);
     const prioBox=document.getElementById("prioridadesBox");
+    const mostrarResumoSemanal=isPracaOuCE&&new Date().getDay()===5&&!resumoSemanalJaMostrado();
+    prioBox.innerHTML=
+      (isPracaOuCE?resumoDoDiaHtml(jobs):"")
+      + objetivosHtml(jobsM,pairsM)
+      + (isPracaOuCE?recadoDoDiaHtml():"")
+      + (mostrarResumoSemanal?resumoSemanalBannerHtml():"");
     if(isPracaOuCE){
-      const mostrarResumoSemanal=new Date().getDay()===5&&!resumoSemanalJaMostrado();
-      prioBox.innerHTML=recadoDoDiaHtml()+(mostrarResumoSemanal?resumoSemanalBannerHtml():"");
+      autoTriggerResumoDoDia(jobs);
       autoTriggerRecadoDoDia(jobs);
       if(mostrarResumoSemanal)autoTriggerResumoSemanalBanner();
-    }else prioBox.innerHTML="";
+    }
     if(isCE)renderBoardPorCliente(jobs); else renderBoard(jobs);
   }
   else if(mainView==="semana"){
     document.getElementById("viewSemana").innerHTML=minhaSemanaHtml(jobs);
+  }
+  else if(mainView==="cases"){
+    document.getElementById("viewCases").innerHTML=casesViewHtml();
   }
   else renderDashboard(jobs,pairs);
 }
@@ -1586,7 +1657,7 @@ function renderKpis(jobs,pairs){
     +kpi("k-aguardando",KPI_ICONS.aguardando,"Aguardando cliente",aguardando);
   const jobsM=jobs.filter(j=>j.tipo==="Proposta comercial");
   const pairsM=pairsFor(jobsM);
-  const valorOrcado=pairsM.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0);
+  const valorOrcado=pairsM.reduce((s,p)=>s+(Number(p.linha.valorOrcado)||0),0)+jobsM.reduce((s,j)=>s+valorProdutosProntosDe(j),0);
   const valorFechado=jobsM.reduce((s,j)=>s+(j.faseAtual==="Fechado"?Number(j.valorFechado)||0:0),0);
   const decididas=jobsM.filter(j=>isTerminal(j.faseAtual)).length;
   const fechadas=jobsM.filter(j=>j.faseAtual==="Fechado").length;
@@ -1750,7 +1821,7 @@ function comparativoAnualHtml(jobs,pairs){
   jobs.forEach(j=>years.add(yearOf(j)));
   const yearsSorted=[...years].sort();
   const byYear={};
-  yearsSorted.forEach(y=>byYear[y]={jobs:0,valorOrcado:0,valorFechado:0,decididas:0,fechadas:0,epLabs:0});
+  yearsSorted.forEach(y=>byYear[y]={jobs:0,valorOrcado:0,valorFechado:0,decididas:0,fechadas:0,epLabs:0,voceEp:0});
   jobs.forEach(j=>{
     const y=yearOf(j);
     byYear[y].jobs++;
@@ -1766,6 +1837,10 @@ function comparativoAnualHtml(jobs,pairs){
     const y=(e.data||"").slice(0,4);
     if(byYear[y])byYear[y].epLabs++;
   });
+  (data.voceNaEp||[]).forEach(e=>{
+    const y=(e.data||"").slice(0,4);
+    if(byYear[y])byYear[y].voceEp++;
+  });
   const metricRow=(label,fn)=>`<tr><td>${label}</td>${yearsSorted.map(y=>`<td>${fn(byYear[y])}</td>`).join("")}</tr>`;
   return `<div class="breakdown"><h3>Comparativo anual</h3>
     <div style="overflow-x:auto"><table class="yr-table">
@@ -1776,6 +1851,7 @@ function comparativoAnualHtml(jobs,pairs){
       ${metricRow("% fechado (valor)",d=>(d.valorOrcado>0?Math.round(d.valorFechado/d.valorOrcado*100):0)+"%")}
       ${metricRow("% fechado (qtd.)",d=>(d.decididas>0?Math.round(d.fechadas/d.decididas*100):0)+"%")}
       ${metricRow("EP Labs realizados",d=>d.epLabs)}
+      ${metricRow("Visitas a emissoras (Você na EP)",d=>d.voceEp)}
     </table></div>
   </div>`;
 }
@@ -1953,6 +2029,66 @@ function tempoMedioPorFaseHtml(jobs){
     ${rows}
   </div>`;
 }
+function retrabalhoHtml(jobs){
+  const comRetrabalho=jobs.filter(j=>(j.retrabalhos||0)>0);
+  const totalEventos=jobs.reduce((s,j)=>s+(j.retrabalhos||0),0);
+  const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
+  return `<div class="breakdown">
+    <h3>↩ Retrabalho (voltou de Entregue)</h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Toda vez que um PIP volta de "Entregue" para "Em desenvolvimento" (usando o botão ◀ no card), fica registrado aqui como retrabalho — sem virar outro PIP.</p>
+    <div class="kpis">${item("PIPs com retrabalho",comRetrabalho.length)+item("Total de retornos",totalEventos)}</div>
+  </div>`;
+}
+function tempoEstimadoVsRealHtml(jobs){
+  const comAmbos=jobs.filter(j=>(j.tempoEstimadoHoras||0)>0&&(j.apontamentos||[]).length);
+  if(!comAmbos.length)return `<div class="breakdown"><h3>⏱ Tempo estimado × realizado</h3><div style="color:var(--muted);font-size:13px">Ainda sem PIPs com tempo estimado e apontamento de horas suficientes pra comparar.</div></div>`;
+  const mediaEstimado=comAmbos.reduce((s,j)=>s+j.tempoEstimadoHoras,0)/comAmbos.length;
+  const mediaReal=comAmbos.reduce((s,j)=>s+horasApontadas(j),0)/comAmbos.length;
+  const item=(label,value)=>`<div class="kpi"><div class="body"><div class="l">${label}</div><div class="v">${value}</div></div></div>`;
+  return `<div class="breakdown">
+    <h3>⏱ Tempo estimado × realizado</h3>
+    <p style="margin:0 0 10px;color:var(--muted);font-size:12px">Média entre os ${comAmbos.length} PIP(s) com estimativa e apontamento de horas registrados.</p>
+    <div class="kpis">${item("Média estimada",fmtHoras(mediaEstimado))+item("Média realizada",fmtHoras(mediaReal))+item("Diferença",fmtHoras(mediaReal-mediaEstimado))}</div>
+  </div>`;
+}
+function produtosProntosUsoHtml(jobs){
+  const map={};
+  jobs.forEach(j=>(j.produtosProntos||[]).forEach(p=>{
+    map[p.nome]=map[p.nome]||{qtd:0,valor:0};
+    map[p.nome].qtd++;
+    if(j.faseAtual==="Fechado")map[p.nome].valor+=Number(p.valor)||0;
+  }));
+  const keys=Object.keys(map);
+  if(!keys.length)return `<div class="breakdown"><h3>📦 Produtos prontos utilizados</h3><div style="color:var(--muted);font-size:13px">Nenhum produto pronto usado ainda — cadastre em ⚙ Cadastros e selecione no formulário do PIP.</div></div>`;
+  const maxQtd=Math.max(...keys.map(k=>map[k].qtd));
+  const rows=keys.sort((a,b)=>map[b].valor-map[a].valor).map(k=>`<div class="brow"><div class="name">${esc(k)}</div><div class="bar"><i style="width:${Math.max(6,Math.round(map[k].qtd/maxQtd*100))}%"></i></div><div class="pct">${map[k].qtd}×</div><div class="val">${fmtMoney(map[k].valor)}</div></div>`).join("");
+  return `<div class="breakdown"><h3>📦 Produtos prontos utilizados</h3>${rows}</div>`;
+}
+function casesEmEscopo(){
+  const all=data.cases||[];
+  if(viewerScope&&viewerScope.mode==="praca")return all.filter(c=>c.praca===viewerScope.praca);
+  if(viewerScope&&viewerScope.mode==="contas-especiais")return all.filter(c=>c.praca==="CE");
+  return all;
+}
+function caseCardHtml(c){
+  return `<div class="mcard" style="cursor:default">
+    <div class="jobnum">${esc(c.numero||"")} · ${c.dataFechamento?fmtDate(c.dataFechamento):"—"}</div>
+    <div class="cliente">${esc(c.cliente)}</div>
+    <div class="tags"><span class="tag-sm">${esc(c.praca)}</span><span class="tag-sm">${esc(c.tipo)}</span></div>
+    ${c.objetivoComunicacao?`<div style="margin-top:6px;font-size:12px;color:var(--ink-soft)"><b>Objetivo:</b> ${esc(c.objetivoComunicacao)}</div>`:""}
+    ${c.diferenciais?`<div style="margin-top:4px;font-size:12px;color:var(--ink-soft)"><b>Diferenciais:</b> ${esc(c.diferenciais)}</div>`:""}
+    ${(c.veiculos||[]).length?`<div style="margin-top:6px;font-size:11px;color:var(--muted)">Veículos: ${c.veiculos.map(v=>esc(v)).join(", ")}</div>`:""}
+    ${(c.produtosProntos||[]).length?`<div style="margin-top:2px;font-size:11px;color:var(--muted)">📦 ${c.produtosProntos.map(v=>esc(v)).join(", ")}</div>`:""}
+    <div class="valorline" style="margin-top:6px">Fechado: <b>${fmtMoney(c.valorFechado)}</b></div>
+    <div class="delrow" style="margin-top:8px"><button data-act="case-del" data-id="${c.id}">Remover do banco de cases</button></div>
+  </div>`;
+}
+function casesViewHtml(){
+  const cases=casesEmEscopo().slice().sort((a,b)=>(b.dataFechamento||"").localeCompare(a.dataFechamento||""));
+  if(!cases.length)return `<div class="empty">Nenhum case ainda — toda vez que um PIP fecha, ele vira um case automaticamente aqui, pronto pra usar como prova social com outros clientes.</div>`;
+  return `<p style="margin:0 0 14px;color:var(--muted);font-size:13px">Todo PIP fechado vira um case aqui automaticamente — solução aplicada, veículos e resultado, pronto pra usar como prova social com outros clientes.</p>
+    <div style="display:flex;flex-wrap:wrap;gap:14px">${cases.map(c=>`<div style="width:300px">${caseCardHtml(c)}</div>`).join("")}</div>`;
+}
 function renderDashboard(jobs,pairs){
   if(!jobs.length){document.getElementById("dashboard").innerHTML=metasHtml(jobs)+`<div class="empty">Sem PIPs para exibir com esses filtros ainda.</div>`;return;}
   const isCE=viewerScope&&viewerScope.mode==="contas-especiais";
@@ -1962,9 +2098,7 @@ function renderDashboard(jobs,pairs){
   const posVenda=jobs.filter(j=>j.tipo==="Pós-venda");
   const diretos=jobs.filter(j=>j.tipo==="Fechamento direto");
   const html=
-    objetivosHtml(jobsM,pairsM)
-    + (isPracaOuCE?resumoDoDiaHtml(jobs):"")
-    + (isCE?desempenhoPorClienteHtml(jobsM)+clienteVeiculoHtml(jobsM):"")
+    (isCE?desempenhoPorClienteHtml(jobsM)+clienteVeiculoHtml(jobsM):"")
     + metasHtml(jobsM)
     + metasIndividuaisHtml(jobsM)
     + heatmapMetaHtml(jobsM)
@@ -1972,6 +2106,7 @@ function renderDashboard(jobs,pairs){
     + dinheiroMesaHtml(jobs)
     + tipoSectionHtml("Pós-venda","PIPs classificados como pós-venda (acompanhamento/atendimento de cliente já fechado) — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",posVenda)
     + tipoSectionHtml("Fechamentos diretos (sem proposta customizada)","PIPs de mídia fechada direto, sem passar por uma proposta customizada da marketing — contados à parte, fora dos KPIs comerciais, metas e conversão do restante do Dashboard.",diretos)
+    + produtosProntosUsoHtml(jobsM)
     + buscaSemanticaHtml()
     + riscoHtml()
     + evolucaoHtml(jobsM,pairsM)
@@ -1983,6 +2118,8 @@ function renderDashboard(jobs,pairs){
     + funilHtml(jobsM)
     + `</div>`
     + tempoMedioPorFaseHtml(jobsM)
+    + retrabalhoHtml(jobsM)
+    + tempoEstimadoVsRealHtml(jobsM)
     +`<div class="dash-grid">`
     + countBreakdownHtml("PIPs por tipo",TIPOS_JOB,jobs,j=>j.tipo)
     + countBreakdownHtml("PIPs por praça",PRACAS,jobsM,j=>j.praca)
@@ -2040,9 +2177,10 @@ function mcardHtml(job){
   const proxFase=podeAvancar?FASE_ORDEM[FASE_ORDEM.indexOf(job.faseAtual)+1]:null;
   const accent=FASE_COLOR[job.faseAtual]||"var(--line-strong)";
   const linhas=job.linhas||[];
-  const totalOrcado=linhas.reduce((s,l)=>s+(Number(l.valorOrcado)||0),0);
+  const totalOrcado=linhas.reduce((s,l)=>s+(Number(l.valorOrcado)||0),0)+valorProdutosProntosDe(job);
   const dias=diasParadoJob(job);
   const lembrete=precisaLembreteJob(job);
+  const podeVoltar=job.faseAtual==="Entregue";
   return `<div class="mcard" style="--card-accent:${accent}${heat?`;background-image:linear-gradient(${heat},${heat})`:""}" data-act="edit" data-id="${job.id}" title="${heat?`Prazo: ${fmtDate(job.prazoPrevisto)} — cor indica proximidade do prazo (verde = tranquilo, vermelho = urgente/atrasado)`:""}">
     <div class="jobnum">${esc(job.numero||"")}</div>
     <div class="cliente">${esc(job.cliente)}</div>
@@ -2052,11 +2190,13 @@ function mcardHtml(job){
       ${!terminal?`<span class="${situClass(job.situacao).replace('status','situ-sm')}" style="background:${SITU_COLOR[job.situacao]}22;color:${SITU_COLOR[job.situacao]}">${esc(job.situacao)}</span>`:""}
       ${lembrete?`<span class="tag-sm warn" title="Parado há ${dias} dia(s) sem contato">⚠ ${dias}d</span>`:""}
       ${job.atribuidoA?`<span class="tag-sm" title="Atribuído a ${esc(job.atribuidoA)}">📌 ${esc(job.atribuidoA)}</span>`:""}
+      ${job.retrabalhos?`<span class="tag-sm warn" title="Voltou de Entregue para Em desenvolvimento ${job.retrabalhos}x">↩ ${job.retrabalhos}x</span>`:""}
     </div>
     ${briefingResumoHtml(job)}
     <div class="pbar"><i style="width:${pct}%"></i></div>
     ${linhas.length?`<div class="linhaslist">${linhas.map(l=>linhaMiniHtml(l,job.faseAtual==="Fechado")).join("")}</div>`:""}
-    ${linhas.length?`<div class="valorline">${job.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(job.faseAtual==="Fechado"?(job.valorFechado||totalOrcado):totalOrcado)}</b></div>`:""}
+    ${(job.produtosProntos&&job.produtosProntos.length)?`<div style="margin-top:4px;font-size:10px;color:var(--ink-soft)">📦 ${job.produtosProntos.map(p=>esc(p.nome)).join(", ")}</div>`:""}
+    ${(linhas.length||(job.produtosProntos&&job.produtosProntos.length))?`<div class="valorline">${job.faseAtual==="Fechado"?"Fechado":"Orçado"}: <b>${fmtMoney(job.faseAtual==="Fechado"?(job.valorFechado||totalOrcado):totalOrcado)}</b></div>`:""}
     ${(job.planoMidia||(job.planilhas&&job.planilhas.length))?`<div class="joblinks">
       ${job.planoMidia?`<a class="joblink" href="${esc(job.planoMidia)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">🖼 Plano de Mídia</a>`:""}
       ${(job.planilhas||[]).filter(p=>p.url).map((p,i)=>`<a class="joblink" href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">📊 ${esc(p.nome||("Planilha "+(i+1)))}</a>`).join("")}
@@ -2068,6 +2208,7 @@ function mcardHtml(job){
     <div class="cardactions">
       ${lembrete?`<button class="cbtn warn" data-act="job-contato" data-id="${job.id}" title="Marcar contato feito hoje">🔔</button>`:""}
       ${!terminal?`
+        ${podeVoltar?`<button class="cbtn warn" data-act="voltar" data-id="${job.id}" title="Voltar para Em desenvolvimento (registra retrabalho)">◀</button>`:""}
         ${proxFase?`<button class="cbtn ok" data-act="avancar" data-id="${job.id}" title="Avançar para ${esc(proxFase)}">▶</button>`:""}
         <button class="cbtn ok" data-act="job-fechar" data-id="${job.id}" title="Fechar PIP">✓</button>
         <button class="cbtn no" data-act="job-declinar" data-id="${job.id}" title="Declinar PIP">✕</button>
@@ -2078,11 +2219,22 @@ function mcardHtml(job){
 function renderBoard(jobs){
   const el=document.getElementById("board");
   if(!jobs.length){el.innerHTML=`<div class="empty">Nenhum PIP por aqui ainda.<br>Clique em <b>＋ Novo PIP</b> assim que receber o primeiro.</div>`;return;}
+  const agruparPorPraca=(!viewerScope||viewerScope.mode==="todos")&&filters.praca==="todos";
   el.innerHTML=`<div class="board">`+FASES.map(fase=>{
     const items=jobs.filter(j=>j.faseAtual===fase);
+    let body;
+    if(agruparPorPraca&&items.length){
+      body=PRACAS.map(p=>{
+        const its=items.filter(j=>j.praca===p);
+        if(!its.length)return "";
+        return `<div class="praca-group"><div class="praca-group-label">${esc(p==="CE"?"CE (Contas Especiais)":p)}</div>${its.map(mcardHtml).join("")}</div>`;
+      }).join("");
+    }else{
+      body=items.length?items.map(mcardHtml).join(""):`<div class="colempty">Vazio</div>`;
+    }
     return `<div class="col" data-fase="${esc(fase)}">
       <h3>${esc(fase)}<span class="cnt">${items.length}</span></h3>
-      <div class="colstack">${items.length?items.map(mcardHtml).join(""):`<div class="colempty">Vazio</div>`}</div>
+      <div class="colstack">${body}</div>
     </div>`;
   }).join("")+`</div>`;
 }
@@ -2209,6 +2361,25 @@ function readBriefingCampos(prefix){
     restricoes:str(`${prefix}_restricoes`)
   };
 }
+function produtosProntosCheckboxesHtml(selecionadosArr){
+  const catalogo=data.config.produtosProntos||[];
+  const idsSel=new Set((selecionadosArr||[]).map(p=>p.id));
+  if(!catalogo.length)return `<p style="margin:0;color:var(--muted);font-size:12.5px">Nenhum produto pronto cadastrado ainda — cadastre em ⚙ Cadastros.</p>`;
+  return `<div style="display:flex;flex-direction:column;gap:6px">${catalogo.map(p=>`
+    <label class="checkfield" style="gap:8px"><input type="checkbox" class="pp-check" value="${esc(p.id)}" ${idsSel.has(p.id)?"checked":""}> <span>${esc(p.nome)} — ${fmtMoney(p.valor)}${p.composicao?` <span style="color:var(--muted);font-size:11.5px">(${esc(p.composicao)})</span>`:""}</span></label>
+  `).join("")}</div>`;
+}
+function apontamentoStatusHtml(job){
+  const aberto=apontamentoAberto(job);
+  const total=horasApontadas(job);
+  const entradas=(job.apontamentos||[]).slice().sort((a,b)=>b.inicio-a.inicio);
+  const fmtHM=t=>new Date(t).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",hour:"2-digit",minute:"2-digit"});
+  return `<div style="font-size:12.5px;color:var(--ink-soft);margin-bottom:8px">Apontado até agora: <b>${fmtHoras(total)}</b>${aberto?` · <span style="color:var(--brand);font-weight:700">em andamento desde ${fmtHM(aberto.inicio)}</span>`:""}</div>
+    ${aberto
+      ?`<button type="button" class="linha-add-btn" data-act="apontamento-finalizar" data-id="${job.id}">⏹ Finalizar</button>`
+      :`<button type="button" class="linha-add-btn" data-act="apontamento-iniciar" data-id="${job.id}">▶ Iniciar</button>`}
+    ${entradas.length?`<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px">${entradas.map(a=>`<div style="font-size:11.5px;color:var(--muted)">${fmtHM(a.inicio)} – ${a.fim?fmtHM(a.fim):"em andamento"} (${fmtHoras(((a.fim||Date.now())-a.inicio)/3600000)})</div>`).join("")}</div>`:""}`;
+}
 function atribuidoOptionsHtml(val){
   const nomes=analistaNomes();
   return `<option value="">Ninguém</option>`
@@ -2294,6 +2465,18 @@ function jobForm(j){
         <div id="veiculoSugestoes" style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px"></div>
       </div>
 
+      <div class="linhas-section">
+        <div class="linhas-head"><label>📦 Produtos prontos utilizados</label></div>
+        <p style="margin:0 0 8px;color:var(--muted);font-size:12px">Pacotes de mídia já compilados pelo time de produto — marque os usados nesta proposta pra contar o valor deles no resultado.</p>
+        ${produtosProntosCheckboxesHtml(j.produtosProntos||[])}
+      </div>
+
+      <div class="linhas-section">
+        <div class="linhas-head"><label>⏱ Estimativa e apontamento de horas</label></div>
+        <div class="field"><label>Tempo estimado (horas)</label><input id="f_tempoEstimado" type="number" step="0.5" min="0" value="${j.tempoEstimadoHoras||""}" placeholder="0"></div>
+        ${j.id?`<div id="apontamentoStatus">${apontamentoStatusHtml(j)}</div>`:`<p style="margin:0;color:var(--muted);font-size:12px">Salve o PIP primeiro pra poder iniciar/finalizar o apontamento de horas.</p>`}
+      </div>
+
       ${(j.historicoValores&&j.historicoValores.length)?`
       <div class="linhas-section">
         <div class="linhas-head"><label>Histórico de valores</label></div>
@@ -2343,6 +2526,10 @@ function saveJobForm(){
     nome:row.querySelector(".pl-nome").value.trim(),
     url:row.querySelector(".pl-url").value.trim()
   })).filter(p=>p.url);
+  const produtosProntos=[...document.querySelectorAll(".pp-check:checked")].map(c=>{
+    const p=(data.config.produtosProntos||[]).find(x=>x.id===c.value);
+    return p?{id:p.id,nome:p.nome,valor:Number(p.valor)||0}:null;
+  }).filter(Boolean);
   const analista=document.getElementById("f_analista").value.trim();
   const executivo=document.getElementById("f_executivo").value.trim();
   const existing=editId?data.jobs.find(x=>x.id===editId):null;
@@ -2369,6 +2556,10 @@ function saveJobForm(){
     planoMidia:document.getElementById("f_planoMidia").value.trim(),
     planilhas,
     linhas,
+    produtosProntos,
+    tempoEstimadoHoras:Number(document.getElementById("f_tempoEstimado").value)||0,
+    apontamentos:existing?existing.apontamentos:[],
+    retrabalhos:existing?existing.retrabalhos:0,
     ultimoContatoEm:existing?existing.ultimoContatoEm:Date.now(),
     valorFechado:existing?existing.valorFechado:0,
     motivoPerda:existing?existing.motivoPerda:"",
@@ -2380,7 +2571,7 @@ function saveJobForm(){
     historicoValores:existing?existing.historicoValores:[],
     updatedAt:Date.now()
   };
-  if(j.faseAtual==="Fechado")j.valorFechado=linhas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
+  if(j.faseAtual==="Fechado")j.valorFechado=linhas.reduce((s,l)=>s+(Number(l.valorFechado)||0),0)+valorProdutosProntosDe(j);
   const fMotivo=document.getElementById("f_motivoPerda");
   if(fMotivo)j.motivoPerda=fMotivo.value;
   const fDataFechamento=document.getElementById("f_dataFechamento");
@@ -2445,13 +2636,33 @@ function fecharJob(id){
   job.faseAtual="Fechado";
   job.dataFechamento=today();
   (job.linhas||[]).forEach(l=>{ if(!l.valorFechado)l.valorFechado=l.valorOrcado; });
-  job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0);
+  job.valorFechado=(job.linhas||[]).reduce((s,l)=>s+(Number(l.valorFechado)||0),0)+valorProdutosProntosDe(job);
   job.recuperavel=false;job.declinioAutomatico=false;
   job.updatedAt=Date.now();
   registrarFase(job);
   registrarValor(job,orcadoAntes,fechadoAntes);
+  criarCaseAutomatico(job);
   save();render();
   toast(`PIP fechado ✓ — ${fmtMoney(job.valorFechado)}`);
+}
+function criarCaseAutomatico(job){
+  data.cases=data.cases||[];
+  data.cases.push({
+    id:uid(),
+    jobId:job.id,
+    numero:job.numero,
+    cliente:job.cliente,
+    tipo:job.tipo,
+    praca:job.praca,
+    objetivoComunicacao:job.objetivoComunicacao,
+    objetivoMarketing:job.objetivoMarketing,
+    diferenciais:job.diferenciais,
+    veiculos:[...new Set((job.linhas||[]).map(l=>l.veiculo).filter(Boolean))],
+    produtosProntos:(job.produtosProntos||[]).map(p=>p.nome),
+    valorFechado:job.valorFechado,
+    dataFechamento:job.dataFechamento,
+    createdAt:Date.now()
+  });
 }
 function declinarJob(id){
   const job=data.jobs.find(x=>x.id===id);if(!job)return;
@@ -2489,6 +2700,24 @@ function senhasSecHtml(){
     ${linha("executivo",cfg.executivo,`data-senha-mode="executivo"`)}
   </div>`;
 }
+function produtosProntosSecHtml(){
+  const list=data.config.produtosProntos||[];
+  return `<div class="cfgsection">
+    <h4>Produtos prontos (time de produto)</h4>
+    <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Pacotes de mídia já compilados pelo time de produto — cadastre aqui pra poder selecioná-los num PIP e contabilizar o valor deles no resultado da proposta.</p>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:9px">
+      ${list.length?list.map(p=>`<div class="linharow"><div class="linharow-head"><span class="linharow-n">${esc(p.nome)}</span><button type="button" class="linharow-del" data-act="cfg-produto-del" data-id="${esc(p.id)}">✕ Remover</button></div>
+        <div style="font-size:12px;color:var(--ink-soft)">${fmtMoney(p.valor)}${p.composicao?" · "+esc(p.composicao):""}</div>
+      </div>`).join(""):`<span style="color:var(--muted);font-size:12.5px">Nenhum cadastrado ainda</span>`}
+    </div>
+    <div class="row2" style="margin-top:9px">
+      <div class="field"><label>Nome</label><input id="cfg_produto_nome" placeholder="Ex: Combo Sazonal Verão"></div>
+      <div class="field"><label>Valor</label><input id="cfg_produto_valor" type="number" step="0.01" min="0" placeholder="0,00"></div>
+    </div>
+    <div class="field"><label>Composição de mídia</label><input id="cfg_produto_composicao" placeholder="Ex: Google Ads + Meta Ads + Rádio"></div>
+    <div class="addrow"><button data-act="cfg-produto-add" style="flex:1">Adicionar produto pronto</button></div>
+  </div>`;
+}
 function settingsHtml(){
   const sec=(title,key,placeholder)=>`
     <div class="cfgsection" data-key="${key}">
@@ -2502,6 +2731,7 @@ function settingsHtml(){
       ${analistasSecHtml()}
       ${sec("Executivos de conta","executivos","Nome do executivo")}
       ${sec("Veículos de mídia","veiculos","Nome do veículo")}
+      ${produtosProntosSecHtml()}
       <div class="cfgsection">
         <h4>Metas mensais por praça</h4>
         <p style="margin:6px 0 0;color:var(--muted);font-size:12.5px">Usadas pra calcular o % de atingimento no gráfico "Meta — mês a mês" do Dashboard.</p>
@@ -2556,6 +2786,57 @@ function addEpLabs(){
 function delEpLabs(id){
   data.epLabs=data.epLabs.filter(e=>e.id!==id);
   save();openModal(epLabsModalHtml());render();
+}
+
+/* ============ Você na EP (visitas a emissoras pra apresentar a empresa) ============ */
+function voceEpListHtml(){
+  const rows=[...(data.voceNaEp||[])].sort((a,b)=>(b.data||"").localeCompare(a.data||""));
+  if(!rows.length)return `<div style="color:var(--muted);font-size:12.5px;padding:8px 0">Nenhuma visita registrada ainda.</div>`;
+  return rows.map(e=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:12.5px">
+    <span><b>${fmtDate(e.data)}</b> ${esc(e.horario||"")} · ${esc(e.emissora||"—")}${e.gerouProposta?' · <span style="color:var(--brand);font-weight:700">gerou proposta</span>':''}</span>
+    <button type="button" class="linharow-del" data-act="voceep-del" data-id="${e.id}">✕</button>
+  </div>`).join("");
+}
+function voceEpModalHtml(){
+  return `<header><h3>📻 Você na EP</h3><button class="x" data-act="close">×</button></header>
+    <div class="form">
+      <p style="margin:0 0 4px;color:var(--muted);font-size:13px">Registre visitas a emissoras (rádio/TV) pra apresentar a empresa. Fica guardado num histórico próprio, à parte dos PIPs.</p>
+      <div class="row2">
+        <div class="field"><label>Data</label><input id="ve_data" type="date" value="${today()}"></div>
+        <div class="field"><label>Horário</label><input id="ve_horario" type="time"></div>
+      </div>
+      <div class="field"><label>Emissora</label><input id="ve_emissora" placeholder="Nome da emissora/veículo visitado"></div>
+      <div class="field"><label>Pauta / descrição da apresentação</label><textarea id="ve_descricao" placeholder="O que foi apresentado, quem participou..."></textarea></div>
+      <div class="field checkfield"><label><input type="checkbox" id="ve_gerouProposta"> Gerou proposta</label></div>
+      <button class="save" data-act="voceep-add" data-writeonly>+ Registrar visita</button>
+      <div class="cfgsection" style="margin-top:18px;padding-top:16px;border-top:1px solid var(--line)">
+        <h4>Histórico</h4>
+        <button type="button" class="linha-add-btn" data-act="export-voceep-csv" style="margin-bottom:9px">📊 Exportar Excel</button>
+        <div id="voceEpListWrap">${voceEpListHtml()}</div>
+      </div>
+    </div>`;
+}
+function openVoceEp(){openModal(voceEpModalHtml());}
+function addVoceEp(){
+  const dataInput=document.getElementById("ve_data").value||today();
+  const horario=document.getElementById("ve_horario").value;
+  const emissora=document.getElementById("ve_emissora").value.trim();
+  const descricao=document.getElementById("ve_descricao").value.trim();
+  data.voceNaEp.push({id:uid(),data:dataInput,horario,emissora,descricao,gerouProposta:document.getElementById("ve_gerouProposta").checked,createdAt:Date.now()});
+  save();openModal(voceEpModalHtml());render();
+  toast("Visita registrada ✓");
+}
+function delVoceEp(id){
+  data.voceNaEp=data.voceNaEp.filter(e=>e.id!==id);
+  save();openModal(voceEpModalHtml());render();
+}
+function exportVoceEpCsv(){
+  try{
+    const header=["Data","Horário","Emissora","Descrição","Gerou proposta"];
+    const rows=[header,...(data.voceNaEp||[]).map(e=>[e.data||"",e.horario||"",e.emissora||"",e.descricao||"",e.gerouProposta?"Sim":"Não"])];
+    downloadCsv("voce-na-ep-"+today()+".csv",rows);
+    toast("Planilha baixada ✓");
+  }catch(e){toast("Não consegui gerar a planilha.");}
 }
 
 /* ============ exportar / importar ============ */
@@ -2689,6 +2970,9 @@ document.body.addEventListener("click",e=>{
   if(act==="new")openNewJobModal();
   else if(act==="edit")openEditJobModal(id);
   else if(act==="avancar")avancarJob(id);
+  else if(act==="voltar")voltarJob(id);
+  else if(act==="apontamento-iniciar")iniciarApontamento(id);
+  else if(act==="apontamento-finalizar")finalizarApontamento(id);
   else if(act==="job-fechar")abrirFechamentoModal(id);
   else if(act==="confirmar-fechamento")confirmarFechamento(id);
   else if(act==="job-declinar")declinarJob(id);
@@ -2767,6 +3051,29 @@ document.body.addEventListener("click",e=>{
   else if(act==="eplabs")openEpLabs();
   else if(act==="eplabs-add")addEpLabs();
   else if(act==="eplabs-del")delEpLabs(id);
+  else if(act==="voceep")openVoceEp();
+  else if(act==="voceep-add")addVoceEp();
+  else if(act==="voceep-del")delVoceEp(id);
+  else if(act==="export-voceep-csv")exportVoceEpCsv();
+  else if(act==="case-del"){
+    data.cases=(data.cases||[]).filter(c=>c.id!==id);
+    save();render();
+    toast("Case removido");
+  }
+  else if(act==="cfg-produto-add"){
+    const nome=document.getElementById("cfg_produto_nome").value.trim();
+    const valor=Number(document.getElementById("cfg_produto_valor").value)||0;
+    const composicao=document.getElementById("cfg_produto_composicao").value.trim();
+    if(!nome)return;
+    data.config.produtosProntos=data.config.produtosProntos||[];
+    data.config.produtosProntos.push({id:uid(),nome,valor,composicao});
+    save();openModal(settingsHtml());render();
+    toast("Produto pronto adicionado ✓");
+  }
+  else if(act==="cfg-produto-del"){
+    data.config.produtosProntos=(data.config.produtosProntos||[]).filter(p=>p.id!==id);
+    save();openModal(settingsHtml());render();
+  }
   else if(act==="cfg-add"){
     const key=b.dataset.key;
     const input=document.querySelector(`[data-cfg-input="${key}"]`);
