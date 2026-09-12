@@ -90,6 +90,12 @@ input,select,textarea{font-family:inherit}
 .stepview .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
 .critcard{border:1px solid var(--grid);border-radius:12px;padding:16px 18px;background:var(--surface-2)}
 .critcard h3{margin:0 0 4px;font-family:"Manrope";font-size:14.5px;font-weight:800}
+.critcard .f{margin-top:12px}
+.critcard .f:first-child{margin-top:0}
+.critcard .f label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px}
+.critcard .f input[type=text],.critcard .f input:not([type]){width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:9px 11px;font-size:13.5px;background:var(--surface);color:var(--ink)}
+.ib{border:1px solid var(--grid-strong);background:var(--surface);color:var(--muted);width:32px;height:32px;border-radius:8px;font-size:15px;line-height:1;flex:0 0 auto}
+.ib:hover{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bg)}
 .critcard .desc{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5}
 .funilrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 .funilfield{background:var(--surface);border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px}
@@ -170,7 +176,8 @@ td.catcell{padding:0 8px}
 td.benchcell{padding:0 8px}
 .benchbtn{border:1px dashed var(--grid-strong);background:transparent;border-radius:7px;padding:3px 8px;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;white-space:nowrap}
 .benchbtn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
-td.delcell{width:32px;text-align:center}
+td.delcell{width:64px;text-align:center;white-space:nowrap}
+.rmbtn:disabled{opacity:.3;cursor:not-allowed}
 .rmbtn{border:0;background:transparent;color:var(--faint);width:26px;height:26px;border-radius:6px;font-size:15px;line-height:1;visibility:hidden}
 tr:hover .rmbtn{visibility:visible}
 .rmbtn:hover{background:var(--danger-bg);color:var(--danger)}
@@ -323,15 +330,17 @@ const TACTICAL_FIELDS = {
   tv: [
     {k:"praca",label:"Praça/Mercado",ph:"Ex.: Grande São Paulo, Rio de Janeiro"},
     {k:"emissora",label:"Emissora/Canal",ph:"Ex.: Globo, SBT, Record"},
-    {k:"programa",label:"Programa",ph:"Ex.: Jornal Nacional"},
+    {k:"programa",label:"Programa",ph:"Ex.: Jornal Nacional",list:"tv"},
     {k:"horario",label:"Faixa horária",ph:"Ex.: 20h30"},
+    {k:"audienciaPct",label:"Audiência (rating %)",ph:"Ex.: 12.8",type:"number",step:"0.1"},
     {k:"audienciaTarget",label:"Audiência no target",ph:"Ex.: 704060",type:"number"},
     {k:"insercoes",label:"Nº inserções",ph:"Ex.: 12",type:"number"},
   ],
   radio: [
     {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo, Campinas"},
     {k:"emissora",label:"Emissora",ph:"Ex.: Jovem Pan, Band FM"},
-    {k:"programa",label:"Programa/Horário",ph:"Ex.: 06h às 09h"},
+    {k:"programa",label:"Programa/Horário",ph:"Ex.: 06h às 09h",list:"radio"},
+    {k:"audienciaPct",label:"Audiência (rating %)",ph:"Ex.: 3.5",type:"number",step:"0.1"},
     {k:"audienciaTarget",label:"Audiência no target",ph:"Ex.: 402277",type:"number"},
     {k:"insercoes",label:"Nº inserções",ph:"Ex.: 20",type:"number"},
   ],
@@ -339,10 +348,12 @@ const TACTICAL_FIELDS = {
     {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo"},
     {k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: outdoor, busdoor, painel LED"},
     {k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros"},
+    {k:"audienciaTarget",label:"Fluxo estimado no target/mês",ph:"Ex.: 500000",type:"number"},
   ],
   cinema: [
     {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo"},
     {k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis"},
+    {k:"audienciaTarget",label:"Público no target",ph:"Ex.: 45000",type:"number"},
     {k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"},
   ],
   impresso: [
@@ -352,17 +363,17 @@ const TACTICAL_FIELDS = {
     {k:"audienciaTarget",label:"Leitores no target",ph:"Ex.: 157699",type:"number"},
     {k:"insercoes",label:"Nº inserções",ph:"Ex.: 3",type:"number"},
   ],
-  audio: [{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 8",type:"number"}],
-  busca: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"}],
-  social: [{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"}],
-  display: [{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"}],
-  video: [{k:"formatoAd",label:"Formato",ph:"Ex.: skippable, bumper, mid-roll"}],
-  retail: [{k:"formatoAd",label:"Formato",ph:"Ex.: sponsored product, display on-site"}],
-  influ: [{k:"perfil",label:"Perfil/Criador",ph:"Ex.: @nomeperfil"},{k:"formatoConteudo",label:"Formato de conteúdo",ph:"Ex.: Reels + Stories"}],
-  afiliados: [{k:"rede",label:"Rede de afiliados",ph:"Ex.: Lomadee, Awin"}],
-  crm: [{k:"base",label:"Base/Segmento",ph:"Ex.: clientes ativos 90 dias"}],
-  app: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: UAC, ASA"}],
-  gaming: [{k:"plataforma",label:"Plataforma/Jogo",ph:"Ex.: Twitch, Free Fire"}],
+  audio: [{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 40000",type:"number"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 8",type:"number"}],
+  busca: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 50000 buscas/mês",type:"number"}],
+  social: [{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"},{k:"audienciaTarget",label:"Tamanho do público segmentado",ph:"Ex.: 350000",type:"number"}],
+  display: [{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 200000",type:"number"}],
+  video: [{k:"formatoAd",label:"Formato",ph:"Ex.: skippable, bumper, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 180000",type:"number"}],
+  retail: [{k:"formatoAd",label:"Formato",ph:"Ex.: sponsored product, display on-site"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 90000",type:"number"}],
+  influ: [{k:"perfil",label:"Perfil/Criador",ph:"Ex.: @nomeperfil"},{k:"formatoConteudo",label:"Formato de conteúdo",ph:"Ex.: Reels + Stories"},{k:"audienciaTarget",label:"Seguidores no target",ph:"Ex.: 60000",type:"number"}],
+  afiliados: [{k:"rede",label:"Rede de afiliados",ph:"Ex.: Lomadee, Awin"},{k:"audienciaTarget",label:"Base de afiliados no target",ph:"Ex.: 20000",type:"number"}],
+  crm: [{k:"base",label:"Base/Segmento",ph:"Ex.: clientes ativos 90 dias"},{k:"audienciaTarget",label:"Tamanho da base no target",ph:"Ex.: 15000",type:"number"}],
+  app: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: UAC, ASA"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 120000",type:"number"}],
+  gaming: [{k:"plataforma",label:"Plataforma/Jogo",ph:"Ex.: Twitch, Free Fire"},{k:"audienciaTarget",label:"Audiência estimada no target",ph:"Ex.: 80000",type:"number"}],
 };
 function tacticalFieldsFor(catKey){ return TACTICAL_FIELDS[catKey]||[]; }
 
@@ -423,7 +434,7 @@ const VEHICLES = [
   {k:"gaming_stream", cat:"gaming", label:"Patrocínio de Streamers (Twitch/YouTube Gaming)", funil:"topo", modelo:"FIXO", bench:"Live/mês R$ 1.000 – 30.000"},
 ];
 
-// faixa numérica de referência [min,max] no modelo de compra do próprio veículo — usada para checar a postura de custo declarada
+// faixa numérica de referência [min,max] no modelo de compra do próprio veículo — usada no botão "usar média de mercado"
 const BENCHNUM = {
   tv_aberta:[800,4000], tv_paga:[15,45], ctv_avod:[35,90], radio_am_fm:[150,1500],
   ooh_tradicional:[3000,30000], dooh_prog:[20,60], mobiliario_urbano:[2000,20000],
@@ -447,7 +458,88 @@ const KPI_OPTS = {
   cpa:{label:"CPA / Conversão direta", modelos:["CPA","CPL","CPI"]},
   roas:{label:"ROAS / Receita", modelos:["CPC","CPA","CPI"]},
   leads:{label:"Geração de Leads", modelos:["CPL","CPA"]},
+  engajamento:{label:"Engajamento / Interação", modelos:["CPM","CPV"]},
+  brandlift:{label:"Brand Lift / Lembrança", modelos:["CPM","CPP"]},
 };
+
+// alvos de mídia padrão (nomenclatura clássica de mercado) e faixa etária associada, usada para
+// estimar tamanho do público (item abaixo) e aderência de veículo (AFFINITY). % é uma estimativa
+// didática de penetração sobre a população total — não é dado de pesquisa real.
+const TARGET_PROFILES = {
+  as_abc_15: {label:"AS ABC 15+ (todos, classe ABC, 15+)", pct:0.55, faixa:"geral"},
+  as_ab_25: {label:"AS AB 25+ (todos, classe AB, 25+)", pct:0.16, faixa:"adulto"},
+  as_cde_18: {label:"AS CDE 18+ (todos, classe CDE, 18+)", pct:0.34, faixa:"adulto"},
+  mm_18_35_abc: {label:"MM 18-35 ABC (mulheres, 18-35, ABC)", pct:0.09, faixa:"jovem"},
+  mm_ab_25mais: {label:"MM AB 25+ (mulheres, 25+, AB)", pct:0.09, faixa:"adulto"},
+  hh_18_45_abc: {label:"HH 18-45 ABC (homens, 18-45, ABC)", pct:0.13, faixa:"adulto"},
+  as_15_24: {label:"AS 15-24 (jovens, todas as classes)", pct:0.15, faixa:"jovem"},
+  as_60mais: {label:"AS 60+ (todas as classes)", pct:0.14, faixa:"senior"},
+  as_ab_infantil: {label:"Crianças AB (responsável, 4-11 anos)", pct:0.04, faixa:"infantil"},
+};
+
+// população total aproximada (estimativa didática, base IBGE) — nacional e por UF, usada para calcular
+// o tamanho do público-alvo automaticamente a partir do target e recorte (nacional/estadual) escolhidos.
+const POPULACAO_BR = {
+  nacional: 203000000,
+  estados: {
+    SP:46300000, MG:21400000, RJ:17200000, BA:14900000, PR:11600000, RS:11100000, PE:9700000,
+    CE:9200000, PA:8700000, SC:7800000, MA:7100000, GO:7200000, AM:4300000, PB:4100000, ES:4100000,
+    RN:3400000, MT:3600000, AL:3400000, PI:3300000, DF:3100000, MS:2900000, SE:2300000, RO:1700000,
+    TO:1600000, AC:900000, AP:870000, RR:660000,
+  },
+  regioes: { sudeste:89000000, nordeste:57000000, sul:30500000, norte:18800000, centrooeste:16800000 },
+};
+const ESTADOS = {SP:"São Paulo",MG:"Minas Gerais",RJ:"Rio de Janeiro",BA:"Bahia",PR:"Paraná",RS:"Rio Grande do Sul",PE:"Pernambuco",CE:"Ceará",PA:"Pará",SC:"Santa Catarina",MA:"Maranhão",GO:"Goiás",AM:"Amazonas",PB:"Paraíba",ES:"Espírito Santo",RN:"Rio Grande do Norte",MT:"Mato Grosso",AL:"Alagoas",PI:"Piauí",DF:"Distrito Federal",MS:"Mato Grosso do Sul",SE:"Sergipe",RO:"Rondônia",TO:"Tocantins",AC:"Acre",AP:"Amapá",RR:"Roraima"};
+
+function publicoEstimado(c){
+  const target=TARGET_PROFILES[c.targetPrincipal]; if(!target) return 0;
+  const base = c.recorte==="estadual" ? (POPULACAO_BR.estados[c.estado]||0) : POPULACAO_BR.nacional;
+  return Math.round(base*target.pct);
+}
+
+// aderência qualitativa (estimativa didática, não pesquisa real) de cada categoria de veículo por faixa
+// do target, para ajudar o aluno a priorizar canais — "alta" / "media" / "baixa".
+const AFFINITY = {
+  tv:        {geral:"alta",  adulto:"alta",  jovem:"media", senior:"alta",  infantil:"alta"},
+  radio:     {geral:"media", adulto:"alta",  jovem:"baixa", senior:"alta",  infantil:"baixa"},
+  ooh:       {geral:"alta",  adulto:"alta",  jovem:"alta",  senior:"media", infantil:"baixa"},
+  cinema:    {geral:"media", adulto:"media", jovem:"alta",  senior:"baixa", infantil:"media"},
+  impresso:  {geral:"baixa", adulto:"media", jovem:"baixa", senior:"alta",  infantil:"baixa"},
+  audio:     {geral:"media", adulto:"media", jovem:"alta",  senior:"baixa", infantil:"baixa"},
+  busca:     {geral:"alta",  adulto:"alta",  jovem:"media", senior:"media", infantil:"baixa"},
+  social:    {geral:"alta",  adulto:"media", jovem:"alta",  senior:"baixa", infantil:"baixa"},
+  display:   {geral:"media", adulto:"media", jovem:"media", senior:"baixa", infantil:"baixa"},
+  video:     {geral:"alta",  adulto:"media", jovem:"alta",  senior:"media", infantil:"alta"},
+  retail:    {geral:"media", adulto:"alta",  jovem:"media", senior:"baixa", infantil:"baixa"},
+  influ:     {geral:"media", adulto:"baixa", jovem:"alta",  senior:"baixa", infantil:"media"},
+  afiliados: {geral:"baixa", adulto:"media", jovem:"media", senior:"baixa", infantil:"baixa"},
+  crm:       {geral:"media", adulto:"alta",  jovem:"baixa", senior:"media", infantil:"baixa"},
+  app:       {geral:"media", adulto:"media", jovem:"alta",  senior:"baixa", infantil:"media"},
+  gaming:    {geral:"baixa", adulto:"baixa", jovem:"alta",  senior:"baixa", infantil:"alta"},
+};
+function affinityFor(catKey, targetKey){
+  const target=TARGET_PROFILES[targetKey]; if(!target) return null;
+  return (AFFINITY[catKey]||{})[target.faixa]||null;
+}
+
+// audiência simulada (didática, não é medição real de Ibope/Kantar) de programas comuns de TV e rádio,
+// para o aluno usar como ponto de partida ao montar linhas de broadcast.
+const PROGRAMAS_REF = {
+  tv: {
+    "Jornal Nacional":28, "Big Brother Brasil":25, "Novela das 21h":22, "Jornal Hoje":16,
+    "Malhação":14, "The Voice Brasil":14, "Globo Esporte":11, "Vídeo Show":12,
+    "Sessão da Tarde":9, "Programa do Ratinho":8, "Domingão":18, "Fantástico":17,
+  },
+  radio: {
+    "CBN - Jornalismo (manhã)":6, "Jovem Pan - Manhã":4.5, "Antena 1 - Musical (dia todo)":2,
+    "Band FM - Manhã":3.5, "Transamérica - Musical":2.5, "Mix FM - Tarde":2.2,
+  },
+};
+function programaRefPct(catKey, nome){
+  const table=PROGRAMAS_REF[catKey]; if(!table||!nome) return null;
+  const key=Object.keys(table).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?table[key]:null;
+}
 
 const GLOSSARY = [
   {t:"CPM (Custo por Mil)", d:"Valor pago a cada 1.000 impressões. Impressões = (verba / CPM) × 1000."},
@@ -498,22 +590,43 @@ function sampleLines(){
   ];
 }
 function defaultCriteria(){
-  return {funil:{topo:25,meio:25,fundo:35,retencao:15},publico:[],postura:"",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"",kpi:"",publicoTamanho:"",coberturaAlvo:"",freqMin:"",freqMax:""};
+  return {
+    funil:{topo:25,meio:25,fundo:35,retencao:15},
+    publico:[],
+    targetPrincipal:"", recorte:"nacional", estado:"",
+    publicoTamanho:"", coberturaAlvo:"", freqMin:"", freqMax:"",
+    timing:"continuo", picos:[],
+    kpi:{topo:"",meio:"",fundo:"",retencao:""},
+    pracas:[],
+  };
 }
 function samplePlan(){
-  const criteria={funil:{topo:40,meio:25,fundo:35,retencao:0},publico:["social","busca","video"],postura:"padrao",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"moderado",kpi:"roas",publicoTamanho:800000,coberturaAlvo:55,freqMin:3,freqMax:8};
-  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 25-40, classe AB, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines:sampleLines(),criteria,justificativas:{}};
+  const criteria={
+    funil:{topo:40,meio:25,fundo:35,retencao:0},
+    publico:["social","busca","video","tv"],
+    targetPrincipal:"mm_18_35_abc", recorte:"nacional", estado:"",
+    publicoTamanho:publicoEstimado({targetPrincipal:"mm_18_35_abc",recorte:"nacional"}), coberturaAlvo:55, freqMin:3, freqMax:8,
+    timing:"continuo", picos:[],
+    kpi:{topo:"alcance",meio:"engajamento",fundo:"roas",retencao:"leads"},
+    pracas:["sudeste","nacional"],
+  };
+  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 18-35, classe ABC, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines:sampleLines(),criteria,justificativas:{}};
 }
 function ensurePlanShape(p){
   if(!p.criteria) p.criteria=defaultCriteria();
   const dc=defaultCriteria();
   Object.keys(dc).forEach(k=>{ if(p.criteria[k]===undefined) p.criteria[k]=dc[k]; });
+  if(typeof p.criteria.kpi==="string") p.criteria.kpi={topo:"",meio:"",fundo:p.criteria.kpi||"",retencao:""};
+  if(!Array.isArray(p.criteria.picos)) p.criteria.picos=[];
+  if(!Array.isArray(p.criteria.pracas)) p.criteria.pracas=[];
+  delete p.criteria.postura; delete p.criteria.competitiva; delete p.criteria.picoInicio; delete p.criteria.picoFim;
   if(!p.justificativas) p.justificativas={};
   (p.lines||[]).forEach(l=>{
     if(!l.papel) l.papel=PAPEL_POR_FUNIL[l.funil]||"alcance";
     if(!l.regiao) l.regiao="nacional";
     if(l.titulo===undefined) l.titulo="";
     if(!l.extra) l.extra={};
+    if(!l.insercoesPorDia) l.insercoesPorDia={};
   });
   return p;
 }
@@ -567,6 +680,15 @@ function num(n){return Math.round(n||0).toLocaleString("pt-BR");}
 function esc(s){return(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtd(s){ if(!s) return ""; const d=new Date(s+"T00:00:00"); if(isNaN(d)) return s; return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}); }
 
+// GRP = audiência (rating %) × nº de inserções. TRP aproxima o GRP "dentro do target" usando a
+// penetração do target escolhido nos critérios como proxy (não temos o universo exato por praça).
+function grpTrp(l, criteria){
+  if(!(l.extra&&l.extra.audienciaPct&&l.extra.insercoes)) return null;
+  const grp=parseFloat(l.extra.audienciaPct)*parseFloat(l.extra.insercoes);
+  const target=criteria&&TARGET_PROFILES[criteria.targetPrincipal];
+  const trp=target? grp*target.pct/0.55 : null; // normaliza pela penetração do público geral (AS ABC 15+ ~55%)
+  return {grp,trp};
+}
 function lineResult(l){
   const custo=parseFloat(l.custo)||0, verba=parseFloat(l.verba)||0;
   if(!custo || l.modelo==="FIXO") return {qty:null,label:RESLABEL[l.modelo]||""};
@@ -600,8 +722,10 @@ function planTotals(p){
 function criteriaComplete(p){
   const c=p.criteria||{};
   const sum=Object.values(c.funil||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
-  return Math.abs(sum-100)<0.5 && c.publico&&c.publico.length && c.postura && c.competitiva && c.kpi
-    && (c.timing==="continuo" || (c.picoInicio&&c.picoFim))
+  const kpiOk = c.kpi && Object.values(c.kpi).every(v=>!!v);
+  const timingOk = c.timing==="continuo" || (c.picos&&c.picos.length && c.picos.every(pc=>pc.inicio&&pc.fim));
+  const alvoOk = c.targetPrincipal && (c.recorte==="nacional" || (c.recorte==="estadual" && c.estado));
+  return Math.abs(sum-100)<0.5 && c.publico&&c.publico.length && kpiOk && timingOk && alvoOk
     && parseFloat(c.publicoTamanho)>0 && parseFloat(c.coberturaAlvo)>0 && parseFloat(c.freqMin)>0 && parseFloat(c.freqMax)>0;
 }
 
@@ -652,61 +776,42 @@ function computeChecks(p){
       : {id:"publico",status:"ok",title:"Aderência ao público",detail:"A maior parte da verba está nos canais que você indicou como consumidos pelo público-alvo."});
   }
 
-  // 3) postura de custo x benchmarks
-  if(!c.postura) checks.push({id:"custo",status:"na",title:"Postura de custo",detail:"Defina se busca eficiência de mercado ou está disposto a pagar premium."});
+  // 3) timing / flighting — agora aceita múltiplos picos
+  if(c.timing==="continuo") checks.push({id:"timing",status:"ok",title:"Timing de veiculação",detail:"Veiculação contínua não exige concentração de verba em períodos específicos."});
+  else if(!c.picos||!c.picos.length||c.picos.some(pc=>!pc.inicio||!pc.fim)) checks.push({id:"timing",status:"warn",title:"Timing de veiculação",detail:"Você escolheu um cronograma pulsado/concentrado, mas não definiu todos os períodos de pico."});
   else{
-    const acima=[], nenhumPremium=[];
-    let existePremium=false;
-    p.lines.forEach(l=>{
-      const v=vehicle(l.veiculo); const range=v&&BENCHNUM[v.k]; const custo=parseFloat(l.custo);
-      if(!v||!range||!custo) return;
-      if(custo>range[1]*1.05) acima.push(v.label);
-      if(custo>(range[0]+range[1])/2) existePremium=true;
-    });
-    if(c.postura==="padrao" && acima.length) checks.push({id:"custo",status:"warn",title:"Postura de custo",detail:`Você definiu buscar eficiência de mercado, mas paga acima da faixa de referência em: ${acima.join(", ")}.`});
-    else if(c.postura==="premium" && !existePremium && p.lines.length) checks.push({id:"custo",status:"warn",title:"Postura de custo",detail:"Você priorizou qualidade/alcance premium, mas nenhuma linha paga acima da média de mercado — reveja se o mix reflete essa escolha."});
-    else checks.push({id:"custo",status:"ok",title:"Postura de custo",detail:"Os custos unitários das linhas são coerentes com a postura declarada."});
-  }
-
-  // 4) timing / flighting
-  if(c.timing==="continuo") checks.push({id:"timing",status:"ok",title:"Timing de veiculação",detail:"Veiculação contínua não exige concentração de verba em um período específico."});
-  else if(!c.picoInicio||!c.picoFim) checks.push({id:"timing",status:"warn",title:"Timing de veiculação",detail:"Você escolheu um cronograma pulsado/concentrado, mas não definiu o período de pico."});
-  else{
-    const pi=new Date(c.picoInicio+"T00:00:00"), pf=new Date(c.picoFim+"T00:00:00");
-    let dentro=0;
+    const matched=new Set();
     p.lines.forEach(l=>{
       if(!l.inicio||!l.fim) return;
       const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
-      if(li<=pf && lf>=pi) dentro+=parseFloat(l.verba)||0;
+      const emAlgumPico=c.picos.some(pc=>{ const pi=new Date(pc.inicio+"T00:00:00"), pf=new Date(pc.fim+"T00:00:00"); return li<=pf && lf>=pi; });
+      if(emAlgumPico) matched.add(l.id);
     });
+    const dentro=p.lines.filter(l=>matched.has(l.id)).reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
     const pct = t.totalVerba? Math.round(dentro/t.totalVerba*100):0;
+    const periodos=c.picos.map(pc=>`${fmtd(pc.inicio)}–${fmtd(pc.fim)}`).join(", ");
     checks.push(pct<45
-      ? {id:"timing",status:"warn",title:"Timing de veiculação",detail:`Só ${pct}% da verba está concentrada no período de pico que você definiu (${fmtd(c.picoInicio)}–${fmtd(c.picoFim)}).`}
-      : {id:"timing",status:"ok",title:"Timing de veiculação",detail:`${pct}% da verba está concentrada no período de pico declarado.`});
+      ? {id:"timing",status:"warn",title:"Timing de veiculação",detail:`Só ${pct}% da verba está concentrada nos ${c.picos.length} período(s) de pico definidos (${periodos}).`}
+      : {id:"timing",status:"ok",title:"Timing de veiculação",detail:`${pct}% da verba está concentrada nos período(s) de pico declarados (${periodos}).`});
   }
 
-  // 5) postura competitiva
-  const massCats=["tv","ooh","cinema","video"];
-  const massPct = t.totalVerba? Math.round(Object.entries(t.byCat).filter(([k])=>massCats.includes(k)).reduce((s,[,v])=>s+v,0)/t.totalVerba*100):0;
-  if(!c.competitiva || t.totalVerba<=0) checks.push({id:"competitiva",status:"na",title:"Postura competitiva",detail:"Defina a postura frente à concorrência e aloque verba para checar."});
-  else if(c.competitiva==="agressivo") checks.push(massPct<20
-    ? {id:"competitiva",status:"warn",title:"Postura competitiva",detail:`Postura agressiva declarada, mas só ${massPct}% da verba está em canais de alcance de massa (TV/OOH/cinema/vídeo).`}
-    : {id:"competitiva",status:"ok",title:"Postura competitiva",detail:`${massPct}% da verba está em canais de massa, coerente com uma postura agressiva.`});
-  else if(c.competitiva==="nicho") checks.push(massPct>20
-    ? {id:"competitiva",status:"warn",title:"Postura competitiva",detail:`Postura de nicho declarada, mas ${massPct}% da verba está em canais de massa (TV/OOH) — pode ser verba desperdiçada em audiência não segmentada.`}
-    : {id:"competitiva",status:"ok",title:"Postura competitiva",detail:"O mix evita concentração em canais de massa, coerente com uma postura de nicho."});
-  else checks.push({id:"competitiva",status:"ok",title:"Postura competitiva",detail:"Presença moderada não exige um padrão específico de canais."});
-
-  // 6) kpi de sucesso x modelo de compra dominante
-  if(!c.kpi || t.totalVerba<=0) checks.push({id:"kpi",status:"na",title:"KPI de sucesso",detail:"Defina a métrica que vai julgar o plano e aloque verba para checar."});
+  // 4) kpi de sucesso por etapa do funil x modelo de compra dominante na etapa
+  if(!c.kpi || t.totalVerba<=0) checks.push({id:"kpi",status:"na",title:"KPI de sucesso por etapa",detail:"Defina o KPI de cada etapa do funil e aloque verba para checar."});
   else{
-    const byModelo={};
-    p.lines.forEach(l=>{ byModelo[l.modelo]=(byModelo[l.modelo]||0)+(parseFloat(l.verba)||0); });
-    const dominante=Object.entries(byModelo).sort((a,b)=>b[1]-a[1])[0];
-    const esperado=KPI_OPTS[c.kpi].modelos;
-    checks.push(dominante && !esperado.includes(dominante[0])
-      ? {id:"kpi",status:"warn",title:"KPI de sucesso",detail:`O KPI escolhido é "${KPI_OPTS[c.kpi].label}", mas o modelo de compra dominante do mix é ${MODELO[dominante[0]]}, pouco ligado a esse resultado.`}
-      : {id:"kpi",status:"ok",title:"KPI de sucesso",detail:`O modelo de compra dominante do mix é coerente com "${KPI_OPTS[c.kpi].label}".`});
+    const offenders=[];
+    Object.keys(FUNIL).forEach(stage=>{
+      const stageLines=p.lines.filter(l=>l.funil===stage);
+      const stageVerba=stageLines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+      if(stageVerba<=0 || !c.kpi[stage]) return;
+      const byModelo={};
+      stageLines.forEach(l=>{ byModelo[l.modelo]=(byModelo[l.modelo]||0)+(parseFloat(l.verba)||0); });
+      const dominante=Object.entries(byModelo).sort((a,b)=>b[1]-a[1])[0];
+      const esperado=KPI_OPTS[c.kpi[stage]].modelos;
+      if(dominante && !esperado.includes(dominante[0])) offenders.push(`${FUNIL[stage]}: KPI "${KPI_OPTS[c.kpi[stage]].label}" mas modelo dominante é ${MODELO[dominante[0]]}`);
+    });
+    checks.push(offenders.length
+      ? {id:"kpi",status:"warn",title:"KPI de sucesso por etapa",detail:"Divergência entre KPI e modelo de compra: "+offenders.join("; ")+"."}
+      : {id:"kpi",status:"ok",title:"KPI de sucesso por etapa",detail:"O modelo de compra dominante de cada etapa é coerente com o KPI escolhido para ela."});
   }
 
   // 7) cobertura do target
@@ -808,88 +913,111 @@ function renderMiniTimeline(p){
 function renderCriterios(p){
   const c=p.criteria;
   const sum=Object.values(c.funil).reduce((s,v)=>s+(parseFloat(v)||0),0);
+  const FUNCAO_FUNIL={topo:"Conhecimento de marca",meio:"Consideração / Engajamento",fundo:"Conversão / Venda",retencao:"Fidelização / Recompra"};
   const el=document.getElementById("stepview");
   el.innerHTML=`<div class="wrap">
+    <div class="critcard">
+      <h3>0. Briefing da campanha</h3>
+      <div class="desc">As informações que vão nortear todo o plano — preencha antes de qualquer alocação.</div>
+      <div class="critrow2">
+        <div class="f"><label>Cliente / Marca</label><input data-field="cliente" value="${esc(p.cliente)}" placeholder="Ex.: Marca Exemplo"></div>
+        <div class="f"><label>Objetivo da campanha</label><input data-field="objetivo" value="${esc(p.objetivo)}" placeholder="Ex.: gerar awareness de lançamento e conversão em e-commerce"></div>
+      </div>
+      <div class="f"><label>Persona / observações do público</label><input data-field="publico" value="${esc(p.publico)}" placeholder="Ex.: mulheres 18-35, classe ABC, interesse em moda"></div>
+      <div class="f"><label>Praças da campanha</label>
+        <div class="chiprow">${Object.entries(REGIOES).map(([k,v])=>`<button class="chip ${c.pracas.includes(k)?"on":""}" data-act="toggle-praca" data-key="${k}">${esc(v)}</button>`).join("")}</div>
+      </div>
+    </div>
+
     <div class="critcard">
       <h3>1. Distribuição por etapa do funil</h3>
       <div class="desc">Antes de escolher qualquer veículo, decida quanto da verba faz sentido em cada etapa para o objetivo do plano. Os quatro campos devem somar 100%.</div>
       <div class="funilrow">
         ${Object.entries(FUNILFULL).map(([k,label])=>`
-          <div class="funilfield"><label>${label.split(" (")[0]}</label><input type="number" min="0" max="100" data-crit="funil.${k}" value="${c.funil[k]}"></div>
+          <div class="funilfield"><label>${label.split(" (")[0]} <small style="display:block;font-weight:500;text-transform:none;color:var(--faint)">${FUNCAO_FUNIL[k]}</small></label><input type="number" min="0" max="100" data-crit="funil.${k}" value="${c.funil[k]}"></div>
         `).join("")}
       </div>
       <div class="funilsum ${Math.abs(sum-100)<0.5?"ok":"bad"}">Soma atual: ${sum}% ${Math.abs(sum-100)<0.5?"✓":"— precisa somar 100%"}</div>
     </div>
 
     <div class="critcard">
-      <h3>2. Cobertura e frequência do target</h3>
-      <div class="desc">Dimensione o público em número de pessoas e defina metas de cobertura (% do público único alcançado) e frequência efetiva (nº médio de exposições) — os dois indicadores clássicos de todo plano de mídia. O sistema estima os dois a partir das linhas de CPM/CPP usando um modelo simplificado de sobreposição estatística entre canais (não substitui pesquisa de audiência real).</div>
+      <h3>2. Target, cobertura e frequência</h3>
+      <div class="desc">Escolha o target principal no formato clássico de mídia (ex.: AS AB 25+) e o recorte geográfico — o sistema estima automaticamente o tamanho do público a partir de uma base populacional aproximada. Cobertura e frequência desejadas ficam por sua conta.</div>
       <div class="critrow2">
-        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Tamanho do público-alvo (nº de pessoas)</label><input type="number" min="0" step="1000" class="critdate" data-crit="publicoTamanho" value="${c.publicoTamanho||""}" placeholder="ex.: 800000"></div>
-        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Cobertura desejada (%)</label><input type="number" min="0" max="100" class="critdate" data-crit="coberturaAlvo" value="${c.coberturaAlvo||""}" placeholder="ex.: 55"></div>
+        <div class="f"><label>Target principal</label><select class="critselect" data-crit="targetPrincipal"><option value="">Selecione...</option>${Object.entries(TARGET_PROFILES).map(([k,v])=>`<option value="${k}" ${c.targetPrincipal===k?"selected":""}>${esc(v.label)}</option>`).join("")}</select></div>
+        <div class="f"><label>Recorte geográfico</label><select class="critselect" data-crit="recorte"><option value="nacional" ${c.recorte==="nacional"?"selected":""}>Nacional</option><option value="estadual" ${c.recorte==="estadual"?"selected":""}>Estadual</option></select></div>
       </div>
-      <div class="critrow2" style="margin-top:10px">
-        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Frequência efetiva mínima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMin" value="${c.freqMin||""}" placeholder="ex.: 3"></div>
-        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Frequência efetiva máxima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMax" value="${c.freqMax||""}" placeholder="ex.: 8"></div>
+      ${c.recorte==="estadual"?`<div class="f"><label>Estado</label><select class="critselect" data-crit="estado"><option value="">Selecione a UF...</option>${Object.entries(ESTADOS).map(([k,v])=>`<option value="${k}" ${c.estado===k?"selected":""}>${v} (${k})</option>`).join("")}</select></div>`:""}
+      <div class="hint" style="margin:8px 0">${c.targetPrincipal && (c.recorte==="nacional"||c.estado) ? `População estimada no target: <b style="color:var(--ink)">${num(publicoEstimado(c))} pessoas</b> (${c.recorte==="nacional"?"Brasil":ESTADOS[c.estado]||"—"} × ${Math.round(TARGET_PROFILES[c.targetPrincipal].pct*100)}% — estimativa didática)` : "Selecione o target e o recorte para estimar o público."}</div>
+      <div class="critrow2">
+        <div class="f"><label>Cobertura desejada (%)</label><input type="number" min="0" max="100" class="critdate" data-crit="coberturaAlvo" value="${c.coberturaAlvo||""}" placeholder="ex.: 55"></div>
+        <div></div>
+      </div>
+      <div class="critrow2">
+        <div class="f"><label>Frequência efetiva mínima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMin" value="${c.freqMin||""}" placeholder="ex.: 3"></div>
+        <div class="f"><label>Frequência efetiva máxima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMax" value="${c.freqMax||""}" placeholder="ex.: 8"></div>
       </div>
     </div>
 
     <div class="critcard">
       <h3>3. Onde esse público realmente consome mídia</h3>
-      <div class="desc">Marque as categorias de veículo que fazem sentido para o público descrito no briefing — não pelo que parece moderno, mas pelo hábito real de consumo dele.</div>
-      <div class="chiprow">${CATS.map(cat=>`<button class="chip ${c.publico.includes(cat.key)?"on":""}" data-act="toggle-cat" data-key="${cat.key}">${esc(cat.label)}</button>`).join("")}</div>
+      <div class="desc">Marque as categorias de veículo que fazem sentido para o target escolhido. A etiqueta mostra a aderência estimada de cada categoria ao target (estimativa didática, não pesquisa real).</div>
+      <div class="chiprow">${CATS.map(cat=>{
+        const aff=affinityFor(cat.key, c.targetPrincipal);
+        const affLbl=aff?{alta:"● alta",media:"● média",baixa:"● baixa"}[aff]:"";
+        const affColor=aff?{alta:"var(--dig)",media:"var(--ret)",baixa:"var(--faint)"}[aff]:"";
+        return `<button class="chip ${c.publico.includes(cat.key)?"on":""}" data-act="toggle-cat" data-key="${cat.key}">${esc(cat.label)}${aff?` <small style="color:${affColor}">${affLbl}</small>`:""}</button>`;
+      }).join("")}</div>
     </div>
 
     <div class="critcard">
-      <h3>4. Postura de custo</h3>
-      <div class="desc">Isso trava a análise de coerência quando uma linha paga muito acima (ou muito abaixo) do que a escolha declarada permite.</div>
-      <div class="radiorow">
-        <label class="radiocard ${c.postura==="padrao"?"on":""}"><input type="radio" name="postura" value="padrao" ${c.postura==="padrao"?"checked":""} data-crit="postura"><div><div class="rt">Eficiência de mercado</div><div class="rd">Busco ficar dentro da faixa média de custo de cada veículo.</div></div></label>
-        <label class="radiocard ${c.postura==="premium"?"on":""}"><input type="radio" name="postura" value="premium" ${c.postura==="premium"?"checked":""} data-crit="postura"><div><div class="rt">Premium por qualidade/alcance</div><div class="rd">Aceito pagar acima da média por posicionamento, formato ou audiência melhores.</div></div></label>
-      </div>
-    </div>
-
-    <div class="critcard">
-      <h3>5. Timing da campanha</h3>
-      <div class="desc">Defina como a verba deve se distribuir ao longo do tempo antes de datar as linhas.</div>
+      <h3>4. Timing da campanha</h3>
+      <div class="desc">Defina como a verba deve se distribuir ao longo do tempo. Pulsado/concentrado aceitam mais de um período de pico.</div>
       <select class="critselect" data-crit="timing">
         <option value="continuo" ${c.timing==="continuo"?"selected":""}>Contínuo — presença constante, sem picos</option>
         <option value="pulsado" ${c.timing==="pulsado"?"selected":""}>Pulsado — picos em momentos-chave</option>
-        <option value="concentrado" ${c.timing==="concentrado"?"selected":""}>Concentrado — tudo em uma janela curta</option>
+        <option value="concentrado" ${c.timing==="concentrado"?"selected":""}>Concentrado — tudo em janelas curtas</option>
       </select>
-      ${c.timing!=="continuo"?`<div class="critrow2" style="margin-top:10px">
-        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Início do pico</label><input type="date" class="critdate" data-crit="picoInicio" value="${c.picoInicio||""}"></div>
-        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Fim do pico</label><input type="date" class="critdate" data-crit="picoFim" value="${c.picoFim||""}"></div>
+      ${c.timing!=="continuo"?`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        ${c.picos.map((pc,i)=>`<div class="critrow2" style="align-items:end">
+          <div class="f"><label>Início do pico ${i+1}</label><input type="date" class="critdate" data-pico="${i}.inicio" value="${pc.inicio||""}"></div>
+          <div class="f" style="display:flex;gap:8px;align-items:end"><div style="flex:1"><label>Fim do pico ${i+1}</label><input type="date" class="critdate" data-pico="${i}.fim" value="${pc.fim||""}"></div><button class="ib" data-act="del-pico" data-idx="${i}" title="Remover pico" style="margin-bottom:1px">×</button></div>
+        </div>`).join("")}
+        <button class="tbtn" data-act="add-pico" style="align-self:flex-start">+ Adicionar período de pico</button>
       </div>`:""}
     </div>
 
     <div class="critcard">
-      <h3>6. Postura competitiva</h3>
-      <div class="desc">Isso deveria influenciar se faz sentido ou não usar canais de alcance de massa (TV, OOH, cinema, vídeo).</div>
-      <div class="radiorow">
-        <label class="radiocard ${c.competitiva==="agressivo"?"on":""}"><input type="radio" name="competitiva" value="agressivo" ${c.competitiva==="agressivo"?"checked":""} data-crit="competitiva"><div><div class="rt">Desafiante agressivo</div><div class="rd">Preciso de alcance de massa para disputar espaço com concorrentes maiores.</div></div></label>
-        <label class="radiocard ${c.competitiva==="moderado"?"on":""}"><input type="radio" name="competitiva" value="moderado" ${c.competitiva==="moderado"?"checked":""} data-crit="competitiva"><div><div class="rt">Presença moderada</div><div class="rd">Sem exigência específica de alcance de massa.</div></div></label>
-        <label class="radiocard ${c.competitiva==="nicho"?"on":""}"><input type="radio" name="competitiva" value="nicho" ${c.competitiva==="nicho"?"checked":""} data-crit="competitiva"><div><div class="rt">Nicho defensivo</div><div class="rd">Prefiro concentrar em segmentação fina a gastar com audiência de massa.</div></div></label>
+      <h3>5. KPI de sucesso por etapa do funil</h3>
+      <div class="desc">O KPI que julga o sucesso muda por etapa — e às vezes por meio. Defina um KPI principal para cada etapa do funil.</div>
+      <div class="funilrow">
+        ${Object.entries(FUNIL).map(([k,label])=>`
+          <div class="funilfield"><label>${label}</label>
+            <select class="critselect" data-crit="kpi.${k}" style="font-size:12.5px;padding:6px 8px"><option value="">Selecione...</option>${Object.entries(KPI_OPTS).map(([kk,vv])=>`<option value="${kk}" ${c.kpi[k]===kk?"selected":""}>${vv.label}</option>`).join("")}</select>
+          </div>
+        `).join("")}
       </div>
-    </div>
-
-    <div class="critcard">
-      <h3>7. KPI de sucesso do plano</h3>
-      <div class="desc">Qual métrica única vai julgar se esse plano funcionou? Isso deveria puxar o modelo de compra predominante do mix.</div>
-      <select class="critselect" data-crit="kpi">
-        <option value="">Selecione...</option>
-        ${Object.entries(KPI_OPTS).map(([k,v])=>`<option value="${k}" ${c.kpi===k?"selected":""}>${v.label}</option>`).join("")}
-      </select>
     </div>
   </div>`;
 
+  el.querySelectorAll("[data-field]").forEach(input=>{
+    input.addEventListener("change",()=>{ p[input.dataset.field]=input.value; save(); render(); });
+  });
   el.querySelectorAll("[data-crit]").forEach(input=>{
-    const evt = input.tagName==="SELECT" ? "change" : (input.type==="radio"?"change":"input");
+    const evt = input.tagName==="SELECT" ? "change" : "input";
     input.addEventListener(evt,()=>{
       const path=input.dataset.crit;
       if(path.startsWith("funil.")) c.funil[path.split(".")[1]]=parseFloat(input.value)||0;
+      else if(path.startsWith("kpi.")) c.kpi[path.split(".")[1]]=input.value;
       else c[path]=input.value;
+      if(path==="targetPrincipal"||path==="recorte"||path==="estado") c.publicoTamanho=publicoEstimado(c);
       save(); render();
+    });
+  });
+  el.querySelectorAll("[data-pico]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [idx,field]=input.dataset.pico.split(".");
+      c.picos[+idx][field]=input.value; save(); render();
     });
   });
 }
@@ -909,15 +1037,28 @@ function monthlyMap(p){
   }
   const rows=dated.slice().sort((a,b)=>{ const va=vehicle(a.veiculo), vb=vehicle(b.veiculo); return (va?va.cat:"").localeCompare(vb?vb.cat:""); }).map(l=>{
     const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
-    const totalLineDays=Math.max(1,Math.round((lf-li)/86400000)+1);
     const verba=parseFloat(l.verba)||0;
     const values={};
-    months.forEach(m=>{
-      const overlapStart=li>m.start?li:m.start;
-      const overlapEnd=lf<m.end?lf:m.end;
-      const overlapDays=Math.max(0,Math.round((overlapEnd-overlapStart)/86400000)+1);
-      values[m.key]=verba*(overlapDays/totalLineDays);
-    });
+    const diasMap=l.insercoesPorDia||{};
+    const totalInsercoesDia=Object.values(diasMap).reduce((s,n)=>s+n,0);
+    if(totalInsercoesDia>0){
+      // usa a grade real de inserções por dia (preenchida pelo aluno) em vez de prorateio linear
+      months.forEach(m=>{ values[m.key]=0; });
+      Object.entries(diasMap).forEach(([dayKey,n])=>{
+        const d=new Date(dayKey+"T00:00:00");
+        const mk=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+        if(values[mk]===undefined) values[mk]=0;
+        values[mk]+=verba*(n/totalInsercoesDia);
+      });
+    }else{
+      const totalLineDays=Math.max(1,Math.round((lf-li)/86400000)+1);
+      months.forEach(m=>{
+        const overlapStart=li>m.start?li:m.start;
+        const overlapEnd=lf<m.end?lf:m.end;
+        const overlapDays=Math.max(0,Math.round((overlapEnd-overlapStart)/86400000)+1);
+        values[m.key]=verba*(overlapDays/totalLineDays);
+      });
+    }
     return {line:l, values};
   });
   const totals={}; months.forEach(m=>{ totals[m.key]=rows.reduce((s,r)=>s+r.values[m.key],0); });
@@ -970,6 +1111,13 @@ function renderJornada(p){
         <div class="tile" style="border:1px solid var(--grid);border-radius:9px;padding:12px;background:var(--surface)"><div class="k" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Cobertura estimada</div><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-top:4px">${rf.reachPct.toFixed(1)}%</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">${num(rf.reachPeople)} de ${num(rf.pop)} pessoas</div></div>
         <div class="tile" style="border:1px solid var(--grid);border-radius:9px;padding:12px;background:var(--surface)"><div class="k" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Frequência média</div><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-top:4px">${rf.avgFreq.toFixed(1)}x</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">exposições por pessoa alcançada</div></div>
       </div>` : `<div class="hint">Informe o tamanho do público-alvo nos critérios (etapa 1) e aloque verba em linhas de CPM/CPP.</div>`}
+      ${(()=>{
+        const tvRadio=p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&(v.cat==="tv"||v.cat==="radio"); });
+        const withGrp=tvRadio.map(l=>grpTrp(l,p.criteria)).filter(Boolean);
+        if(!withGrp.length) return "";
+        const totalGrp=withGrp.reduce((s,g)=>s+g.grp,0), totalTrp=withGrp.reduce((s,g)=>s+(g.trp||0),0);
+        return `<div class="hint" style="margin-top:10px">TV/Rádio — GRP total: <b style="color:var(--ink)">${totalGrp.toFixed(1)}</b> · TRP no target (aproximado): <b style="color:var(--ink)">${totalTrp.toFixed(1)}</b>. TRP é uma aproximação didática (GRP escalado pela penetração do target declarado), não uma medição real de audiência.</div>`;
+      })()}
     </div>
 
     <div class="critcard">
@@ -1071,7 +1219,13 @@ function renderGrid(p){
       const v=vehicle(l.veiculo)||VEHICLES[0];
       const r=lineResult(l);
       const idx=p.lines.indexOf(l)+1;
-      const extraCells=extraFields.map(f=>`<td><input class="cellinput left" type="${f.type||"text"}" data-line="${l.id}" data-k="extra.${f.k}" value="${esc(l.extra&&l.extra[f.k]||"")}" placeholder="${esc(f.ph||"")}"></td>`).join("");
+      const extraCells=extraFields.map(f=>{
+        const val=esc((l.extra&&l.extra[f.k])||"");
+        const inp=`<input class="cellinput left" type="${f.type||"text"}" ${f.step?`step="${f.step}"`:""} data-line="${l.id}" data-k="extra.${f.k}" value="${val}" placeholder="${esc(f.ph||"")}" ${f.list?`list="dl_${f.list}"`:""}>`;
+        const refPct = f.k==="programa" ? programaRefPct(g.cat.key, l.extra&&l.extra.programa) : null;
+        const btn = refPct!==null ? `<button class="benchbtn" data-act="usar-audiencia-ref" data-id="${l.id}" data-pct="${refPct}" title="Preencher audiência simulada de referência para este programa">rating ~${refPct}%</button>` : "";
+        return `<td>${inp}${btn}</td>`;
+      }).join("");
       return `<tr data-id="${l.id}">
         <td class="rownum">${idx}</td>
         <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsAllByCat}</select></td>
@@ -1087,10 +1241,13 @@ function renderGrid(p){
           <input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0">
           ${(l.extra&&l.extra.insercoes&&l.custo)?`<button class="benchbtn" data-act="usar-insercoes" data-id="${l.id}" title="Verba = custo unitário × nº de inserções">= ${l.extra.insercoes}× ${money(l.custo)}</button>`:""}
         </td>
-        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}${(l.extra&&l.extra.audienciaTarget&&l.custo)?`<div class="hint" style="font-size:10.5px;margin-top:2px">CPM real: ${money(l.custo/l.extra.audienciaTarget*1000)}</div>`:""}</td>
+        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}${(l.extra&&l.extra.audienciaTarget&&l.custo)?`<div class="hint" style="font-size:10.5px;margin-top:2px">CPM real: ${money(l.custo/l.extra.audienciaTarget*1000)}</div>`:""}${(()=>{ const gt=grpTrp(l,p.criteria); return gt?`<div class="hint" style="font-size:10.5px;margin-top:2px">GRP ${gt.grp.toFixed(1)}${gt.trp!==null?` · TRP~${gt.trp.toFixed(1)}`:""}</div>`:""; })()}</td>
         <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
         <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="fim" value="${l.fim||""}"></td>
-        <td class="delcell"><button class="rmbtn" data-act="del-line" data-id="${l.id}" title="Excluir linha">×</button></td>
+        <td class="delcell">
+          <button class="rmbtn" data-act="grade-dias" data-id="${l.id}" title="Grade de inserções por dia" ${(!l.inicio||!l.fim)?"disabled":""}>📅</button>
+          <button class="rmbtn" data-act="del-line" data-id="${l.id}" title="Excluir linha">×</button>
+        </td>
       </tr>`;
     }).join("");
     const totalCols=14+extraFields.length; // rownum,veiculo,titulo,extras...,regiao,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
@@ -1115,7 +1272,9 @@ function renderGrid(p){
     <div class="addcatrow"><label>Adicionar linha em outra categoria:</label>
       <select id="addCatSelect">${optionsAllByCat}</select>
       <button class="tbtn pri" data-act="add-line-select">+ Adicionar</button>
-    </div>`;
+    </div>
+    <datalist id="dl_tv">${Object.keys(PROGRAMAS_REF.tv).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>
+    <datalist id="dl_radio">${Object.keys(PROGRAMAS_REF.radio).map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
 
   // select vehicle values (can't set selected in template safely with dynamic optgroups) + bind
   p.lines.forEach(l=>{
@@ -1251,6 +1410,51 @@ function closeAnalytics(){
 }
 
 /* ===================== glossário ===================== */
+/* ===================== grade de inserções por dia ===================== */
+function openGradeDias(lineId){
+  const p=curPlan(); const l=p.lines.find(x=>x.id===lineId); if(!l||!l.inicio||!l.fim) return;
+  const v=vehicle(l.veiculo);
+  const start=new Date(l.inicio+"T00:00:00"), end=new Date(l.fim+"T00:00:00");
+  const days=[]; for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) days.push(new Date(d));
+  const byMonth={};
+  days.forEach(d=>{ const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); (byMonth[key]=byMonth[key]||[]).push(d); });
+  const dias=l.insercoesPorDia||{};
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Grade de inserções — ${esc(v?v.label:l.veiculo)}</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="form" style="max-height:60vh;overflow:auto">
+      <div class="hint" style="margin-bottom:10px">Preencha o nº de inserções em cada dia — igual às planilhas tradicionais de mapa de mídia. O total substitui o campo "Nº inserções" e passa a valer no mapa mensal.</div>
+      ${Object.entries(byMonth).map(([mk,ds])=>`
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${ds[0].toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px">
+            ${ds.map(d=>{
+              const key=ymd_(d);
+              return `<div style="border:1px solid var(--grid-strong);border-radius:8px;padding:5px 7px;background:var(--surface-2)">
+                <div style="font-size:10px;color:var(--muted);font-weight:700">${d.toLocaleDateString("pt-BR",{day:"2-digit",weekday:"short"})}</div>
+                <input type="number" min="0" step="1" data-day="${key}" value="${dias[key]||""}" style="width:100%;border:0;background:transparent;font-size:14px;font-weight:700;padding:2px 0;font-family:'JetBrains Mono',monospace">
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+      `).join("")}
+      <button class="save" data-act="save-grade-dias" data-id="${l.id}">Salvar grade</button>
+    </div>`;
+  document.getElementById("backdrop").classList.add("open");
+}
+function ymd_(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function saveGradeDias(lineId){
+  const p=curPlan(); const l=p.lines.find(x=>x.id===lineId); if(!l) return;
+  const novo={}; let total=0;
+  document.querySelectorAll("[data-day]").forEach(inp=>{
+    const n=parseFloat(inp.value)||0;
+    if(n>0){ novo[inp.dataset.day]=n; total+=n; }
+  });
+  l.insercoesPorDia=novo;
+  if(!l.extra) l.extra={};
+  if(total>0) l.extra.insercoes=total;
+  save(); closeModal(); render();
+}
+
 function openGlossary(){
   document.getElementById("modal").innerHTML=`
     <header><h3>Glossário de mídia</h3><button class="x" data-act="close-modal">×</button></header>
@@ -1314,6 +1518,17 @@ document.addEventListener("click",e=>{
     if(i>=0) p.criteria.publico.splice(i,1); else p.criteria.publico.push(key);
     save(); render();
   }
+  else if(act==="toggle-praca"){
+    const p=curPlan(); const key=b.dataset.key; const i=p.criteria.pracas.indexOf(key);
+    if(i>=0) p.criteria.pracas.splice(i,1); else p.criteria.pracas.push(key);
+    save(); render();
+  }
+  else if(act==="add-pico"){
+    const p=curPlan(); p.criteria.picos.push({inicio:"",fim:""}); save(); render();
+  }
+  else if(act==="del-pico"){
+    const p=curPlan(); p.criteria.picos.splice(+b.dataset.idx,1); save(); render();
+  }
   else if(act==="del-plan"){ e.stopPropagation(); if(confirm("Excluir este plano de mídia?")) delPlan(id); }
   else if(act==="add-line"){
     const p=curPlan();
@@ -1325,6 +1540,12 @@ document.addEventListener("click",e=>{
   else if(act==="usar-bench"){
     const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo); const range=v&&BENCHNUM[v.k];
     if(line&&range){ line.custo=Math.round(((range[0]+range[1])/2)*100)/100; save(); render(); }
+  }
+  else if(act==="grade-dias") openGradeDias(id);
+  else if(act==="save-grade-dias") saveGradeDias(id);
+  else if(act==="usar-audiencia-ref"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id);
+    if(line){ if(!line.extra) line.extra={}; line.extra.audienciaPct=parseFloat(b.dataset.pct); save(); render(); }
   }
   else if(act==="usar-insercoes"){
     const p=curPlan(); const line=p.lines.find(x=>x.id===id);
