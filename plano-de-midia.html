@@ -133,7 +133,17 @@ input,select,textarea{font-family:inherit}
 .icell.money input{font-family:"JetBrains Mono",monospace}
 
 /* ===== grid principal ===== */
-.gridwrap{flex:1;overflow:auto;background:var(--surface)}
+.gridwrap{flex:1;overflow:auto;background:var(--surface);padding:0 0 24px}
+.sheetsummary{padding:12px 16px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--grid)}
+.sheetsummary b{color:var(--ink);font-family:"JetBrains Mono",monospace}
+.sheetgroup{margin-top:18px}
+.sheetgroup:first-of-type{margin-top:8px}
+.sheetgrouphead{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:12px;color:var(--muted);font-weight:600}
+.sheetgrouphead .sp{flex:1}
+.sheetgrouphead b{font-family:"JetBrains Mono",monospace;color:var(--ink);font-size:13px}
+.addcatrow{display:flex;align-items:center;gap:9px;padding:16px;flex-wrap:wrap}
+.addcatrow label{font-size:12px;color:var(--muted);font-weight:600}
+.addcatrow select{border:1px solid var(--grid-strong);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--surface);color:var(--ink)}
 table.sheet{border-collapse:collapse;width:100%;min-width:1180px}
 table.sheet thead th{position:sticky;top:0;background:var(--head-bg);z-index:2;border-bottom:1px solid var(--grid-strong);border-right:1px solid var(--grid);padding:7px 9px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
 table.sheet thead th.num{text-align:right}
@@ -302,6 +312,30 @@ const PAPEL = {alcance:"Alcance / Cobertura", frequencia:"Frequência / Lembran�
 const PAPEL_POR_FUNIL = {topo:"alcance", meio:"frequencia", fundo:"conversao", retencao:"recorrencia"};
 const RESLABEL = {CPM:"impressões", CPC:"cliques", CPV:"views", CPA:"conversões", CPL:"leads", CPI:"instalações", CPP:"GRPs", FIXO:"pacote fechado"};
 
+const REGIOES = {nacional:"Nacional", norte:"Norte", nordeste:"Nordeste", centrooeste:"Centro-Oeste", sudeste:"Sudeste", sul:"Sul"};
+
+// campos táticos específicos de cada tipo de veículo — o nível de detalhe que uma planilha real de mídia tem
+// (veículo específico, praça, programa/horário, formato, nº de inserções etc.), além do título da peça/ação.
+const TACTICAL_FIELDS = {
+  tv: [{k:"emissora",label:"Emissora/Canal",ph:"Ex.: Globo, SBT, Record"},{k:"programa",label:"Programa",ph:"Ex.: Jornal Nacional"},{k:"horario",label:"Faixa horária",ph:"Ex.: 20h30"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 12",type:"number"}],
+  radio: [{k:"emissora",label:"Emissora",ph:"Ex.: Jovem Pan, Band FM"},{k:"programa",label:"Programa/Horário",ph:"Ex.: 7h–9h"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 20",type:"number"}],
+  ooh: [{k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: outdoor, busdoor, painel LED"},{k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros, SP"}],
+  cinema: [{k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis"},{k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"}],
+  impresso: [{k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo"},{k:"formatoImp",label:"Formato/Página",ph:"Ex.: página dupla"}],
+  audio: [{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"}],
+  busca: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"}],
+  social: [{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"}],
+  display: [{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"}],
+  video: [{k:"formatoAd",label:"Formato",ph:"Ex.: skippable, bumper, mid-roll"}],
+  retail: [{k:"formatoAd",label:"Formato",ph:"Ex.: sponsored product, display on-site"}],
+  influ: [{k:"perfil",label:"Perfil/Criador",ph:"Ex.: @nomeperfil"},{k:"formatoConteudo",label:"Formato de conteúdo",ph:"Ex.: Reels + Stories"}],
+  afiliados: [{k:"rede",label:"Rede de afiliados",ph:"Ex.: Lomadee, Awin"}],
+  crm: [{k:"base",label:"Base/Segmento",ph:"Ex.: clientes ativos 90 dias"}],
+  app: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: UAC, ASA"}],
+  gaming: [{k:"plataforma",label:"Plataforma/Jogo",ph:"Ex.: Twitch, Free Fire"}],
+};
+function tacticalFieldsFor(catKey){ return TACTICAL_FIELDS[catKey]||[]; }
+
 const CATS = [
   {key:"tv", label:"TV", cls:"off"}, {key:"radio", label:"Rádio", cls:"off"},
   {key:"ooh", label:"OOH / DOOH", cls:"off"}, {key:"cinema", label:"Cinema", cls:"off"},
@@ -427,9 +461,9 @@ let viewMode="criterios"; // 'criterios' | 'alocacao' | 'coerencia'
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sampleLines(){
   return [
-    {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:""},
-    {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:""},
-    {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:""},
+    {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",regiao:"nacional",titulo:"Carrossel remarketing",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:"",extra:{formatoAd:"Stories",segmentacao:"Lookalike 1% compradores"}},
+    {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",regiao:"nacional",titulo:"Busca marca + genéricas",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:"",extra:{campanhaTipo:"Pesquisa",palavrasChave:"marca, genéricas"}},
+    {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",regiao:"sudeste",titulo:"Filme 15s lançamento",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:"",extra:{formatoAd:"Skippable in-stream"}},
   ];
 }
 function defaultCriteria(){
@@ -444,7 +478,12 @@ function ensurePlanShape(p){
   const dc=defaultCriteria();
   Object.keys(dc).forEach(k=>{ if(p.criteria[k]===undefined) p.criteria[k]=dc[k]; });
   if(!p.justificativas) p.justificativas={};
-  (p.lines||[]).forEach(l=>{ if(!l.papel) l.papel=PAPEL_POR_FUNIL[l.funil]||"alcance"; });
+  (p.lines||[]).forEach(l=>{
+    if(!l.papel) l.papel=PAPEL_POR_FUNIL[l.funil]||"alcance";
+    if(!l.regiao) l.regiao="nacional";
+    if(l.titulo===undefined) l.titulo="";
+    if(!l.extra) l.extra={};
+  });
   return p;
 }
 
@@ -505,7 +544,7 @@ function lineResult(l){
 }
 function planTotals(p){
   const totalVerba=p.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
-  const byCat={}, byFunil={}, byClass={off:0,dig:0};
+  const byCat={}, byFunil={}, byClass={off:0,dig:0}, byRegiao={};
   let impressoes=0, cliques=0, views=0, conversoes=0;
   p.lines.forEach(l=>{
     const v=vehicle(l.veiculo); if(!v) return;
@@ -514,6 +553,7 @@ function planTotals(p){
     byCat[v.cat]=(byCat[v.cat]||0)+verba;
     byFunil[l.funil]=(byFunil[l.funil]||0)+verba;
     byClass[c.cls]=(byClass[c.cls]||0)+verba;
+    byRegiao[l.regiao||"nacional"]=(byRegiao[l.regiao||"nacional"]||0)+verba;
     const r=lineResult(l);
     if(r.qty){
       if(l.modelo==="CPM") impressoes+=r.qty;
@@ -522,7 +562,7 @@ function planTotals(p){
       else if(["CPA","CPL","CPI"].includes(l.modelo)) conversoes+=r.qty;
     }
   });
-  return {totalVerba,byCat,byFunil,byClass,impressoes,cliques,views,conversoes};
+  return {totalVerba,byCat,byFunil,byClass,byRegiao,impressoes,cliques,views,conversoes};
 }
 
 /* ===================== critérios: validação e checagens ===================== */
@@ -833,21 +873,30 @@ function renderJornada(p){
   const maxCell=Math.max(1,...Object.values(matrix).flatMap(row=>Object.values(row).map(c=>c.verba)));
 
   const dated=p.lines.filter(l=>l.inicio&&l.fim).slice().sort((a,b)=>new Date(a.inicio)-new Date(b.inicio));
-  let tlHtml=`<div class="hint">Defina início e fim nas linhas (aba Alocação) para visualizar a sequência de touchpoints.</div>`;
+  let tlHtml=`<div class="hint">Defina início e fim nas linhas (aba Alocação) para visualizar o flowchart de veiculação.</div>`;
   if(dated.length){
     let min=null,max=null;
     dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
     const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
-    tlHtml=dated.map(l=>{
+    const nWeeks=Math.max(1,Math.ceil(totalDays/7));
+    const weekHeader=`<div class="tlrow" style="grid-template-columns:190px 1fr">
+      <div class="tlname" style="font-weight:700;color:var(--muted);font-size:10.5px;text-transform:uppercase">${min.toLocaleDateString("pt-BR")} – ${max.toLocaleDateString("pt-BR")}</div>
+      <div style="display:flex">${Array.from({length:nWeeks}).map(()=>`<div style="flex:1;text-align:center;font-size:9.5px;font-weight:700;color:var(--faint);border-left:1px dashed var(--grid)"></div>`).join("")}<span style="position:absolute"></span></div>
+    </div>
+    <div class="tlrow" style="grid-template-columns:190px 1fr;padding-top:0">
+      <div></div><div style="display:flex">${Array.from({length:nWeeks}).map((_,i)=>`<div style="flex:1;text-align:left;font-size:9.5px;font-weight:700;color:var(--faint);border-left:1px dashed var(--grid);padding-left:3px">S${i+1}</div>`).join("")}</div>
+    </div>`;
+    const barRows=dated.map(l=>{
       const v=vehicle(l.veiculo);
       const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
       const startPct=Math.max(0,(di-min)/86400000)/totalDays*100;
       const widthPct=Math.max(2,(df-di)/86400000+1)/totalDays*100;
       return `<div class="tlrow" style="grid-template-columns:190px 1fr">
-        <div class="tlname">${esc(v?v.label:l.veiculo)} <span class="badge ${l.funil}" style="margin-left:4px"><span class="d"></span>${FUNIL[l.funil]}</span></div>
-        <div class="tltrack"><div class="tlbar" style="left:${startPct}%;width:${widthPct}%;background:${catColor(v?v.cat:"")}" title="${esc(PAPEL[l.papel])}"></div></div>
+        <div class="tlname">${esc(l.titulo||(v?v.label:l.veiculo))} <span class="badge ${l.funil}" style="margin-left:4px"><span class="d"></span>${FUNIL[l.funil]}</span></div>
+        <div class="tltrack"><div class="tlbar" style="left:${startPct}%;width:${widthPct}%;background:${catColor(v?v.cat:"")}" title="${esc(v?v.label:l.veiculo)} · ${esc(PAPEL[l.papel])}"></div></div>
       </div>`;
     }).join("");
+    tlHtml=weekHeader+barRows;
   }
 
   el.innerHTML=`<div class="wrap">
@@ -879,8 +928,8 @@ function renderJornada(p){
     </div>
 
     <div class="critcard">
-      <h3>Sequência de touchpoints ao longo do tempo</h3>
-      <div class="desc">Ordem cronológica das linhas datadas — a leitura de multicanalidade real: o público deveria ser tocado por papéis diferentes em momentos diferentes, não pelo mesmo canal repetido.</div>
+      <h3>Flowchart de veiculação</h3>
+      <div class="desc">Visão semana a semana de quando cada ação está no ar — o formato clássico de flowchart de plano de mídia. Leia como multicanalidade real: o público deveria ser tocado por papéis diferentes em momentos diferentes, não pelo mesmo canal repetido.</div>
       ${tlHtml}
     </div>
   </div>`;
@@ -920,70 +969,101 @@ function renderGrid(p){
     el.innerHTML=`<div class="empty"><div class="em">Nenhuma linha de veiculação</div><p>Adicione veículos para montar o mix de mídia do plano.</p><button data-act="add-line">+ Adicionar linha</button></div>`;
     return;
   }
-  const optionsByCat=CATS.map(c=>{
+  const optionsAllByCat=CATS.map(c=>{
     const opts=VEHICLES.filter(v=>v.cat===c.key).map(v=>`<option value="${v.k}">${esc(v.label)}</option>`).join("");
     return `<optgroup label="${esc(c.label)}">${opts}</optgroup>`;
   }).join("");
-  const rows=p.lines.map((l,i)=>{
-    const v=vehicle(l.veiculo)||VEHICLES[0];
-    const c=catInfo(v.cat);
-    const r=lineResult(l);
-    const isLate = l.fim && p.fim && new Date(l.fim)>new Date(p.fim);
-    return `<tr data-id="${l.id}">
-      <td class="rownum">${i+1}</td>
-      <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsByCat}</select></td>
-      <td><span class="badge ${c.cls}">${esc(c.label)}</span></td>
-      <td><select class="cellsel" data-line="${l.id}" data-k="funil">${Object.entries(FUNIL).map(([k,v2])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v2}</option>`).join("")}</select></td>
-      <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
-      <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
-      <td><input class="cellinput" type="number" min="0" step="0.01" data-line="${l.id}" data-k="custo" value="${l.custo||""}" placeholder="0,00" ${l.modelo==="FIXO"?"disabled":""}></td>
-      <td class="benchcell">${BENCHNUM[v.k]?`<button class="benchbtn" data-act="usar-bench" data-id="${l.id}" title="Preencher com a média da faixa de mercado">${money(BENCHNUM[v.k][0])}–${money(BENCHNUM[v.k][1])}</button>`:`<span class="hint" style="font-size:11px">${esc(v.bench)}</span>`}</td>
-      <td><input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0"></td>
-      <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}</td>
-      <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
-      <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="fim" value="${l.fim||""}"></td>
-      <td class="delcell"><button class="rmbtn" data-act="del-line" data-id="${l.id}" title="Excluir linha">×</button></td>
-    </tr>`;
+
+  const groups=CATS.map(c=>({cat:c, lines:p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&v.cat===c.key; })})).filter(g=>g.lines.length);
+
+  const groupHtml=groups.map(g=>{
+    const extraFields=tacticalFieldsFor(g.cat.key);
+    const subtotal=g.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    const rows=g.lines.map(l=>{
+      const v=vehicle(l.veiculo)||VEHICLES[0];
+      const r=lineResult(l);
+      const idx=p.lines.indexOf(l)+1;
+      const extraCells=extraFields.map(f=>`<td><input class="cellinput left" type="${f.type||"text"}" data-line="${l.id}" data-k="extra.${f.k}" value="${esc(l.extra&&l.extra[f.k]||"")}" placeholder="${esc(f.ph||"")}"></td>`).join("");
+      return `<tr data-id="${l.id}">
+        <td class="rownum">${idx}</td>
+        <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsAllByCat}</select></td>
+        <td><input class="cellinput left" type="text" data-line="${l.id}" data-k="titulo" value="${esc(l.titulo||"")}" placeholder="Título da peça/ação"></td>
+        ${extraCells}
+        <td><select class="cellsel" data-line="${l.id}" data-k="regiao">${Object.entries(REGIOES).map(([k,v2])=>`<option value="${k}" ${l.regiao===k?"selected":""}>${v2}</option>`).join("")}</select></td>
+        <td><select class="cellsel" data-line="${l.id}" data-k="funil">${Object.entries(FUNIL).map(([k,v2])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v2}</option>`).join("")}</select></td>
+        <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
+        <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
+        <td><input class="cellinput" type="number" min="0" step="0.01" data-line="${l.id}" data-k="custo" value="${l.custo||""}" placeholder="0,00" ${l.modelo==="FIXO"?"disabled":""}></td>
+        <td class="benchcell">${BENCHNUM[v.k]?`<button class="benchbtn" data-act="usar-bench" data-id="${l.id}" title="Preencher com a média da faixa de mercado">${money(BENCHNUM[v.k][0])}–${money(BENCHNUM[v.k][1])}</button>`:`<span class="hint" style="font-size:11px">${esc(v.bench)}</span>`}</td>
+        <td><input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0"></td>
+        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}</td>
+        <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
+        <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="fim" value="${l.fim||""}"></td>
+        <td class="delcell"><button class="rmbtn" data-act="del-line" data-id="${l.id}" title="Excluir linha">×</button></td>
+      </tr>`;
+    }).join("");
+    const totalCols=14+extraFields.length; // rownum,veiculo,titulo,extras...,regiao,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
+    return `<div class="sheetgroup">
+      <div class="sheetgrouphead"><span class="badge ${g.cat.cls}">${esc(g.cat.label)}</span><span>${g.lines.length} ${g.lines.length===1?"linha":"linhas"}</span><span class="sp"></span><b>${money(subtotal)}</b></div>
+      <table class="sheet">
+        <thead><tr>
+          <th class="rownum">#</th><th>Veículo</th><th>Título da ação</th>${extraFields.map(f=>`<th>${esc(f.label)}</th>`).join("")}
+          <th>Região</th><th>Funil</th><th>Papel</th><th>Modelo</th>
+          <th class="num">Custo unit.</th><th>Ref. mercado</th><th class="num">Verba</th><th class="num">Resultado est.</th>
+          <th>Início</th><th>Fim</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tbody><tr class="addrow"><td colspan="${totalCols}"><button class="addrowbtn" data-act="add-line" data-veiculo="${VEHICLES.find(v=>v.cat===g.cat.key).k}">+ Adicionar linha em ${esc(g.cat.label)}</button></td></tr></tbody>
+      </table>
+    </div>`;
   }).join("");
+
   const t=planTotals(p);
-  el.innerHTML=`<table class="sheet">
-    <thead><tr>
-      <th class="rownum">#</th><th>Veículo</th><th>Categoria</th><th>Funil</th><th>Papel</th><th>Modelo</th>
-      <th class="num">Custo unit.</th><th>Ref. mercado</th><th class="num">Verba</th><th class="num">Resultado est.</th>
-      <th>Início</th><th>Fim</th><th></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-    <tfoot><tr>
-      <td colspan="7">Total (${p.lines.length} ${p.lines.length===1?"linha":"linhas"})</td>
-      <td></td>
-      <td class="num">${money(t.totalVerba)}</td>
-      <td class="num">${num(t.impressoes)} impr. · ${num(t.cliques)} cliq.</td>
-      <td colspan="3"></td>
-    </tr></tfoot>
-    <tbody><tr class="addrow"><td colspan="13"><button class="addrowbtn" data-act="add-line">+ Adicionar linha de veiculação</button></td></tr></tbody>
-  </table>`;
+  el.innerHTML=`<div class="sheetsummary">Total do plano: <b>${money(t.totalVerba)}</b> em ${p.lines.length} ${p.lines.length===1?"linha":"linhas"} · ${num(t.impressoes)} impressões est. · ${num(t.cliques)} cliques est.</div>
+    ${groupHtml}
+    <div class="addcatrow"><label>Adicionar linha em outra categoria:</label>
+      <select id="addCatSelect">${optionsAllByCat}</select>
+      <button class="tbtn pri" data-act="add-line-select">+ Adicionar</button>
+    </div>`;
+
   // select vehicle values (can't set selected in template safely with dynamic optgroups) + bind
   p.lines.forEach(l=>{
-    const sel=el.querySelector(`select[data-line="${l.id}"][data-k="veiculo"]`);
-    if(sel) sel.value=l.veiculo;
+    el.querySelectorAll(`select[data-line="${l.id}"][data-k="veiculo"]`).forEach(sel=>sel.value=l.veiculo);
   });
   el.querySelectorAll("[data-line]").forEach(input=>{
     const evt = input.tagName==="SELECT" ? "change" : "input";
     input.addEventListener(evt,()=>{
       const line=p.lines.find(x=>x.id===input.dataset.line);
       if(!line) return;
+      const k=input.dataset.k;
       let v=input.value;
-      if(input.dataset.k==="custo"||input.dataset.k==="verba") v=parseFloat(v)||0;
-      line[input.dataset.k]=v;
-      if(input.dataset.k==="veiculo"){
-        const veh=vehicle(v);
-        if(veh){ line.funil=veh.funil; line.modelo=veh.modelo; line.papel=PAPEL_POR_FUNIL[veh.funil]; }
+      if(k==="custo"||k==="verba") v=parseFloat(v)||0;
+      if(k.startsWith("extra.")){
+        if(!line.extra) line.extra={};
+        line.extra[k.split(".")[1]]=v;
+      }else{
+        line[k]=v;
       }
-      if(input.dataset.k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
-      if(input.dataset.k==="papel"){ line._papelManual=true; }
+      if(k==="veiculo"){
+        const veh=vehicle(v); const oldVeh=vehicle(line.veiculo);
+        if(veh){
+          const oldCat=oldVeh?oldVeh.cat:null;
+          line.funil=veh.funil; line.modelo=veh.modelo; line.papel=PAPEL_POR_FUNIL[veh.funil];
+          if(oldCat!==veh.cat) line.extra={};
+        }
+      }
+      if(k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
+      if(k==="papel"){ line._papelManual=true; }
       save();
       render();
     });
+  });
+  const addSel=document.getElementById("addCatSelect");
+  const addBtn=el.querySelector('[data-act="add-line-select"]');
+  if(addBtn) addBtn.addEventListener("click",()=>{
+    const p2=curPlan(); const veh=vehicle(addSel.value);
+    p2.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],regiao:"nacional",titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
+    save(); render();
   });
 }
 
@@ -1066,6 +1146,8 @@ function openAnalytics(){
       ${stackBar(t.byFunil, FUNILFULL, t.totalVerba, funilColor)}
       <h4>Offline × Digital</h4>
       ${stackBar(t.byClass, {off:"Offline",dig:"Digital"}, t.totalVerba, c=>c==="off"?"var(--off)":"var(--dig)")}
+      <h4>Verba por região</h4>
+      ${barList(t.byRegiao, REGIOES, t.totalVerba, ()=>"var(--brand)")}
       <h4>Cronograma de veiculação</h4>
       ${timelineHTML(p)}
     </div>`;
@@ -1144,7 +1226,8 @@ document.addEventListener("click",e=>{
   else if(act==="del-plan"){ e.stopPropagation(); if(confirm("Excluir este plano de mídia?")) delPlan(id); }
   else if(act==="add-line"){
     const p=curPlan();
-    p.lines.push({id:uid(),veiculo:VEHICLES[0].k,funil:VEHICLES[0].funil,papel:PAPEL_POR_FUNIL[VEHICLES[0].funil],modelo:VEHICLES[0].modelo,custo:"",verba:"",inicio:"",fim:""});
+    const veh = b.dataset.veiculo ? vehicle(b.dataset.veiculo) : VEHICLES[0];
+    p.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],regiao:"nacional",titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
     save(); render();
   }
   else if(act==="del-line"){ const p=curPlan(); p.lines=p.lines.filter(x=>x.id!==id); save(); render(); }
