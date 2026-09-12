@@ -726,7 +726,7 @@ function vehicle(k){return VEHICLES.find(v=>v.k===k);}
 function catInfo(k){return CATS.find(c=>c.key===k);}
 function money(n){return (n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
 function num(n){return Math.round(n||0).toLocaleString("pt-BR");}
-function esc(s){return(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtd(s){ if(!s) return ""; const d=new Date(s+"T00:00:00"); if(isNaN(d)) return s; return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}); }
 
 // GRP = audiência (rating %) × nº de inserções. TRP aproxima o GRP "dentro do target" usando a
