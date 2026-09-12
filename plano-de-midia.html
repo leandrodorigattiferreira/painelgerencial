@@ -366,19 +366,20 @@ const TACTICAL_FIELDS = {
   ],
   ooh: [
     {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
-    {k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: outdoor, busdoor, painel LED"},
+    {k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: Outdoor, Busdoor...",list:"ooh"},
     {k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros"},
     {k:"audienciaTarget",label:"Fluxo estimado no target/mês",ph:"Ex.: 500000",type:"number"},
+    {k:"insercoes",label:"Nº de pontos/painéis",ph:"Ex.: 5",type:"number"},
   ],
   cinema: [
     {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
-    {k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis"},
+    {k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis...",list:"cinema"},
     {k:"audienciaTarget",label:"Público no target",ph:"Ex.: 45000",type:"number"},
     {k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"},
   ],
   impresso: [
     {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
-    {k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo"},
+    {k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo...",list:"impresso"},
     {k:"formatoImp",label:"Formato/Colocação",ph:"Ex.: 1 pág. 4 cores, rodapé, 1/2 pág."},
     {k:"audienciaTarget",label:"Leitores no target",ph:"Ex.: 157699",type:"number"},
     {k:"insercoes",label:"Nº inserções",ph:"Ex.: 3",type:"number"},
@@ -678,9 +679,141 @@ function valorProgramaNaPraca(catKey, ref, pracaKey){
   const mult = catKey==="tv" ? REDE_MULT_TV[ref.rede] : REDE_MULT_RADIO[ref.rede];
   if(!mult) return null;
   const valorBaseSP1 = ref.rating*mult;
+  return escalaPorPraca(valorBaseSP1, pracaKey);
+}
+// escala qualquer valor de referência (calibrado em São Paulo Capital) pela população relativa da praça —
+// a mesma lógica usada em tabelas reais de preço por mercado (praças maiores custam proporcionalmente mais).
+function escalaPorPraca(valorBaseSP1, pracaKey){
   const praca=MERCADOS_TV[pracaKey]; const sp1=MERCADOS_TV.SP1;
   if(!praca||!sp1) return valorBaseSP1;
   return Math.round(valorBaseSP1*(praca.pop/sp1.pop)*100)/100;
+}
+
+// ===== impresso (revista/jornal): dados de leitores e valor de página levantados de mapas de mídia
+// reais de referência (planilhas de exercício de mídia impressa) — leitores e valor no Estado de SP,
+// escalados para outras praças pela mesma lógica de população relativa.
+const PUBLICACOES_REF = {
+  "Veja":{leitoresSP:3820811, valorPaginaSP:107000},
+  "Época":{leitoresSP:460442, valorPaginaSP:54200},
+  "Claudia":{leitoresSP:907748, valorPaginaSP:56100},
+  "Caras":{leitoresSP:598640, valorPaginaSP:43300},
+  "Capricho":{leitoresSP:315398, valorPaginaSP:27500},
+  "Boa Forma":{leitoresSP:298792, valorPaginaSP:26400},
+  "Exame":{leitoresSP:126470, valorPaginaSP:54300},
+  "Isto É":{leitoresSP:241441, valorPaginaSP:44100},
+  "Nova":{leitoresSP:166154, valorPaginaSP:37300},
+  "Playboy":{leitoresSP:478560, valorPaginaSP:49700},
+  "Vip":{leitoresSP:445725, valorPaginaSP:31400},
+  "Folha de S.Paulo":{leitoresSP:1498000, valorPaginaSP:241488},
+  "O Estado de S.Paulo":{leitoresSP:1142000, valorPaginaSP:226200},
+};
+function publicacaoRef(nome){
+  if(!nome) return null;
+  const key=Object.keys(PUBLICACOES_REF).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?PUBLICACOES_REF[key]:null;
+}
+function autoFillPublicacao(line, criteria){
+  if(!line.extra||!line.extra.publicacao) return false;
+  const ref=publicacaoRef(line.extra.publicacao); if(!ref) return false;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const leitores=escalaPorPraca(ref.leitoresSP, line.extra.praca);
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct) line.extra.audienciaTarget=Math.round(leitores*targetPct);
+  line.custo=escalaPorPraca(ref.valorPaginaSP, line.extra.praca);
+  if(line.extra.insercoes) line.verba=Math.round(line.custo*parseFloat(line.extra.insercoes)*100)/100;
+  return true;
+}
+
+// ===== cinema: público médio por sessão e valor por sessão (estimativa didática, referência São Paulo
+// Capital), escalados por praça — cada rede tem um padrão de preço/porte de complexo diferente.
+const CINEMA_REF = {
+  "Cinemark":{publicoSessaoSP:120, valorSessaoSP:4500},
+  "Cinépolis":{publicoSessaoSP:110, valorSessaoSP:4200},
+  "UCI":{publicoSessaoSP:100, valorSessaoSP:3800},
+  "Kinoplex":{publicoSessaoSP:90, valorSessaoSP:3200},
+  "Moviecom":{publicoSessaoSP:70, valorSessaoSP:2400},
+};
+function cinemaRef(nome){
+  if(!nome) return null;
+  const key=Object.keys(CINEMA_REF).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?CINEMA_REF[key]:null;
+}
+function autoFillCinema(line, criteria){
+  if(!line.extra||!line.extra.rede) return false;
+  const ref=cinemaRef(line.extra.rede); if(!ref) return false;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const publicoSessao=escalaPorPraca(ref.publicoSessaoSP, line.extra.praca);
+  line.custo=escalaPorPraca(ref.valorSessaoSP, line.extra.praca);
+  const insercoes=parseFloat(line.extra.insercoes)||0;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct && insercoes) line.extra.audienciaTarget=Math.round(publicoSessao*insercoes*targetPct);
+  if(insercoes) line.verba=Math.round(line.custo*insercoes*100)/100;
+  return true;
+}
+
+// ===== OOH: fluxo mensal médio e valor mensal por formato (estimativa didática, referência São Paulo
+// Capital), escalados por praça e multiplicados pelo nº de pontos/painéis contratados (inserções).
+const OOH_REF = {
+  "Outdoor":{fluxoMensalSP:800000, valorMensalSP:8000},
+  "Busdoor":{fluxoMensalSP:400000, valorMensalSP:3500},
+  "Painel LED Digital":{fluxoMensalSP:1200000, valorMensalSP:15000},
+  "Mobiliário Urbano":{fluxoMensalSP:600000, valorMensalSP:6000},
+  "Metrô/Estação":{fluxoMensalSP:900000, valorMensalSP:9500},
+};
+function oohRef(nome){
+  if(!nome) return null;
+  const key=Object.keys(OOH_REF).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?OOH_REF[key]:null;
+}
+function autoFillOOH(line, criteria){
+  if(!line.extra||!line.extra.formatoOOH) return false;
+  const ref=oohRef(line.extra.formatoOOH); if(!ref) return false;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const fluxo=escalaPorPraca(ref.fluxoMensalSP, line.extra.praca);
+  const valorPorPonto=escalaPorPraca(ref.valorMensalSP, line.extra.praca);
+  line.custo=valorPorPonto;
+  const pontos=parseFloat(line.extra.insercoes)||0;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct && pontos) line.extra.audienciaTarget=Math.round(fluxo*pontos*targetPct);
+  if(pontos) line.verba=Math.round(line.custo*pontos*100)/100;
+  return true;
+}
+
+// ===== veículos digitais/programáticos: não têm "inventário nomeado" como TV/rádio — são comprados por
+// leilão contínuo (CPM/CPC/CPV) numa base de usuários. A penetração é a % estimada da população que é
+// alcançável naquele veículo (estimativa didática). Isso preenche a audiência no target e sugere o custo
+// (mesma faixa de referência do mercado já usada no botão "usar-bench"); a VERBA continua sendo decisão
+// do aluno — é o próprio exercício de alocação, então não fazemos essa parte por ele.
+const PENETRACAO_VEICULO = {
+  meta_ads:0.75, tiktok_ads:0.45, linkedin_ads:0.22, pinterest_ads:0.18, x_ads:0.20, snapchat_ads:0.12, kwai_ads:0.28,
+  google_search:0.90, google_shopping:0.55, bing_ads:0.15,
+  youtube_ads:0.85, video_prog:0.60, display_prog:0.65, native_ads:0.50, pg_guaranteed:0.55,
+  retail_meli:0.55, retail_amazon:0.30, retail_magalu:0.22, retail_shopee:0.42,
+  app_ua:0.80, gaming_ads:0.30,
+  audio_streaming:0.45, podcast_prog:0.20, podcast_hostread:0.10,
+  ctv_avod:0.40, dooh_prog:0.35, tv_paga:0.30, radio_am_fm:0.50,
+};
+// escolhe a rotina de preenchimento automático certa pra categoria da linha — cada meio com sua própria lógica.
+function autoFillRef(line, catKey, criteria){
+  if(catKey==="tv"||catKey==="radio") return autoFillPrograma(line, catKey, criteria);
+  if(catKey==="impresso") return autoFillPublicacao(line, criteria);
+  if(catKey==="cinema") return autoFillCinema(line, criteria);
+  if(catKey==="ooh") return autoFillOOH(line, criteria);
+  return autoFillDigital(line, criteria);
+}
+function autoFillDigital(line, criteria){
+  const veh=vehicle(line.veiculo); if(!veh) return false;
+  const pen=PENETRACAO_VEICULO[veh.k]; if(pen===undefined) return false;
+  if(!line.custo && BENCHNUM[veh.k]) line.custo=Math.round(((BENCHNUM[veh.k][0]+BENCHNUM[veh.k][1])/2)*100)/100;
+  const pracaKey=line.extra&&line.extra.praca; if(!pracaKey) return true;
+  const pop=REGIOES[pracaKey]!==undefined ? (pracaKey==="nacional"?POPULACAO_BR.nacional:POPULACAO_BR.regioes[pracaKey]) : null;
+  if(!pop) return true;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct) line.extra.audienciaTarget=Math.round(pop*targetPct*pen);
+  return true;
 }
 
 const GLOSSARY = [
@@ -1404,10 +1537,14 @@ function renderGrid(p){
         if(f.type==="select"){
           inp=`<select class="cellsel" data-line="${l.id}" data-k="extra.${f.k}"><option value="">${esc(f.ph||"—")}</option>${Object.entries(f.opts).map(([ok,ov])=>`<option value="${ok}" ${(l.extra&&l.extra[f.k])===ok?"selected":""}>${esc(ov)}</option>`).join("")}</select>`;
         }else if(f.list){
-          // datalist filtrada pela rede/emissora já escolhida nesta linha, para que programa sugerido bata com a emissora
-          const rede=l.extra&&l.extra.emissora;
-          const table=PROGRAMAS_REF[f.list]||{};
-          const nomes=Object.entries(table).filter(([,v])=>!rede||v.rede===rede).map(([n])=>n);
+          // datalist com os nomes de referência (programas filtrados por rede/emissora quando aplicável)
+          let nomes=[];
+          if(f.list==="tv"||f.list==="radio"){
+            const rede=l.extra&&l.extra.emissora;
+            nomes=Object.entries(PROGRAMAS_REF[f.list]||{}).filter(([,v])=>!rede||v.rede===rede).map(([n])=>n);
+          }else if(f.list==="impresso") nomes=Object.keys(PUBLICACOES_REF);
+          else if(f.list==="cinema") nomes=Object.keys(CINEMA_REF);
+          else if(f.list==="ooh") nomes=Object.keys(OOH_REF);
           const dlId=`dl_${f.list}_${l.id}`;
           inp=`<input class="cellinput left" type="text" data-line="${l.id}" data-k="extra.${f.k}" value="${val}" placeholder="${esc(f.ph||"")}" list="${dlId}">
             <datalist id="${dlId}">${nomes.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
@@ -1415,11 +1552,15 @@ function renderGrid(p){
           inp=`<input class="cellinput left" type="${f.type||"text"}" ${f.step?`step="${f.step}"`:""} data-line="${l.id}" data-k="extra.${f.k}" value="${val}" placeholder="${esc(f.ph||"")}">`;
         }
         let btn="";
-        if(f.k==="programa"){
-          const nome=l.extra&&l.extra.programa;
-          const ref=programaRef(g.cat.key, nome);
+        if(f.list==="tv"||f.list==="radio"||f.list==="impresso"||f.list==="cinema"||f.list==="ooh"){
+          const nome=l.extra&&l.extra[f.k];
+          const ref = f.list==="tv"||f.list==="radio" ? programaRef(f.list,nome)
+            : f.list==="impresso" ? publicacaoRef(nome)
+            : f.list==="cinema" ? cinemaRef(nome)
+            : oohRef(nome);
+          const caption = f.list==="tv"||f.list==="radio" ? `preencher tudo (rating ${ref&&ref.rating}%)` : "preencher tudo automaticamente";
           if(ref){
-            btn=`<button class="benchbtn" data-act="usar-audiencia-ref" data-id="${l.id}" title="Preencher horário, audiência, GRP/TRP e valor deste programa automaticamente">preencher tudo (rating ${ref.rating}%)</button>`;
+            btn=`<button class="benchbtn" data-act="usar-audiencia-ref" data-id="${l.id}" title="Preencher audiência, valor e verba automaticamente">${caption}</button>`;
             if(!MERCADOS_TV[l.extra.praca]) btn+=`<div class="hint" style="font-size:10.5px;color:var(--danger)">selecione a praça para calcular audiência/valor</div>`;
           }else if(nome){
             btn=`<div class="hint" style="font-size:10.5px;color:var(--danger)">sem dado de referência p/ este nome — confira a grafia ou preencha os campos manualmente</div>`;
@@ -1502,12 +1643,16 @@ function renderGrid(p){
       }
       if(k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
       if(k==="papel"){ line._papelManual=true; }
-      if(k==="extra.praca"||k==="extra.programa"||k==="extra.emissora"){
+      // dispara o preenchimento automático (cada categoria com sua própria lógica) sempre que o campo que
+      // identifica o inventário mudar: veículo, praça, ou o campo-referência específico da categoria
+      // (programa/emissora p/ TV e rádio, publicação p/ impresso, rede p/ cinema, formato p/ OOH).
+      const gatilhos=["veiculo","extra.praca","extra.programa","extra.emissora","extra.publicacao","extra.rede","extra.formatoOOH","extra.insercoes"];
+      if(gatilhos.includes(k)){
         const veh=vehicle(line.veiculo);
-        if(veh&&(veh.cat==="tv"||veh.cat==="radio")) autoFillPrograma(line, veh.cat, p.criteria);
+        if(veh) autoFillRef(line, veh.cat, p.criteria);
       }
       // assim que custo e nº de inserções estiverem definidos, a verba se preenche sozinha — sem precisar
-      // clicar em nada ou "estimar" à parte, valendo pra qualquer categoria (não só TV/rádio).
+      // clicar em nada ou "estimar" à parte, valendo pra qualquer categoria.
       if((k==="extra.insercoes"||k==="custo") && line.extra&&line.extra.insercoes&&line.custo){
         line.verba=Math.round(parseFloat(line.custo)*parseFloat(line.extra.insercoes)*100)/100;
       }
@@ -1839,7 +1984,7 @@ document.addEventListener("click",e=>{
   else if(act==="usar-audiencia-ref"){
     const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo);
     if(line&&v){
-      const ok=autoFillPrograma(line, v.cat, p.criteria);
+      const ok=autoFillRef(line, v.cat, p.criteria);
       if(ok && !MERCADOS_TV[line.extra.praca]) toast("Selecione a praça/mercado desta linha para calcular audiência no target e valor exato.");
       else if(ok && !combinedTargetPct(p.criteria)) toast("Declare ao menos um target nos Critérios (etapa 2) para calcular a audiência no target.");
       save(); render();
