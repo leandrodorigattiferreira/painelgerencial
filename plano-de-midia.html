@@ -294,6 +294,9 @@ tfoot td.num{text-align:right}
 const FUNIL = {topo:"Topo", meio:"Meio", fundo:"Fundo", retencao:"Retenção"};
 const FUNILFULL = {topo:"Topo (Awareness)", meio:"Meio (Consideração)", fundo:"Fundo (Conversão)", retencao:"Retenção/Fidelização"};
 const MODELO = {CPM:"CPM", CPC:"CPC", CPV:"CPV", CPA:"CPA", CPL:"CPL", CPI:"CPI", CPP:"CPP/GRP", FIXO:"Fixo"};
+// papel clássico do veículo no mix — independente da etapa do funil, é a função tática que ele cumpre
+const PAPEL = {alcance:"Alcance / Cobertura", frequencia:"Frequência / Lembrança", conversao:"Conversão / Resposta direta", recorrencia:"Recorrência / Retenção"};
+const PAPEL_POR_FUNIL = {topo:"alcance", meio:"frequencia", fundo:"conversao", retencao:"recorrencia"};
 const RESLABEL = {CPM:"impressões", CPC:"cliques", CPV:"views", CPA:"conversões", CPL:"leads", CPI:"instalações", CPP:"GRPs", FIXO:"pacote fechado"};
 
 const CATS = [
@@ -421,21 +424,24 @@ let viewMode="criterios"; // 'criterios' | 'alocacao' | 'coerencia'
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sampleLines(){
   return [
-    {id:uid(),veiculo:"meta_ads",funil:"meio",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:""},
-    {id:uid(),veiculo:"google_search",funil:"fundo",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:""},
-    {id:uid(),veiculo:"youtube_ads",funil:"topo",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:""},
+    {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:""},
+    {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:""},
+    {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:""},
   ];
 }
 function defaultCriteria(){
-  return {funil:{topo:25,meio:25,fundo:35,retencao:15},publico:[],postura:"",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"",kpi:""};
+  return {funil:{topo:25,meio:25,fundo:35,retencao:15},publico:[],postura:"",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"",kpi:"",publicoTamanho:"",coberturaAlvo:"",freqMin:"",freqMax:""};
 }
 function samplePlan(){
-  const criteria={funil:{topo:40,meio:25,fundo:35,retencao:0},publico:["social","busca","video"],postura:"padrao",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"moderado",kpi:"roas"};
+  const criteria={funil:{topo:40,meio:25,fundo:35,retencao:0},publico:["social","busca","video"],postura:"padrao",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"moderado",kpi:"roas",publicoTamanho:800000,coberturaAlvo:55,freqMin:3,freqMax:8};
   return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 25-40, classe AB, interesse em moda e bem-estar",inicio:"",fim:"",verba:13000,lines:sampleLines(),criteria,justificativas:{}};
 }
 function ensurePlanShape(p){
   if(!p.criteria) p.criteria=defaultCriteria();
+  const dc=defaultCriteria();
+  Object.keys(dc).forEach(k=>{ if(p.criteria[k]===undefined) p.criteria[k]=dc[k]; });
   if(!p.justificativas) p.justificativas={};
+  (p.lines||[]).forEach(l=>{ if(!l.papel) l.papel=PAPEL_POR_FUNIL[l.funil]||"alcance"; });
   return p;
 }
 
@@ -521,7 +527,27 @@ function criteriaComplete(p){
   const c=p.criteria||{};
   const sum=Object.values(c.funil||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
   return Math.abs(sum-100)<0.5 && c.publico&&c.publico.length && c.postura && c.competitiva && c.kpi
-    && (c.timing==="continuo" || (c.picoInicio&&c.picoFim));
+    && (c.timing==="continuo" || (c.picoInicio&&c.picoFim))
+    && parseFloat(c.publicoTamanho)>0 && parseFloat(c.coberturaAlvo)>0 && parseFloat(c.freqMin)>0 && parseFloat(c.freqMax)>0;
+}
+
+// modelo simplificado de alcance/frequência para fins didáticos: assume distribuição de exposição
+// tipo Poisson por linha (reach = 1 - e^-impressões/população) e combina canais por independência estatística.
+// Não substitui pesquisa de audiência real — é uma aproximação para discutir o conceito em sala.
+function reachFreq(p){
+  const pop=parseFloat(p.criteria.publicoTamanho)||0;
+  if(!pop) return null;
+  let complement=1, totalImpEquiv=0;
+  p.lines.forEach(l=>{
+    let impEquiv=0;
+    if(l.modelo==="CPM"){ const r=lineResult(l); if(r.qty) impEquiv=r.qty; }
+    else if(l.modelo==="CPP"){ const r=lineResult(l); if(r.qty) impEquiv=r.qty/100*pop; }
+    if(impEquiv>0){ totalImpEquiv+=impEquiv; complement*=(1-Math.min(1,1-Math.exp(-impEquiv/pop))); }
+  });
+  const reachPct=(1-complement)*100;
+  const reachPeople=pop*(1-complement);
+  const avgFreq=reachPeople>0? totalImpEquiv/reachPeople : 0;
+  return {reachPct,reachPeople,avgFreq,totalImpEquiv,pop};
 }
 function computeChecks(p){
   const t=planTotals(p); const c=p.criteria||{};
@@ -609,6 +635,39 @@ function computeChecks(p){
       : {id:"kpi",status:"ok",title:"KPI de sucesso",detail:`O modelo de compra dominante do mix é coerente com "${KPI_OPTS[c.kpi].label}".`});
   }
 
+  // 7) cobertura do target
+  const rf=reachFreq(p);
+  if(!rf || t.totalVerba<=0 || !c.coberturaAlvo) checks.push({id:"cobertura",status:"na",title:"Cobertura do target",detail:"Informe o tamanho do público-alvo e a cobertura desejada, e aloque verba em linhas de CPM/CPP para estimar."});
+  else{
+    const declarado=parseFloat(c.coberturaAlvo);
+    const diff=rf.reachPct-declarado;
+    checks.push(Math.abs(diff)>10
+      ? {id:"cobertura",status:"warn",title:"Cobertura do target",detail:`Cobertura estimada de ${rf.reachPct.toFixed(1)}% do público (${num(rf.reachPeople)} pessoas), contra os ${declarado}% desejados — estimativa simplificada por sobreposição estatística entre canais de CPM/CPP.`}
+      : {id:"cobertura",status:"ok",title:"Cobertura do target",detail:`Cobertura estimada de ${rf.reachPct.toFixed(1)}% do público, próxima da meta de ${declarado}%.`});
+  }
+
+  // 8) frequência média efetiva
+  if(!rf || t.totalVerba<=0 || !c.freqMin || !c.freqMax) checks.push({id:"frequencia",status:"na",title:"Frequência efetiva média",detail:"Informe a faixa de frequência desejada e aloque verba em linhas de CPM/CPP para estimar."});
+  else{
+    const min=parseFloat(c.freqMin), max=parseFloat(c.freqMax);
+    checks.push(rf.avgFreq<min*0.8 || rf.avgFreq>max*1.2
+      ? {id:"frequencia",status:"warn",title:"Frequência efetiva média",detail:`Frequência média estimada de ${rf.avgFreq.toFixed(1)}x, fora da faixa desejada de ${min}x–${max}x. Muito abaixo pode não gerar lembrança; muito acima costuma indicar saturação/desperdício de verba.`}
+      : {id:"frequencia",status:"ok",title:"Frequência efetiva média",detail:`Frequência média estimada de ${rf.avgFreq.toFixed(1)}x, dentro da faixa desejada de ${min}x–${max}x.`});
+  }
+
+  // 9) papel dos veículos x etapa do funil — gaps de jornada
+  if(t.totalVerba<=0) checks.push({id:"jornada",status:"na",title:"Jornada e papel dos veículos",detail:"Adicione linhas para checar se a jornada do público está coberta ponta a ponta."});
+  else{
+    const semConversao = (t.byFunil.fundo||0)>0 && !p.lines.some(l=>l.funil==="fundo" && l.papel==="conversao");
+    const semAlcance = (t.byFunil.topo||0)>0 && !p.lines.some(l=>l.funil==="topo" && l.papel==="alcance");
+    const gaps=[];
+    if(semConversao) gaps.push("há verba no fundo de funil mas nenhuma linha com papel de Conversão/Resposta direta");
+    if(semAlcance) gaps.push("há verba no topo de funil mas nenhuma linha com papel de Alcance/Cobertura");
+    checks.push(gaps.length
+      ? {id:"jornada",status:"warn",title:"Jornada e papel dos veículos",detail:"A jornada do público tem lacunas: "+gaps.join("; ")+"."}
+      : {id:"jornada",status:"ok",title:"Jornada e papel dos veículos",detail:"Cada etapa do funil com verba alocada tem ao menos um veículo cumprindo o papel tático esperado."});
+  }
+
   return checks;
 }
 
@@ -626,7 +685,9 @@ function render(){
     renderInfostrip(p); renderGrid(p); renderStatusbar(p);
   }else{
     sv.classList.add("show");
-    if(viewMode==="criterios") renderCriterios(p); else renderCoerencia(p);
+    if(viewMode==="criterios") renderCriterios(p);
+    else if(viewMode==="jornada") renderJornada(p);
+    else renderCoerencia(p);
   }
   renderTabs();
 }
@@ -637,7 +698,8 @@ function renderStepbar(p){
   const steps=[
     {k:"criterios",n:"1",label:"Critérios de planejamento",extra: complete?`<span class="okcheck">✓</span>`:""},
     {k:"alocacao",n:"2",label:"Alocação de verba"},
-    {k:"coerencia",n:"3",label:"Coerência do plano",extra: warnCount?`<span class="warncount">${warnCount}</span>`:(complete?`<span class="okcheck">✓</span>`:"")},
+    {k:"jornada",n:"3",label:"Jornada e multicanalidade"},
+    {k:"coerencia",n:"4",label:"Coerência do plano",extra: warnCount?`<span class="warncount">${warnCount}</span>`:(complete?`<span class="okcheck">✓</span>`:"")},
   ];
   document.getElementById("stepbar").innerHTML=steps.map(s=>`
     <button class="step ${viewMode===s.k?"on":""}" data-act="set-view" data-view="${s.k}"><span class="n">${s.n}</span>${s.label}${s.extra||""}</button>
@@ -686,13 +748,26 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>2. Onde esse público realmente consome mídia</h3>
+      <h3>2. Cobertura e frequência do target</h3>
+      <div class="desc">Dimensione o público em número de pessoas e defina metas de cobertura (% do público único alcançado) e frequência efetiva (nº médio de exposições) — os dois indicadores clássicos de todo plano de mídia. O sistema estima os dois a partir das linhas de CPM/CPP usando um modelo simplificado de sobreposição estatística entre canais (não substitui pesquisa de audiência real).</div>
+      <div class="critrow2">
+        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Tamanho do público-alvo (nº de pessoas)</label><input type="number" min="0" step="1000" class="critdate" data-crit="publicoTamanho" value="${c.publicoTamanho||""}" placeholder="ex.: 800000"></div>
+        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Cobertura desejada (%)</label><input type="number" min="0" max="100" class="critdate" data-crit="coberturaAlvo" value="${c.coberturaAlvo||""}" placeholder="ex.: 55"></div>
+      </div>
+      <div class="critrow2" style="margin-top:10px">
+        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Frequência efetiva mínima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMin" value="${c.freqMin||""}" placeholder="ex.: 3"></div>
+        <div><label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px">Frequência efetiva máxima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMax" value="${c.freqMax||""}" placeholder="ex.: 8"></div>
+      </div>
+    </div>
+
+    <div class="critcard">
+      <h3>3. Onde esse público realmente consome mídia</h3>
       <div class="desc">Marque as categorias de veículo que fazem sentido para o público descrito no briefing — não pelo que parece moderno, mas pelo hábito real de consumo dele.</div>
       <div class="chiprow">${CATS.map(cat=>`<button class="chip ${c.publico.includes(cat.key)?"on":""}" data-act="toggle-cat" data-key="${cat.key}">${esc(cat.label)}</button>`).join("")}</div>
     </div>
 
     <div class="critcard">
-      <h3>3. Postura de custo</h3>
+      <h3>4. Postura de custo</h3>
       <div class="desc">Isso trava a análise de coerência quando uma linha paga muito acima (ou muito abaixo) do que a escolha declarada permite.</div>
       <div class="radiorow">
         <label class="radiocard ${c.postura==="padrao"?"on":""}"><input type="radio" name="postura" value="padrao" ${c.postura==="padrao"?"checked":""} data-crit="postura"><div><div class="rt">Eficiência de mercado</div><div class="rd">Busco ficar dentro da faixa média de custo de cada veículo.</div></div></label>
@@ -701,7 +776,7 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>4. Timing da campanha</h3>
+      <h3>5. Timing da campanha</h3>
       <div class="desc">Defina como a verba deve se distribuir ao longo do tempo antes de datar as linhas.</div>
       <select class="critselect" data-crit="timing">
         <option value="continuo" ${c.timing==="continuo"?"selected":""}>Contínuo — presença constante, sem picos</option>
@@ -715,7 +790,7 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>5. Postura competitiva</h3>
+      <h3>6. Postura competitiva</h3>
       <div class="desc">Isso deveria influenciar se faz sentido ou não usar canais de alcance de massa (TV, OOH, cinema, vídeo).</div>
       <div class="radiorow">
         <label class="radiocard ${c.competitiva==="agressivo"?"on":""}"><input type="radio" name="competitiva" value="agressivo" ${c.competitiva==="agressivo"?"checked":""} data-crit="competitiva"><div><div class="rt">Desafiante agressivo</div><div class="rd">Preciso de alcance de massa para disputar espaço com concorrentes maiores.</div></div></label>
@@ -725,7 +800,7 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>6. KPI de sucesso do plano</h3>
+      <h3>7. KPI de sucesso do plano</h3>
       <div class="desc">Qual métrica única vai julgar se esse plano funcionou? Isso deveria puxar o modelo de compra predominante do mix.</div>
       <select class="critselect" data-crit="kpi">
         <option value="">Selecione...</option>
@@ -743,6 +818,69 @@ function renderCriterios(p){
       save(); render();
     });
   });
+}
+
+function renderJornada(p){
+  const el=document.getElementById("stepview");
+  const t=planTotals(p); const rf=reachFreq(p);
+  // matriz funil x papel
+  const matrix={};
+  Object.keys(FUNIL).forEach(f=>{ matrix[f]={}; Object.keys(PAPEL).forEach(pp=>matrix[f][pp]={verba:0,n:0}); });
+  p.lines.forEach(l=>{ if(matrix[l.funil]&&matrix[l.funil][l.papel]){ matrix[l.funil][l.papel].verba+=parseFloat(l.verba)||0; matrix[l.funil][l.papel].n++; } });
+  const maxCell=Math.max(1,...Object.values(matrix).flatMap(row=>Object.values(row).map(c=>c.verba)));
+
+  const dated=p.lines.filter(l=>l.inicio&&l.fim).slice().sort((a,b)=>new Date(a.inicio)-new Date(b.inicio));
+  let tlHtml=`<div class="hint">Defina início e fim nas linhas (aba Alocação) para visualizar a sequência de touchpoints.</div>`;
+  if(dated.length){
+    let min=null,max=null;
+    dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+    const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
+    tlHtml=dated.map(l=>{
+      const v=vehicle(l.veiculo);
+      const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
+      const startPct=Math.max(0,(di-min)/86400000)/totalDays*100;
+      const widthPct=Math.max(2,(df-di)/86400000+1)/totalDays*100;
+      return `<div class="tlrow" style="grid-template-columns:190px 1fr">
+        <div class="tlname">${esc(v?v.label:l.veiculo)} <span class="badge ${l.funil}" style="margin-left:4px"><span class="d"></span>${FUNIL[l.funil]}</span></div>
+        <div class="tltrack"><div class="tlbar" style="left:${startPct}%;width:${widthPct}%;background:${catColor(v?v.cat:"")}" title="${esc(PAPEL[l.papel])}"></div></div>
+      </div>`;
+    }).join("");
+  }
+
+  el.innerHTML=`<div class="wrap">
+    <div class="hint" style="margin-bottom:-6px">A jornada mostra se o público é acompanhado do descobrimento à recompra, e se os canais se revezam em vez de duplicar o mesmo papel.</div>
+
+    <div class="critcard">
+      <h3>Alcance e frequência estimados</h3>
+      ${rf ? `<div class="critrow2">
+        <div class="tile" style="border:1px solid var(--grid);border-radius:9px;padding:12px;background:var(--surface)"><div class="k" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Cobertura estimada</div><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-top:4px">${rf.reachPct.toFixed(1)}%</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">${num(rf.reachPeople)} de ${num(rf.pop)} pessoas</div></div>
+        <div class="tile" style="border:1px solid var(--grid);border-radius:9px;padding:12px;background:var(--surface)"><div class="k" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Frequência média</div><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-top:4px">${rf.avgFreq.toFixed(1)}x</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">exposições por pessoa alcançada</div></div>
+      </div>` : `<div class="hint">Informe o tamanho do público-alvo nos critérios (etapa 1) e aloque verba em linhas de CPM/CPP.</div>`}
+    </div>
+
+    <div class="critcard">
+      <h3>Papel de cada veículo x etapa do funil</h3>
+      <div class="desc">Cada célula mostra a verba alocada cruzando a etapa do funil (linha) com o papel tático declarado por linha (coluna). Vazios em etapas com verba indicam possível lacuna na jornada.</div>
+      <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:520px">
+        <thead><tr><th></th>${Object.values(PAPEL).map(l=>`<th style="text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:4px 8px">${l.split(" / ")[0]}</th>`).join("")}</tr></thead>
+        <tbody>${Object.entries(FUNIL).map(([fk,fl])=>`<tr>
+          <td style="font-size:12px;font-weight:700;padding:6px 8px;white-space:nowrap">${fl}</td>
+          ${Object.keys(PAPEL).map(pk=>{
+            const cell=matrix[fk][pk]; const op=cell.verba? Math.max(.12,cell.verba/maxCell):0;
+            return `<td style="padding:6px 8px"><div style="border-radius:8px;padding:8px;background:${cell.verba?`rgba(63,107,240,${op})`:"var(--surface-2)"};min-height:34px">
+              ${cell.verba?`<div style="font-size:12px;font-weight:700">${money(cell.verba)}</div><div style="font-size:10.5px;color:var(--muted)">${cell.n} linha${cell.n>1?"s":""}</div>`:`<div style="font-size:10.5px;color:var(--faint)">—</div>`}
+            </div></td>`;
+          }).join("")}
+        </tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+
+    <div class="critcard">
+      <h3>Sequência de touchpoints ao longo do tempo</h3>
+      <div class="desc">Ordem cronológica das linhas datadas — a leitura de multicanalidade real: o público deveria ser tocado por papéis diferentes em momentos diferentes, não pelo mesmo canal repetido.</div>
+      ${tlHtml}
+    </div>
+  </div>`;
 }
 
 function renderCoerencia(p){
@@ -793,6 +931,7 @@ function renderGrid(p){
       <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsByCat}</select></td>
       <td><span class="badge ${c.cls}">${esc(c.label)}</span></td>
       <td><select class="cellsel" data-line="${l.id}" data-k="funil">${Object.entries(FUNIL).map(([k,v2])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v2}</option>`).join("")}</select></td>
+      <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
       <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
       <td><input class="cellinput" type="number" min="0" step="0.01" data-line="${l.id}" data-k="custo" value="${l.custo||""}" placeholder="0,00" ${l.modelo==="FIXO"?"disabled":""}></td>
       <td><input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0"></td>
@@ -805,18 +944,18 @@ function renderGrid(p){
   const t=planTotals(p);
   el.innerHTML=`<table class="sheet">
     <thead><tr>
-      <th class="rownum">#</th><th>Veículo</th><th>Categoria</th><th>Funil</th><th>Modelo</th>
+      <th class="rownum">#</th><th>Veículo</th><th>Categoria</th><th>Funil</th><th>Papel</th><th>Modelo</th>
       <th class="num">Custo unit.</th><th class="num">Verba</th><th class="num">Resultado est.</th>
       <th>Início</th><th>Fim</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
     <tfoot><tr>
-      <td colspan="6">Total (${p.lines.length} ${p.lines.length===1?"linha":"linhas"})</td>
+      <td colspan="7">Total (${p.lines.length} ${p.lines.length===1?"linha":"linhas"})</td>
       <td class="num">${money(t.totalVerba)}</td>
       <td class="num">${num(t.impressoes)} impr. · ${num(t.cliques)} cliq.</td>
       <td colspan="3"></td>
     </tr></tfoot>
-    <tbody><tr class="addrow"><td colspan="11"><button class="addrowbtn" data-act="add-line">+ Adicionar linha de veiculação</button></td></tr></tbody>
+    <tbody><tr class="addrow"><td colspan="12"><button class="addrowbtn" data-act="add-line">+ Adicionar linha de veiculação</button></td></tr></tbody>
   </table>`;
   // select vehicle values (can't set selected in template safely with dynamic optgroups) + bind
   p.lines.forEach(l=>{
@@ -833,8 +972,10 @@ function renderGrid(p){
       line[input.dataset.k]=v;
       if(input.dataset.k==="veiculo"){
         const veh=vehicle(v);
-        if(veh){ line.funil=veh.funil; line.modelo=veh.modelo; }
+        if(veh){ line.funil=veh.funil; line.modelo=veh.modelo; line.papel=PAPEL_POR_FUNIL[veh.funil]; }
       }
+      if(input.dataset.k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
+      if(input.dataset.k==="papel"){ line._papelManual=true; }
       save();
       render();
     });
@@ -998,7 +1139,7 @@ document.addEventListener("click",e=>{
   else if(act==="del-plan"){ e.stopPropagation(); if(confirm("Excluir este plano de mídia?")) delPlan(id); }
   else if(act==="add-line"){
     const p=curPlan();
-    p.lines.push({id:uid(),veiculo:VEHICLES[0].k,funil:VEHICLES[0].funil,modelo:VEHICLES[0].modelo,custo:"",verba:"",inicio:"",fim:""});
+    p.lines.push({id:uid(),veiculo:VEHICLES[0].k,funil:VEHICLES[0].funil,papel:PAPEL_POR_FUNIL[VEHICLES[0].funil],modelo:VEHICLES[0].modelo,custo:"",verba:"",inicio:"",fim:""});
     save(); render();
   }
   else if(act==="del-line"){ const p=curPlan(); p.lines=p.lines.filter(x=>x.id!==id); save(); render(); }
