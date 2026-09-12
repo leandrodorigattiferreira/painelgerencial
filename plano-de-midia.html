@@ -1176,7 +1176,7 @@ function renderCriterios(p){
     input.addEventListener("change",()=>{ p[input.dataset.field]=input.value; save(); render(); });
   });
   el.querySelectorAll("[data-crit]").forEach(input=>{
-    const evt = input.tagName==="SELECT" ? "change" : "input";
+    const evt = "change";
     input.addEventListener(evt,()=>{
       const path=input.dataset.crit;
       if(path.startsWith("funil.")) c.funil[path.split(".")[1]]=parseFloat(input.value)||0;
@@ -1479,7 +1479,7 @@ function renderGrid(p){
     el.querySelectorAll(`select[data-line="${l.id}"][data-k="veiculo"]`).forEach(sel=>sel.value=l.veiculo);
   });
   el.querySelectorAll("[data-line]").forEach(input=>{
-    const evt = input.tagName==="SELECT" ? "change" : "input";
+    const evt = "change";
     input.addEventListener(evt,()=>{
       const line=p.lines.find(x=>x.id===input.dataset.line);
       if(!line) return;
