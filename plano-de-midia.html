@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plano de Mídia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#F2F0FB; --surface:#FFFFFF; --surface-2:#F7F6FD; --ink:#191A2B; --ink-soft:#454764; --muted:#84869E; --faint:#B4B6CB;
+  --line:#E7E6F5; --line-strong:#D6D4EC;
+  --brand:#5B4CE0; --brand-bg:#ECE9FC;
+  --off:#C9762E; --off-bg:#FBF0E6;
+  --dig:#1F9E8C; --dig-bg:#E2F2EF;
+  --topo:#5759D1; --meio:#0E8C7F; --fundo:#B0496B; --ret:#C2830C;
+  --danger:#DA3B41; --danger-bg:#FBEAEA;
+  --r:16px; --r-sm:11px; --r-xs:8px;
+  --sh:0 1px 2px rgba(25,26,43,.05), 0 4px 16px rgba(25,26,43,.06);
+  --sh-pop:0 16px 50px rgba(25,26,43,.2);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:radial-gradient(1100px 520px at 12% -10%,#F6F5FD 0%,rgba(246,245,253,0) 60%),radial-gradient(900px 480px at 100% 0%,#EEF3FA 0%,rgba(238,243,250,0) 55%),var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+.mono{font-family:"JetBrains Mono",monospace;font-feature-settings:"tnum"}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+
+.app{display:grid;grid-template-columns:260px 1fr;min-height:100vh}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px;padding:20px 16px;background:rgba(255,255,255,.75);backdrop-filter:blur(8px);border-right:1px solid var(--line)}
+.logo{display:flex;align-items:center;gap:11px;padding:4px 6px 16px}
+.logo .mark{width:34px;height:34px;flex:0 0 auto}
+.logo h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:17px;letter-spacing:-.02em;margin:0;line-height:1.05}
+.logo p{margin:1px 0 0;font-size:11px;color:var(--muted);font-weight:600}
+.navlbl{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:14px 8px 6px;display:flex;justify-content:space-between;align-items:center}
+.navlbl button{border:0;background:transparent;color:var(--brand);font-weight:700;font-size:15px;line-height:1;padding:2px 4px}
+.plans{display:flex;flex-direction:column;gap:3px;max-height:34vh;overflow:auto;padding-right:2px}
+.planitem{display:flex;align-items:center;gap:8px;width:100%;border:0;background:transparent;border-radius:10px;padding:8px 9px;font-weight:600;font-size:13.5px;color:var(--ink-soft);text-align:left}
+.planitem:hover{background:var(--surface-2)}
+.planitem.on{background:var(--ink);color:#fff}
+.planitem .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.planitem .vb{font-size:11px;color:var(--muted);font-weight:600}
+.planitem.on .vb{color:rgba(255,255,255,.7)}
+.side .grow{flex:1}
+.gbtn{width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:11px;padding:9px;font-weight:700;font-size:13px;color:var(--ink-soft);margin-top:8px}
+.gbtn:hover{background:var(--surface-2)}
+.gbtn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.gbtn.pri:hover{filter:brightness(1.08)}
+.io{display:flex;gap:7px;margin-top:8px}
+.io .iobtn{flex:1;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+.io .iobtn:hover{background:var(--surface-2)}
+.savestat{display:flex;align-items:center;gap:7px;margin-top:9px;padding:0 2px;font-size:11px;font-weight:600;color:var(--muted)}
+.savestat .dotok{width:7px;height:7px;border-radius:50%;background:var(--dig);flex:0 0 auto;box-shadow:0 0 0 3px var(--dig-bg)}
+.savestat .dotwarn{width:7px;height:7px;border-radius:50%;background:var(--ret);flex:0 0 auto}
+
+.main{min-width:0;padding:24px 28px 90px;max-width:1280px}
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;flex-wrap:wrap;margin-bottom:18px}
+.top .h{font-family:"Bricolage Grotesque";font-weight:800;font-size:26px;letter-spacing:-.02em;margin:0;line-height:1;display:flex;align-items:center;gap:8px}
+.top .h input{font:inherit;border:1px solid transparent;border-radius:8px;background:transparent;padding:2px 6px;max-width:420px}
+.top .h input:hover,.top .h input:focus{border-color:var(--line-strong);background:var(--surface)}
+.top .sub{color:var(--muted);font-size:13px;margin-top:6px}
+.controls{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
+.addbtn{border:0;border-radius:11px;padding:9px 15px;font-weight:700;font-size:14px;color:#fff;background:var(--brand);display:flex;align-items:center;gap:7px;box-shadow:var(--sh)}
+.addbtn:hover{filter:brightness(1.08)}
+.addbtn svg{width:15px;height:15px}
+.addbtn.ghost{background:var(--surface);color:var(--ink);border:1px solid var(--line-strong)}
+.addbtn.danger{background:var(--danger)}
+.seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;box-shadow:var(--sh)}
+.seg button{border:0;background:transparent;border-radius:8px;padding:7px 13px;font-weight:600;font-size:13px;color:var(--muted)}
+.seg button.on{background:var(--ink);color:#fff}
+
+.field{margin-top:0}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)}
+.card + .card{margin-top:16px}
+.card h2{font-family:"Bricolage Grotesque";font-size:13px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+.f label{display:block;font-size:11px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin-bottom:5px}
+.f input,.f select,.f textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px;font-size:14px;color:var(--ink);background:var(--surface-2)}
+.f textarea{resize:vertical;min-height:56px}
+.f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--brand);outline-offset:1px;border-color:transparent}
+.f{margin-bottom:12px}
+
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 15px;box-shadow:var(--sh)}
+.tile .k{font-size:11.5px;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.03em}
+.tile .v{font-family:"Bricolage Grotesque";font-size:22px;font-weight:800;line-height:1.2;margin-top:6px}
+.tile .v2{font-size:11.5px;color:var(--muted);margin-top:3px}
+
+table.lines{width:100%;border-collapse:collapse;font-size:13.5px}
+table.lines th{text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:0 8px 8px;border-bottom:1px solid var(--line)}
+table.lines td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+table.lines tr:last-child td{border-bottom:0}
+.vname{font-weight:700}
+.vname small{display:block;font-weight:500;color:var(--muted);font-size:11.5px;margin-top:1px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:99px}
+.pill .d{width:6px;height:6px;border-radius:50%}
+.pill.topo{background:#ECEDFB;color:var(--topo)} .pill.topo .d{background:var(--topo)}
+.pill.meio{background:var(--dig-bg);color:var(--meio)} .pill.meio .d{background:var(--meio)}
+.pill.fundo{background:#FAEAEF;color:var(--fundo)} .pill.fundo .d{background:var(--fundo)}
+.pill.retencao{background:#FBF1E2;color:var(--ret)} .pill.retencao .d{background:var(--ret)}
+.pill.off{background:var(--off-bg);color:var(--off)}
+.pill.dig{background:var(--dig-bg);color:var(--dig)}
+.rowact{display:flex;gap:2px}
+.ib{border:0;background:transparent;color:var(--faint);width:28px;height:28px;border-radius:8px;display:grid;place-items:center}
+.ib:hover{background:var(--surface-2);color:var(--ink)}
+.ib svg{width:14px;height:14px}
+.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+
+.barlist{display:flex;flex-direction:column;gap:9px}
+.barrow .bl{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px}
+.bl b{font-weight:700}
+.bl span{color:var(--muted)}
+.bartrack{height:9px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bartrack > i{display:block;height:100%;border-radius:99px}
+
+.stack{height:22px;border-radius:99px;overflow:hidden;display:flex;background:var(--surface-2)}
+.stack span{height:100%}
+.legend{display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-soft)}
+.legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+.timeline{overflow-x:auto}
+.tlgrid{display:grid;min-width:640px}
+.tlhead{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(64px,1fr);border-bottom:1px solid var(--line);padding-bottom:6px;margin-bottom:8px}
+.tlhead div{font-size:10.5px;font-weight:700;color:var(--muted);text-align:center}
+.tlrow{display:grid;grid-template-columns:180px 1fr;align-items:center;gap:10px;padding:6px 0}
+.tlname{font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tltrack{position:relative;height:20px;background:var(--surface-2);border-radius:99px}
+.tlbar{position:absolute;top:2px;bottom:2px;border-radius:99px}
+
+.empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:44px 24px;text-align:center;color:var(--muted)}
+.empty .em{font-family:"Bricolage Grotesque";color:var(--ink);font-weight:700;font-size:17px;margin-bottom:5px}
+.empty button{margin-top:14px;border:0;background:var(--brand);color:#fff;border-radius:11px;padding:9px 16px;font-weight:700;font-size:14px}
+
+.backdrop{position:fixed;inset:0;background:rgba(25,26,43,.45);display:none;align-items:flex-start;justify-content:center;padding:36px 16px;z-index:60;overflow:auto}
+.backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:20px;width:100%;max-width:560px;box-shadow:var(--sh-pop);animation:pop .18s ease}
+.modal.wide{max-width:820px}
+@keyframes pop{from{transform:translateY(10px) scale(.985);opacity:0}to{transform:none;opacity:1}}
+.modal header{padding:18px 20px 2px;display:flex;justify-content:space-between;align-items:center}
+.modal header h3{margin:0;font-family:"Bricolage Grotesque";font-size:18px;font-weight:800}
+.modal .x{border:0;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:8px;font-size:20px;line-height:1}
+.modal .x:hover{background:var(--surface-2);color:var(--ink)}
+.form{padding:6px 20px 20px}
+.save{width:100%;margin-top:16px;border:0;background:var(--brand);color:#fff;border-radius:12px;padding:12px;font-weight:700;font-size:15px}
+.save:hover{filter:brightness(1.08)}
+.delrow{display:flex;justify-content:center;margin-top:10px}
+.delrow button{border:0;background:transparent;color:var(--danger);font-weight:600;font-size:13px;padding:6px 12px;border-radius:8px}
+.delrow button:hover{background:var(--danger-bg)}
+.hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+
+.glossary{max-height:64vh;overflow:auto;padding:4px 20px 20px}
+.gitem{padding:10px 0;border-bottom:1px solid var(--line)}
+.gitem:last-child{border-bottom:0}
+.gitem b{font-family:"Bricolage Grotesque";font-size:14px}
+.gitem p{margin:4px 0 0;font-size:13px;color:var(--ink-soft);line-height:1.5}
+.gsearch{padding:16px 20px 0}
+.gsearch input{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 12px;font-size:14px;background:var(--surface-2)}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--sh-pop);z-index:90;opacity:0;transition:.28s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media print{
+  .side,.controls,.addbtn,.ib,.gbtn,.savestat,.io{display:none!important}
+  .app{grid-template-columns:1fr}
+  body{background:#fff}
+  .card{box-shadow:none;break-inside:avoid}
+}
+@media (max-width:960px){
+  .app{grid-template-columns:1fr}
+  .side{position:static;height:auto}
+  .tiles{grid-template-columns:1fr 1fr}
+  .grid4{grid-template-columns:1fr 1fr}
+  .grid3{grid-template-columns:1fr 1fr}
+  .main{padding:18px 16px 80px}
+}
+@media (max-width:560px){.tiles{grid-template-columns:1fr}.grid4,.grid3,.grid2{grid-template-columns:1fr}.tlrow{grid-template-columns:110px 1fr}}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logo">
+      <svg class="mark" viewBox="0 0 40 40" fill="none">
+        <rect x="4" y="20" width="7" height="16" rx="2" fill="#5B4CE0"/>
+        <rect x="16.5" y="10" width="7" height="26" rx="2" fill="#1F9E8C"/>
+        <rect x="29" y="4" width="7" height="32" rx="2" fill="#B0496B"/>
+      </svg>
+      <div><h1>Plano de Mídia</h1><p>ferramenta de estudo</p></div>
+    </div>
+
+    <div class="navlbl">Planos <button data-act="glossary" title="Glossário">?</button></div>
+    <div class="plans" id="plans"></div>
+    <button class="gbtn pri" data-act="new-plan">+ Novo plano</button>
+
+    <div class="grow"></div>
+    <div class="io">
+      <button class="iobtn" data-act="export" title="Baixar backup de todos os planos">⬇ Exportar</button>
+      <button class="iobtn" data-act="import" title="Restaurar de um backup">⬆ Importar</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    </div>
+    <div class="savestat" id="saveStat"></div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+
+<script>
+"use strict";
+
+/* ===================== catálogo de veículos ===================== */
+const FUNIL = {topo:"Topo (Awareness)", meio:"Meio (Consideração)", fundo:"Fundo (Conversão)", retencao:"Retenção/Fidelização"};
+const MODELO = {CPM:"CPM", CPC:"CPC", CPV:"CPV", CPA:"CPA", CPL:"CPL", CPI:"CPI", CPP:"CPP/GRP", FIXO:"Fixo/Pacote"};
+const RESLABEL = {CPM:"Impressões", CPC:"Cliques", CPV:"Views", CPA:"Conversões", CPL:"Leads", CPI:"Instalações", CPP:"GRPs/TRPs", FIXO:"Pacote fechado"};
+
+// benchmark: faixa aproximada de referência do mercado brasileiro (educativo, não é cotação oficial)
+const CATS = [
+  {key:"tv", label:"TV", cls:"off"},
+  {key:"radio", label:"Rádio", cls:"off"},
+  {key:"ooh", label:"OOH / DOOH", cls:"off"},
+  {key:"cinema", label:"Cinema", cls:"off"},
+  {key:"impresso", label:"Impresso", cls:"off"},
+  {key:"audio", label:"Áudio / Podcast", cls:"dig"},
+  {key:"busca", label:"Busca Paga", cls:"dig"},
+  {key:"social", label:"Social Ads", cls:"dig"},
+  {key:"display", label:"Display / Programática", cls:"dig"},
+  {key:"video", label:"Vídeo Online / CTV", cls:"dig"},
+  {key:"retail", label:"Retail Media", cls:"dig"},
+  {key:"influ", label:"Influenciadores / Creators", cls:"dig"},
+  {key:"afiliados", label:"Afiliados", cls:"dig"},
+  {key:"crm", label:"CRM / Retenção", cls:"dig"},
+  {key:"app", label:"App / UA", cls:"dig"},
+  {key:"gaming", label:"Gaming / In-game", cls:"dig"},
+];
+
+const VEHICLES = [
+  {k:"tv_aberta", cat:"tv", label:"TV Aberta", funil:"topo", modelo:"CPP", bench:"CPP R$ 800 – 4.000 (praça/horário)"},
+  {k:"tv_paga", cat:"tv", label:"TV por Assinatura", funil:"topo", modelo:"CPM", bench:"CPM R$ 15 – 45"},
+  {k:"ctv_avod", cat:"video", label:"CTV / Streaming AVOD (Globoplay, Prime, Max, Pluto)", funil:"topo", modelo:"CPM", bench:"CPM R$ 35 – 90"},
+  {k:"radio_am_fm", cat:"radio", label:"Rádio AM/FM", funil:"topo", modelo:"CPP", bench:"Inserção R$ 150 – 1.500"},
+  {k:"ooh_tradicional", cat:"ooh", label:"OOH Tradicional (outdoor, busdoor, painel)", funil:"topo", modelo:"FIXO", bench:"Pacote/praça R$ 3.000 – 30.000/mês"},
+  {k:"dooh_prog", cat:"ooh", label:"DOOH Programático", funil:"topo", modelo:"CPM", bench:"CPM R$ 20 – 60"},
+  {k:"mobiliario_urbano", cat:"ooh", label:"Mobiliário Urbano / Metrô", funil:"topo", modelo:"FIXO", bench:"Pacote R$ 2.000 – 20.000"},
+  {k:"cinema_sala", cat:"cinema", label:"Cinema (pré-filme)", funil:"topo", modelo:"CPM", bench:"CPM R$ 25 – 70"},
+  {k:"revista", cat:"impresso", label:"Revista", funil:"topo", modelo:"FIXO", bench:"Página R$ 5.000 – 40.000"},
+  {k:"jornal", cat:"impresso", label:"Jornal", funil:"topo", modelo:"FIXO", bench:"Módulo R$ 1.500 – 15.000"},
+  {k:"podcast_hostread", cat:"audio", label:"Podcast (host-read / patrocínio)", funil:"meio", modelo:"FIXO", bench:"Episódio R$ 500 – 15.000"},
+  {k:"podcast_prog", cat:"audio", label:"Podcast Ads Programático", funil:"meio", modelo:"CPM", bench:"CPM R$ 25 – 60"},
+  {k:"audio_streaming", cat:"audio", label:"Áudio Streaming (Spotify, Deezer)", funil:"topo", modelo:"CPM", bench:"CPM R$ 18 – 45"},
+  {k:"google_search", cat:"busca", label:"Google Ads – Rede de Pesquisa", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,80 – 8,00"},
+  {k:"google_shopping", cat:"busca", label:"Google Shopping / PMax", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,50 – 5,00"},
+  {k:"bing_ads", cat:"busca", label:"Microsoft (Bing) Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,50 – 4,00"},
+  {k:"meta_ads", cat:"social", label:"Meta Ads (Facebook/Instagram)", funil:"meio", modelo:"CPM", bench:"CPM R$ 12 – 35"},
+  {k:"tiktok_ads", cat:"social", label:"TikTok Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 10 – 30"},
+  {k:"linkedin_ads", cat:"social", label:"LinkedIn Ads (B2B)", funil:"meio", modelo:"CPC", bench:"CPC R$ 8 – 25"},
+  {k:"pinterest_ads", cat:"social", label:"Pinterest Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 8 – 22"},
+  {k:"x_ads", cat:"social", label:"X Ads (Twitter)", funil:"topo", modelo:"CPM", bench:"CPM R$ 10 – 28"},
+  {k:"snapchat_ads", cat:"social", label:"Snapchat Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 8 – 20"},
+  {k:"kwai_ads", cat:"social", label:"Kwai Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 6 – 18"},
+  {k:"display_prog", cat:"display", label:"Display Programático (RTB)", funil:"meio", modelo:"CPM", bench:"CPM R$ 4 – 18"},
+  {k:"native_ads", cat:"display", label:"Native Ads (Taboola, Outbrain)", funil:"meio", modelo:"CPC", bench:"CPC R$ 0,20 – 1,50"},
+  {k:"pg_guaranteed", cat:"display", label:"Programmatic Guaranteed / Direto com veículo", funil:"meio", modelo:"CPM", bench:"CPM R$ 15 – 50"},
+  {k:"youtube_ads", cat:"video", label:"YouTube Ads (TrueView, Bumper)", funil:"topo", modelo:"CPV", bench:"CPV R$ 0,05 – 0,35"},
+  {k:"video_prog", cat:"video", label:"Vídeo Programático (in-stream/out-stream)", funil:"meio", modelo:"CPM", bench:"CPM R$ 20 – 55"},
+  {k:"retail_meli", cat:"retail", label:"Mercado Livre Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,30 – 3,00"},
+  {k:"retail_amazon", cat:"retail", label:"Amazon Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,40 – 3,50"},
+  {k:"retail_magalu", cat:"retail", label:"Magalu Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,30 – 2,80"},
+  {k:"retail_shopee", cat:"retail", label:"Shopee Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,20 – 2,00"},
+  {k:"influ_micro", cat:"influ", label:"Micro-influenciadores (10k–100k)", funil:"meio", modelo:"FIXO", bench:"Post R$ 300 – 3.000"},
+  {k:"influ_macro", cat:"influ", label:"Macro-influenciadores / Celebridades", funil:"topo", modelo:"FIXO", bench:"Post/campanha R$ 5.000 – 150.000+"},
+  {k:"influ_ugc", cat:"influ", label:"UGC / Creators para Ads (whitelisting)", funil:"meio", modelo:"FIXO", bench:"Conteúdo R$ 500 – 5.000"},
+  {k:"afiliados_rede", cat:"afiliados", label:"Marketing de Afiliados", funil:"fundo", modelo:"CPA", bench:"Comissão 5% – 30% da venda"},
+  {k:"email_mkt", cat:"crm", label:"E-mail Marketing / CRM", funil:"retencao", modelo:"FIXO", bench:"Ferramenta/disparo R$ 300 – 5.000/mês"},
+  {k:"sms_whats", cat:"crm", label:"SMS / WhatsApp Marketing", funil:"retencao", modelo:"CPM", bench:"CPM R$ 30 – 90 (por envio)"},
+  {k:"push_app", cat:"crm", label:"Push Notification / App Retenção", funil:"retencao", modelo:"FIXO", bench:"Ferramenta R$ 200 – 3.000/mês"},
+  {k:"app_ua", cat:"app", label:"User Acquisition (Google/Apple/Meta Installs)", funil:"fundo", modelo:"CPI", bench:"CPI R$ 2 – 15"},
+  {k:"aso", cat:"app", label:"ASO (App Store Optimization)", funil:"fundo", modelo:"FIXO", bench:"Serviço R$ 1.500 – 8.000/mês"},
+  {k:"gaming_ads", cat:"gaming", label:"In-game Ads / Advergaming", funil:"topo", modelo:"CPM", bench:"CPM R$ 10 – 30"},
+  {k:"gaming_stream", cat:"gaming", label:"Patrocínio de Streamers (Twitch/YouTube Gaming)", funil:"topo", modelo:"FIXO", bench:"Live/mês R$ 1.000 – 30.000"},
+];
+
+/* ===================== glossário ===================== */
+const GLOSSARY = [
+  {t:"CPM (Custo por Mil)", d:"Valor pago a cada 1.000 impressões. Impressões = (verba / CPM) × 1000."},
+  {t:"CPC (Custo por Clique)", d:"Valor pago por clique no anúncio. Cliques = verba / CPC."},
+  {t:"CPV (Custo por Visualização)", d:"Valor pago por visualização de vídeo (ex.: YouTube TrueView). Views = verba / CPV."},
+  {t:"CPA (Custo por Aquisição)", d:"Valor pago por conversão/venda gerada. Conversões = verba / CPA."},
+  {t:"CPL (Custo por Lead)", d:"Valor pago por lead qualificado captado."},
+  {t:"CPI (Custo por Instalação)", d:"Valor pago por instalação de aplicativo (user acquisition mobile)."},
+  {t:"CPP / GRP (Custo por Ponto)", d:"Usado em TV/rádio. GRP (Gross Rating Point) mede o volume bruto de audiência atingida; TRP é o GRP no público-alvo específico."},
+  {t:"Alcance (Reach)", d:"Número de pessoas únicas expostas à campanha em um período."},
+  {t:"Frequência", d:"Número médio de vezes que cada pessoa alcançada viu o anúncio. Frequência = Impressões / Alcance."},
+  {t:"Share of Voice (SOV)", d:"Participação da marca no total de investimento/visibilidade da categoria em um canal ou mercado."},
+  {t:"CTR (Click-Through Rate)", d:"Taxa de cliques. CTR = Cliques / Impressões."},
+  {t:"VTR (View-Through Rate)", d:"Taxa de conclusão de visualização de vídeo (views completos / impressões de vídeo)."},
+  {t:"Viewability", d:"Percentual de impressões que efetivamente ficaram visíveis na tela do usuário (padrão MRC: 50% do anúncio por 1s+)."},
+  {t:"CPCV (Custo por Visualização Completa)", d:"Custo por visualização de vídeo até o final."},
+  {t:"ROAS (Return on Ad Spend)", d:"Retorno sobre o investimento em mídia. ROAS = Receita gerada / Verba investida."},
+  {t:"ROI (Return on Investment)", d:"Retorno sobre o investimento total, considerando custos além da mídia."},
+  {t:"Funil de Marketing", d:"Topo (awareness/descoberta), Meio (consideração/engajamento), Fundo (conversão/venda) e Retenção (fidelização/recompra)."},
+  {t:"Full-funnel Planning", d:"Estratégia de mídia que combina veículos e formatos cobrindo todas as etapas do funil, e não só performance de fundo."},
+  {t:"Retail Media", d:"Publicidade veiculada dentro de marketplaces e e-commerces (Mercado Livre, Amazon, Magalu, Shopee), aproveitando dados de intenção de compra."},
+  {t:"Programática", d:"Compra automatizada de mídia via leilão em tempo real (RTB) ou acordos diretos (Programmatic Guaranteed), usando DSPs."},
+  {t:"DSP (Demand-Side Platform)", d:"Plataforma usada por anunciantes/agências para comprar inventário de mídia programática."},
+  {t:"Contextual Targeting", d:"Segmentação baseada no conteúdo da página/vídeo, alternativa relevante num cenário sem cookies de terceiros (cookieless)."},
+  {t:"Cookieless", d:"Cenário de publicidade digital sem cookies de terceiros, com uso de dados first-party, contextual e IDs alternativos (ex.: Privacy Sandbox)."},
+  {t:"Frequency Capping", d:"Limite de quantas vezes um mesmo usuário vê o anúncio em um período, para evitar saturação."},
+  {t:"Flighting / Cronograma de Veiculação", d:"Distribuição da veiculação ao longo do tempo: contínua, pulsada (com picos) ou intermitente (blocos com pausas)."},
+  {t:"Brand Lift", d:"Estudo que mede o impacto da campanha em métricas de marca (lembrança, favorabilidade, intenção de compra)."},
+  {t:"Incrementalidade / MMM", d:"Marketing Mix Modeling e testes de incrementalidade medem o efeito real de cada canal no resultado, isolando causalidade."},
+  {t:"Attention Metrics", d:"Métricas mais recentes que medem atenção real do usuário (tempo de atenção ativa), além de viewability."},
+  {t:"CTV (Connected TV)", d:"TVs conectadas à internet que exibem anúncios em serviços de streaming (AVOD/FAST channels)."},
+  {t:"UGC (User-Generated Content)", d:"Conteúdo produzido por criadores/usuários, usado como anúncio (whitelisting/spark ads) por ter maior autenticidade percebida."},
+];
+
+/* ===================== estado & persistência ===================== */
+const KEY="plano-midia-v1";
+let data={plans:[]};
+let activePlanId=null;
+let editLineId=null;
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+
+async function load(){
+  try{
+    if(window.storage){
+      const r=await window.storage.get(KEY).catch(()=>null);
+      if(r&&r.value) data=JSON.parse(r.value);
+    }else if(window.localStorage){
+      const v=localStorage.getItem(KEY);
+      if(v) data=JSON.parse(v);
+    }
+  }catch(e){}
+  data.plans=data.plans||[];
+  if(data.plans.length) activePlanId=data.plans[0].id;
+}
+async function save(){
+  try{
+    if(window.storage){ await window.storage.set(KEY,JSON.stringify(data)); setSaveStat("ok"); }
+    else if(window.localStorage){ localStorage.setItem(KEY,JSON.stringify(data)); setSaveStat("local"); }
+    else setSaveStat("none");
+  }catch(e){ setSaveStat("err"); }
+}
+function setSaveStat(s){
+  const el=document.getElementById("saveStat"); if(!el) return;
+  const h=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  if(s==="ok")el.innerHTML=`<span class="dotok"></span>Salvo na sua conta · ${h}`;
+  else if(s==="local")el.innerHTML=`<span class="dotok"></span>Salvo neste navegador · ${h}`;
+  else if(s==="none")el.innerHTML=`<span class="dotwarn"></span>Sem salvamento — exporte`;
+  else el.innerHTML=`<span class="dotwarn"></span>Falha ao salvar — exporte`;
+}
+
+function newPlan(){
+  const p={id:uid(),nome:"Novo plano de mídia",cliente:"",objetivo:"",publico:"",inicio:"",fim:"",verba:0,lines:[]};
+  data.plans.unshift(p); activePlanId=p.id; save(); render();
+}
+function dupPlan(id){
+  const p=data.plans.find(x=>x.id===id); if(!p) return;
+  const c=JSON.parse(JSON.stringify(p)); c.id=uid(); c.nome=p.nome+" (cópia)";
+  c.lines=c.lines.map(l=>({...l,id:uid()}));
+  data.plans.unshift(c); activePlanId=c.id; save(); render();
+}
+function delPlan(id){
+  data.plans=data.plans.filter(x=>x.id!==id);
+  if(activePlanId===id) activePlanId=data.plans.length?data.plans[0].id:null;
+  save(); render();
+}
+function curPlan(){return data.plans.find(p=>p.id===activePlanId);}
+
+/* ===================== helpers de cálculo ===================== */
+function vehicle(k){return VEHICLES.find(v=>v.k===k);}
+function catInfo(k){return CATS.find(c=>c.key===k);}
+function money(n){return (n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function num(n){return Math.round(n||0).toLocaleString("pt-BR");}
+function esc(s){return(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+
+function lineResult(l){
+  const custo=parseFloat(l.custo)||0, verba=parseFloat(l.verba)||0;
+  if(!custo || l.modelo==="FIXO") return {qty:null,label:RESLABEL[l.modelo]||""};
+  let qty;
+  if(l.modelo==="CPM") qty=verba/custo*1000;
+  else qty=verba/custo;
+  return {qty, label:RESLABEL[l.modelo]||""};
+}
+
+function planTotals(p){
+  const totalVerba=p.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+  const byCat={}, byFunil={}, byClass={off:0,dig:0};
+  let impressoes=0, cliques=0, views=0, conversoes=0;
+  p.lines.forEach(l=>{
+    const v=vehicle(l.veiculo); if(!v) return;
+    const c=catInfo(v.cat);
+    const verba=parseFloat(l.verba)||0;
+    byCat[v.cat]=(byCat[v.cat]||0)+verba;
+    byFunil[l.funil]=(byFunil[l.funil]||0)+verba;
+    byClass[c.cls]=(byClass[c.cls]||0)+verba;
+    const r=lineResult(l);
+    if(r.qty){
+      if(l.modelo==="CPM") impressoes+=r.qty;
+      else if(l.modelo==="CPC") cliques+=r.qty;
+      else if(l.modelo==="CPV") views+=r.qty;
+      else if(l.modelo==="CPA"||l.modelo==="CPL"||l.modelo==="CPI") conversoes+=r.qty;
+    }
+  });
+  return {totalVerba,byCat,byFunil,byClass,impressoes,cliques,views,conversoes};
+}
+
+/* ===================== render: sidebar ===================== */
+function renderPlansList(){
+  const el=document.getElementById("plans");
+  if(!data.plans.length){ el.innerHTML=`<div style="font-size:12.5px;color:var(--muted);padding:8px 4px">Nenhum plano ainda.</div>`; return; }
+  el.innerHTML=data.plans.map(p=>{
+    const t=planTotals(p);
+    return `<button class="planitem ${p.id===activePlanId?"on":""}" data-act="select-plan" data-id="${p.id}">
+      <span class="nm">${esc(p.nome)}</span><span class="vb">${money(t.totalVerba)}</span>
+    </button>`;
+  }).join("");
+}
+
+/* ===================== render: main ===================== */
+function render(){
+  renderPlansList();
+  const main=document.getElementById("main");
+  const p=curPlan();
+  if(!p){
+    main.innerHTML=`<div class="empty" style="margin-top:60px">
+      <div class="em">Crie seu primeiro plano de mídia</div>
+      <p>Defina objetivo, verba, público e monte as linhas de veiculação por veículo.</p>
+      <button data-act="new-plan">+ Novo plano</button>
+    </div>`;
+    return;
+  }
+  const t=planTotals(p);
+  const pctAlocado=p.verba? Math.round(t.totalVerba/parseFloat(p.verba)*100):null;
+  main.innerHTML=`
+    <div class="top">
+      <div>
+        <h1 class="h"><input value="${esc(p.nome)}" data-field="nome" placeholder="Nome do plano"></h1>
+        <div class="sub">${esc(p.cliente||"Sem cliente definido")} ${p.inicio&&p.fim?`· ${fmtd(p.inicio)} — ${fmtd(p.fim)}`:""}</div>
+      </div>
+      <div class="controls">
+        <button class="addbtn ghost" data-act="dup-plan" data-id="${p.id}">Duplicar</button>
+        <button class="addbtn ghost" data-act="print">Imprimir / PDF</button>
+        <button class="addbtn ghost danger" data-act="del-plan" data-id="${p.id}">Excluir plano</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Briefing</h2>
+      <div class="grid4">
+        <div class="f"><label>Cliente / Marca</label><input data-field="cliente" value="${esc(p.cliente)}"></div>
+        <div class="f"><label>Verba total (R$)</label><input type="number" min="0" step="100" data-field="verba" value="${p.verba||0}"></div>
+        <div class="f"><label>Início</label><input type="date" data-field="inicio" value="${p.inicio||""}"></div>
+        <div class="f"><label>Fim</label><input type="date" data-field="fim" value="${p.fim||""}"></div>
+      </div>
+      <div class="grid2">
+        <div class="f"><label>Objetivo da campanha</label><textarea data-field="objetivo" placeholder="Ex.: gerar awareness de lançamento e conversão em e-commerce">${esc(p.objetivo)}</textarea></div>
+        <div class="f"><label>Público-alvo</label><textarea data-field="publico" placeholder="Ex.: mulheres 25-40, classe AB, interesse em moda e bem-estar">${esc(p.publico)}</textarea></div>
+      </div>
+    </div>
+
+    <div class="tiles">
+      <div class="tile"><div class="k">Verba alocada</div><div class="v">${money(t.totalVerba)}</div><div class="v2">${pctAlocado===null?"defina a verba total":`${pctAlocado}% da verba total`}</div></div>
+      <div class="tile"><div class="k">Impressões est.</div><div class="v">${num(t.impressoes)}</div><div class="v2">de linhas por CPM</div></div>
+      <div class="tile"><div class="k">Cliques est.</div><div class="v">${num(t.cliques)}</div><div class="v2">CTR médio ${t.impressoes?((t.cliques/t.impressoes*100)||0).toFixed(2)+"%":"—"}</div></div>
+      <div class="tile"><div class="k">Views est.</div><div class="v">${num(t.views)}</div><div class="v2">vídeo (CPV)</div></div>
+      <div class="tile"><div class="k">Conversões est.</div><div class="v">${num(t.conversoes)}</div><div class="v2">CPA/CPL/CPI</div></div>
+    </div>
+
+    <div class="grid2">
+      <div class="card">
+        <h2>Verba por veículo</h2>
+        ${barList(t.byCat, CATS.reduce((o,c)=>{o[c.key]=c.label;return o;},{}), t.totalVerba, catColor)}
+      </div>
+      <div class="card">
+        <h2>Verba por etapa do funil</h2>
+        ${stackBar(t.byFunil, FUNIL, t.totalVerba, funilColor)}
+        <h2 style="margin-top:18px">Offline × Digital</h2>
+        ${stackBar(t.byClass, {off:"Offline",dig:"Digital"}, t.totalVerba, c=>c==="off"?"var(--off)":"var(--dig)")}
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 style="margin:0">Linhas de veiculação</h2>
+        <button class="addbtn" data-act="add-line"><svg viewBox="0 0 16 16" fill="none"><path d="M8 3v10M3 8h10" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>Adicionar linha</button>
+      </div>
+      ${p.lines.length? linesTable(p) : `<div class="empty"><div class="em">Nenhuma linha ainda</div><p>Adicione veículos, defina modelo de compra e verba para simular resultados.</p></div>`}
+    </div>
+
+    ${p.lines.length? `<div class="card"><h2>Cronograma (flighting)</h2>${timeline(p)}</div>` : ""}
+  `;
+  bindFields();
+}
+
+function catColor(catKey){
+  const palette={tv:"#5B4CE0",radio:"#2F6FB2",ooh:"#C9762E",cinema:"#9A57A8",impresso:"#838C9E",audio:"#B0496B",busca:"#DA3B41",social:"#1F9E8C",display:"#4C9A51",video:"#0E8C7F",retail:"#C2410C",influ:"#D08412",afiliados:"#5759D1",crm:"#159069",app:"#2F6FB2",gaming:"#B0496B"};
+  return palette[catKey]||"#5B4CE0";
+}
+function funilColor(k){return {topo:"var(--topo)",meio:"var(--meio)",fundo:"var(--fundo)",retencao:"var(--ret)"}[k]||"var(--brand)";}
+
+function barList(byKey, labels, total, colorFn){
+  const rows=Object.entries(byKey).sort((a,b)=>b[1]-a[1]);
+  if(!rows.length) return `<div class="hint">Sem verba alocada ainda.</div>`;
+  return `<div class="barlist">${rows.map(([k,v])=>{
+    const pct=total? Math.round(v/total*100):0;
+    return `<div class="barrow"><div class="bl"><b>${esc(labels[k]||k)}</b><span>${money(v)} · ${pct}%</span></div>
+      <div class="bartrack"><i style="width:${pct}%;background:${colorFn(k)}"></i></div></div>`;
+  }).join("")}</div>`;
+}
+function stackBar(byKey, labels, total, colorFn){
+  const keys=Object.keys(labels).filter(k=>byKey[k]);
+  if(!keys.length) return `<div class="hint">Sem verba alocada ainda.</div>`;
+  const stack=`<div class="stack">${keys.map(k=>{
+    const pct=total? (byKey[k]/total*100):0;
+    return `<span style="width:${pct}%;background:${colorFn(k)}"></span>`;
+  }).join("")}</div>`;
+  const legend=`<div class="legend">${keys.map(k=>{
+    const pct=total? Math.round(byKey[k]/total*100):0;
+    return `<span><i style="background:${colorFn(k)}"></i>${esc(labels[k])} — ${pct}%</span>`;
+  }).join("")}</div>`;
+  return stack+legend;
+}
+
+function linesTable(p){
+  return `<table class="lines"><thead><tr>
+    <th>Veículo</th><th>Etapa</th><th>Modelo</th><th class="num">Custo unit.</th><th class="num">Verba</th><th class="num">Resultado est.</th><th>Período</th><th></th>
+  </tr></thead><tbody>${p.lines.map(l=>{
+    const v=vehicle(l.veiculo); const c=catInfo(v?v.cat:"");
+    const r=lineResult(l);
+    return `<tr>
+      <td class="vname">${esc(v?v.label:l.veiculo)}<small><span class="pill ${c?c.cls:""}">${c?c.label:""}</span></small></td>
+      <td><span class="pill ${l.funil}"><span class="d"></span>${FUNIL[l.funil]}</span></td>
+      <td>${MODELO[l.modelo]}</td>
+      <td class="num">${l.modelo==="FIXO"?"—":money(l.custo)}</td>
+      <td class="num">${money(l.verba)}</td>
+      <td class="num">${r.qty?num(r.qty)+" "+r.label:r.label}</td>
+      <td>${l.inicio?fmtd(l.inicio):"—"}${l.fim?" – "+fmtd(l.fim):""}</td>
+      <td><div class="rowact">
+        <button class="ib" data-act="edit-line" data-id="${l.id}" aria-label="Editar"><svg viewBox="0 0 16 16" fill="none"><path d="M11.5 2.5l2 2L6 12l-2.7.7L4 10z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/></svg></button>
+        <button class="ib" data-act="del-line" data-id="${l.id}" aria-label="Excluir"><svg viewBox="0 0 16 16" fill="none"><path d="M3.5 4.5h9M6 4.5V3h4v1.5M5 4.5l.6 8h4.8l.6-8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      </div></td>
+    </tr>`;
+  }).join("")}</tbody></table>`;
+}
+
+function fmtd(s){ if(!s) return ""; const d=new Date(s+"T00:00:00"); if(isNaN(d)) return s; return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}); }
+
+function timeline(p){
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length) return `<div class="hint">Defina datas de início e fim nas linhas para ver o cronograma.</div>`;
+  let min=p.inicio?new Date(p.inicio+"T00:00:00"):null, max=p.fim?new Date(p.fim+"T00:00:00"):null;
+  dated.forEach(l=>{
+    const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
+    if(!min||di<min) min=di; if(!max||df>max) max=df;
+  });
+  const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
+  const weeks=Math.max(1, Math.ceil(totalDays/7));
+  let head=""; for(let i=0;i<weeks;i++) head+=`<div>Sem ${i+1}</div>`;
+  const rows=dated.map(l=>{
+    const v=vehicle(l.veiculo);
+    const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
+    const startPct=Math.max(0,(di-min)/86400000)/totalDays*100;
+    const widthPct=Math.max(2,(df-di)/86400000+1)/totalDays*100;
+    return `<div class="tlrow"><div class="tlname">${esc(v?v.label:l.veiculo)}</div>
+      <div class="tltrack"><div class="tlbar" style="left:${startPct}%;width:${widthPct}%;background:${catColor(v?v.cat:"")}"></div></div></div>`;
+  }).join("");
+  return `<div class="timeline"><div class="tlgrid"><div class="tlhead" style="grid-template-columns:180px 1fr"><div></div></div>${rows}</div></div>`;
+}
+
+/* ===================== bind de campos do briefing ===================== */
+function bindFields(){
+  document.querySelectorAll("[data-field]").forEach(el=>{
+    el.addEventListener("change",()=>{
+      const p=curPlan(); if(!p) return;
+      let v=el.value;
+      if(el.dataset.field==="verba") v=parseFloat(v)||0;
+      p[el.dataset.field]=v; save(); if(el.dataset.field!=="nome") render(); else renderPlansList();
+    });
+  });
+}
+
+/* ===================== modal: linha de veiculação ===================== */
+function openLineModal(id){
+  editLineId=id;
+  const p=curPlan();
+  const l=id? p.lines.find(x=>x.id===id) : {id:null,veiculo:VEHICLES[0].k,funil:VEHICLES[0].funil,modelo:VEHICLES[0].modelo,custo:"",verba:"",inicio:p.inicio||"",fim:p.fim||""};
+  const optionsByCat=CATS.map(c=>{
+    const opts=VEHICLES.filter(v=>v.cat===c.key).map(v=>`<option value="${v.k}" ${l.veiculo===v.k?"selected":""}>${esc(v.label)}</option>`).join("");
+    return `<optgroup label="${esc(c.label)}">${opts}</optgroup>`;
+  }).join("");
+  document.getElementById("modal").innerHTML=`
+    <header><h3>${id?"Editar linha":"Nova linha de veiculação"}</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="form">
+      <div class="f"><label>Veículo</label><select id="lVeiculo">${optionsByCat}</select><div class="hint" id="benchHint"></div></div>
+      <div class="grid2">
+        <div class="f"><label>Etapa do funil</label><select id="lFunil">${Object.entries(FUNIL).map(([k,v])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v}</option>`).join("")}</select></div>
+        <div class="f"><label>Modelo de compra</label><select id="lModelo">${Object.entries(MODELO).map(([k,v])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v}</option>`).join("")}</select></div>
+      </div>
+      <div class="grid2">
+        <div class="f"><label>Custo unitário (R$)</label><input type="number" min="0" step="0.01" id="lCusto" value="${l.custo}" placeholder="ex.: 25.00"></div>
+        <div class="f"><label>Verba da linha (R$)</label><input type="number" min="0" step="10" id="lVerba" value="${l.verba}"></div>
+      </div>
+      <div class="grid2">
+        <div class="f"><label>Início</label><input type="date" id="lInicio" value="${l.inicio||""}"></div>
+        <div class="f"><label>Fim</label><input type="date" id="lFim" value="${l.fim||""}"></div>
+      </div>
+      <div class="hint" id="resultHint"></div>
+      <button class="save" data-act="save-line">Salvar linha</button>
+      ${id?`<div class="delrow"><button data-act="del-line" data-id="${id}">Excluir esta linha</button></div>`:""}
+    </div>`;
+  document.getElementById("backdrop").classList.add("open");
+  const vSel=document.getElementById("lVeiculo"), fSel=document.getElementById("lFunil"), mSel=document.getElementById("lModelo"), cInp=document.getElementById("lCusto"), bInp=document.getElementById("lVerba");
+  function syncFromVehicle(){
+    const v=vehicle(vSel.value); if(!v) return;
+    if(!id){ fSel.value=v.funil; mSel.value=v.modelo; }
+    document.getElementById("benchHint").textContent="Referência de mercado: "+v.bench;
+  }
+  function syncResult(){
+    const r=lineResult({modelo:mSel.value,custo:cInp.value,verba:bInp.value});
+    document.getElementById("resultHint").textContent = r.qty ? `Resultado estimado: ${num(r.qty)} ${r.label}` : (mSel.value==="FIXO"?"Modelo fixo: sem cálculo de volume.":"Informe custo unitário para estimar resultado.");
+  }
+  vSel.addEventListener("change",()=>{syncFromVehicle();syncResult();});
+  [mSel,cInp,bInp].forEach(el=>el.addEventListener("input",syncResult));
+  syncFromVehicle(); syncResult();
+}
+function saveLineFromModal(){
+  const p=curPlan(); if(!p) return;
+  const obj={
+    id:editLineId||uid(),
+    veiculo:document.getElementById("lVeiculo").value,
+    funil:document.getElementById("lFunil").value,
+    modelo:document.getElementById("lModelo").value,
+    custo:parseFloat(document.getElementById("lCusto").value)||0,
+    verba:parseFloat(document.getElementById("lVerba").value)||0,
+    inicio:document.getElementById("lInicio").value,
+    fim:document.getElementById("lFim").value,
+  };
+  if(editLineId){ const i=p.lines.findIndex(x=>x.id===editLineId); p.lines[i]=obj; }
+  else p.lines.push(obj);
+  save(); closeModal(); render();
+}
+function delLine(id){ const p=curPlan(); if(!p) return; p.lines=p.lines.filter(x=>x.id!==id); save(); closeModal(); render(); }
+
+/* ===================== modal: glossário ===================== */
+function openGlossary(){
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Glossário de mídia</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="gsearch"><input id="gSearch" placeholder="Buscar termo (ex.: CPM, alcance, ROAS)..."></div>
+    <div class="glossary" id="gList"></div>`;
+  document.getElementById("modal").classList.add("wide");
+  document.getElementById("backdrop").classList.add("open");
+  function renderList(q){
+    q=(q||"").toLowerCase();
+    const items=GLOSSARY.filter(g=>!q||g.t.toLowerCase().includes(q)||g.d.toLowerCase().includes(q));
+    document.getElementById("gList").innerHTML=items.map(g=>`<div class="gitem"><b>${esc(g.t)}</b><p>${esc(g.d)}</p></div>`).join("")||`<div class="hint" style="padding:20px 0">Nenhum termo encontrado.</div>`;
+  }
+  document.getElementById("gSearch").addEventListener("input",e=>renderList(e.target.value));
+  renderList("");
+}
+function closeModal(){ document.getElementById("backdrop").classList.remove("open"); document.getElementById("modal").classList.remove("wide"); editLineId=null; }
+
+/* ===================== import/export ===================== */
+function exportJSON(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="plano-de-midia-backup-"+new Date().toISOString().slice(0,10)+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function importJSON(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const incoming=JSON.parse(reader.result);
+      if(incoming&&Array.isArray(incoming.plans)){
+        incoming.plans.forEach(p=>{ if(!p.id) p.id=uid(); });
+        data.plans=data.plans.concat(incoming.plans);
+        activePlanId=incoming.plans.length?incoming.plans[incoming.plans.length-1].id:activePlanId;
+        save(); render(); toast("Planos importados com sucesso.");
+      }else toast("Arquivo inválido.");
+    }catch(e){ toast("Erro ao ler o arquivo."); }
+  };
+  reader.readAsText(file);
+}
+function toast(msg){
+  let t=document.querySelector(".toast");
+  if(!t){ t=document.createElement("div"); t.className="toast"; document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+/* ===================== eventos globais ===================== */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const act=b.dataset.act, id=b.dataset.id;
+  if(act==="new-plan") newPlan();
+  else if(act==="select-plan"){ activePlanId=id; render(); }
+  else if(act==="dup-plan") dupPlan(id);
+  else if(act==="del-plan"){ if(confirm("Excluir este plano de mídia? Essa ação não pode ser desfeita.")) delPlan(id); }
+  else if(act==="add-line") openLineModal(null);
+  else if(act==="edit-line") openLineModal(id);
+  else if(act==="del-line"){ if(confirm("Excluir esta linha de veiculação?")) delLine(id); }
+  else if(act==="save-line") saveLineFromModal();
+  else if(act==="close-modal") closeModal();
+  else if(act==="glossary") openGlossary();
+  else if(act==="print") window.print();
+  else if(act==="export") exportJSON();
+  else if(act==="import") document.getElementById("importFile").click();
+});
+document.getElementById("backdrop").addEventListener("click",e=>{ if(e.target.id==="backdrop") closeModal(); });
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") closeModal(); });
+document.getElementById("importFile").addEventListener("change",e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; });
+
+/* ===================== boot ===================== */
+(async function(){ await load(); render(); })();
+</script>
+</body>
+</html>

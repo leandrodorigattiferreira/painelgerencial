@@ -1,5 +1,22 @@
 # Painel do Leandro
 
+---
+
+## Plano de Mídia (para alunos)
+
+Arquivo `plano-de-midia.html` — ferramenta separada, independente do painel acima, para os alunos montarem planos de mídia completos.
+
+- **Catálogo com ~40 veículos**: TV aberta/paga, CTV/streaming, rádio, OOH/DOOH, cinema, impresso, áudio/podcast, busca paga, social ads (Meta, TikTok, LinkedIn, Pinterest, X, Snapchat, Kwai), display/programática, vídeo online, retail media (Mercado Livre, Amazon, Magalu, Shopee), influenciadores/creators, afiliados, CRM/retenção, app/UA e gaming/in-game — cada um com etapa de funil, modelo de compra e faixa de referência de custo do mercado brasileiro.
+- **Múltiplos planos**: cada aluno cria, duplica e gerencia vários planos (por marca/trabalho).
+- **Linhas de veiculação**: escolha do veículo, etapa do funil, modelo de compra (CPM/CPC/CPV/CPA/CPL/CPI/CPP/Fixo), custo unitário e verba, com cálculo automático de impressões/cliques/views/conversões estimadas.
+- **Painéis analíticos**: verba por veículo, por etapa do funil, offline × digital, e cronograma de veiculação (flighting) por linha.
+- **Glossário de mídia**: mais de 25 termos modernos (CPM, ROAS, viewability, attention metrics, MMM/incrementalidade, cookieless, retail media etc.), com busca.
+- **Exportar/Importar** todos os planos em JSON e **Imprimir/gerar PDF** do plano ativo.
+- Mesmo padrão do painel acima: arquivo único sem build, salva localmente no navegador (localStorage) ou na conta quando publicado como artefato.
+
+> Ainda sem multiusuário/nuvem: cada aluno usa e salva no próprio navegador, exportando o JSON para levar entre dispositivos.
+
+
 Ferramenta de produtividade para gestores de marketing. Organiza tarefas em três lentes — **Minhas** (operacional), **Time** (acompanhamento, dividido por praça: CAM, RIB, SCA, CE) e **Gestão** (1:1s, pessoas) — com status e progresso por tarefa, calendário, agenda de compromissos/reuniões/viagens e backup dos dados.
 
 É um único arquivo `index.html`, sem dependências de build. Abre em qualquer navegador.
