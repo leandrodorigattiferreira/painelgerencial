@@ -1502,9 +1502,14 @@ function renderGrid(p){
       }
       if(k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
       if(k==="papel"){ line._papelManual=true; }
-      if(k==="extra.praca"||k==="extra.programa"){
+      if(k==="extra.praca"||k==="extra.programa"||k==="extra.emissora"){
         const veh=vehicle(line.veiculo);
         if(veh&&(veh.cat==="tv"||veh.cat==="radio")) autoFillPrograma(line, veh.cat, p.criteria);
+      }
+      // assim que custo e nº de inserções estiverem definidos, a verba se preenche sozinha — sem precisar
+      // clicar em nada ou "estimar" à parte, valendo pra qualquer categoria (não só TV/rádio).
+      if((k==="extra.insercoes"||k==="custo") && line.extra&&line.extra.insercoes&&line.custo){
+        line.verba=Math.round(parseFloat(line.custo)*parseFloat(line.extra.insercoes)*100)/100;
       }
       save();
       render();
