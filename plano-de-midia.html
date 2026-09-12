@@ -20,9 +20,31 @@
   --sh:0 1px 2px rgba(25,26,43,.05), 0 4px 16px rgba(25,26,43,.06);
   --sh-pop:0 16px 50px rgba(25,26,43,.2);
 }
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15141F; --surface:#1D1C2B; --surface-2:#242335; --ink:#EFEEFA; --ink-soft:#C6C4DC; --muted:#8B89A6; --faint:#5D5B78;
+    --line:#302F45; --line-strong:#3C3B54;
+    --brand:#8B7CF6; --brand-bg:#2A2650;
+    --off:#E0985A; --off-bg:#3A2E1F;
+    --dig:#4FC3B0; --dig-bg:#1B3833;
+    --danger:#F0666B; --danger-bg:#3A2029;
+    --sh:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.35);
+    --sh-pop:0 16px 50px rgba(0,0,0,.55);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15141F; --surface:#1D1C2B; --surface-2:#242335; --ink:#EFEEFA; --ink-soft:#C6C4DC; --muted:#8B89A6; --faint:#5D5B78;
+  --line:#302F45; --line-strong:#3C3B54;
+  --brand:#8B7CF6; --brand-bg:#2A2650;
+  --off:#E0985A; --off-bg:#3A2E1F;
+  --dig:#4FC3B0; --dig-bg:#1B3833;
+  --danger:#F0666B; --danger-bg:#3A2029;
+  --sh:0 1px 2px rgba(0,0,0,.35), 0 4px 16px rgba(0,0,0,.35);
+  --sh-pop:0 16px 50px rgba(0,0,0,.55);
+}
 *{box-sizing:border-box}
 html,body{margin:0;padding:0;height:100%}
-body{background:radial-gradient(1100px 520px at 12% -10%,#F6F5FD 0%,rgba(246,245,253,0) 60%),radial-gradient(900px 480px at 100% 0%,#EEF3FA 0%,rgba(238,243,250,0) 55%),var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--ink);font-family:"Hanken Grotesk",system-ui,sans-serif;font-size:15px;line-height:1.45;-webkit-font-smoothing:antialiased}
 .mono{font-family:"JetBrains Mono",monospace;font-feature-settings:"tnum"}
 button{font-family:inherit;cursor:pointer;color:inherit}
 input,select,textarea{font-family:inherit}
@@ -668,11 +690,18 @@ function openGlossary(){
 function closeModal(){ document.getElementById("backdrop").classList.remove("open"); document.getElementById("modal").classList.remove("wide"); editLineId=null; }
 
 /* ===================== import/export ===================== */
-function exportJSON(){
-  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+async function exportJSON(){
+  const filename="plano-de-midia-backup-"+new Date().toISOString().slice(0,10)+".json";
+  const json=JSON.stringify(data,null,2);
+  try{
+    const downloads=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(downloads){ await downloads.save({filename,data:json}); return; }
+  }catch(e){}
+  // fora do artefato (GitHub Pages, arquivo local): baixa normalmente
+  const blob=new Blob([json],{type:"application/json"});
   const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);
-  a.download="plano-de-midia-backup-"+new Date().toISOString().slice(0,10)+".json";
+  a.download=filename;
   document.body.appendChild(a); a.click(); a.remove();
 }
 function importJSON(file){
