@@ -365,37 +365,39 @@ const TACTICAL_FIELDS = {
     {k:"insercoes",label:"Nº inserções",ph:"Ex.: 20",type:"number"},
   ],
   ooh: [
-    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo"},
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
     {k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: outdoor, busdoor, painel LED"},
     {k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros"},
     {k:"audienciaTarget",label:"Fluxo estimado no target/mês",ph:"Ex.: 500000",type:"number"},
   ],
   cinema: [
-    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo"},
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
     {k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis"},
     {k:"audienciaTarget",label:"Público no target",ph:"Ex.: 45000",type:"number"},
     {k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"},
   ],
   impresso: [
-    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo, nacional"},
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
     {k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo"},
     {k:"formatoImp",label:"Formato/Colocação",ph:"Ex.: 1 pág. 4 cores, rodapé, 1/2 pág."},
     {k:"audienciaTarget",label:"Leitores no target",ph:"Ex.: 157699",type:"number"},
     {k:"insercoes",label:"Nº inserções",ph:"Ex.: 3",type:"number"},
   ],
-  audio: [{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 40000",type:"number"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 8",type:"number"}],
-  busca: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 50000 buscas/mês",type:"number"}],
-  social: [{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"},{k:"audienciaTarget",label:"Tamanho do público segmentado",ph:"Ex.: 350000",type:"number"}],
-  display: [{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 200000",type:"number"}],
-  video: [{k:"formatoAd",label:"Formato",ph:"Ex.: skippable, bumper, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 180000",type:"number"}],
-  retail: [{k:"formatoAd",label:"Formato",ph:"Ex.: sponsored product, display on-site"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 90000",type:"number"}],
-  influ: [{k:"perfil",label:"Perfil/Criador",ph:"Ex.: @nomeperfil"},{k:"formatoConteudo",label:"Formato de conteúdo",ph:"Ex.: Reels + Stories"},{k:"audienciaTarget",label:"Seguidores no target",ph:"Ex.: 60000",type:"number"}],
-  afiliados: [{k:"rede",label:"Rede de afiliados",ph:"Ex.: Lomadee, Awin"},{k:"audienciaTarget",label:"Base de afiliados no target",ph:"Ex.: 20000",type:"number"}],
-  crm: [{k:"base",label:"Base/Segmento",ph:"Ex.: clientes ativos 90 dias"},{k:"audienciaTarget",label:"Tamanho da base no target",ph:"Ex.: 15000",type:"number"}],
-  app: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: UAC, ASA"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 120000",type:"number"}],
-  gaming: [{k:"plataforma",label:"Plataforma/Jogo",ph:"Ex.: Twitch, Free Fire"},{k:"audienciaTarget",label:"Audiência estimada no target",ph:"Ex.: 80000",type:"number"}],
+  audio: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 40000",type:"number"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 8",type:"number"}],
+  busca: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 50000 buscas/mês",type:"number"}],
+  social: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"},{k:"audienciaTarget",label:"Tamanho do público segmentado",ph:"Ex.: 350000",type:"number"}],
+  display: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 200000",type:"number"}],
+  video: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato",ph:"Ex.: skippable, bumper, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 180000",type:"number"}],
+  retail: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato",ph:"Ex.: sponsored product, display on-site"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 90000",type:"number"}],
+  influ: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"perfil",label:"Perfil/Criador",ph:"Ex.: @nomeperfil"},{k:"formatoConteudo",label:"Formato de conteúdo",ph:"Ex.: Reels + Stories"},{k:"audienciaTarget",label:"Seguidores no target",ph:"Ex.: 60000",type:"number"}],
+  afiliados: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"rede",label:"Rede de afiliados",ph:"Ex.: Lomadee, Awin"},{k:"audienciaTarget",label:"Base de afiliados no target",ph:"Ex.: 20000",type:"number"}],
+  crm: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"base",label:"Base/Segmento",ph:"Ex.: clientes ativos 90 dias"},{k:"audienciaTarget",label:"Tamanho da base no target",ph:"Ex.: 15000",type:"number"}],
+  app: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: UAC, ASA"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 120000",type:"number"}],
+  gaming: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"plataforma",label:"Plataforma/Jogo",ph:"Ex.: Twitch, Free Fire"},{k:"audienciaTarget",label:"Audiência estimada no target",ph:"Ex.: 80000",type:"number"}],
 };
 function tacticalFieldsFor(catKey){ return TACTICAL_FIELDS[catKey]||[]; }
+// resolve o label de uma praça seja ela um mercado de broadcast (MERCADOS_TV) ou uma região macro (REGIOES)
+function pracaLabelAny(key){ if(!key) return ""; if(MERCADOS_TV[key]) return MERCADOS_TV[key].label; if(REGIOES[key]) return REGIOES[key]; return key; }
 
 const CATS = [
   {key:"tv", label:"TV", cls:"off"}, {key:"radio", label:"Rádio", cls:"off"},
@@ -561,28 +563,114 @@ function affinityFor(catKey, targetKey){
   return (AFFINITY[catKey]||{})[target.faixa]||null;
 }
 
-// audiência simulada (didática, não é medição real de Ibope/Kantar) de programas comuns de TV e rádio,
-// cada um associado a uma rede — para o aluno usar como ponto de partida ao montar linhas de broadcast.
+// grade de programação simulada (didática, não é medição real de Ibope/Kantar nem grade oficial vigente
+// das emissoras — os nomes e horários são ilustrativos, mas seguem a lógica real de cada praça/faixa/gênero)
+// cobrindo a faixa do dia inteiro das 5 principais redes de TV e das principais redes de rádio.
+// "mult" é o multiplicador de preço por rede (Globo cobra mais caro que as demais para o mesmo rating).
+const REDE_MULT_TV = {Globo:1600, SBT:1000, Record:950, Band:700, "RedeTV!":550};
+const REDE_MULT_RADIO = {CBN:1400, "Jovem Pan":1200, "Band FM":700, "Antena 1":650, "Transamérica":700, "Mix FM":600};
 const PROGRAMAS_REF = {
   tv: {
-    "Jornal Nacional":{pct:28,rede:"Globo"}, "Big Brother Brasil":{pct:25,rede:"Globo"}, "Novela das 21h":{pct:22,rede:"Globo"},
-    "Jornal Hoje":{pct:16,rede:"Globo"}, "Malhação":{pct:14,rede:"Globo"}, "The Voice Brasil":{pct:14,rede:"Globo"},
-    "Globo Esporte":{pct:11,rede:"Globo"}, "Vídeo Show":{pct:12,rede:"Globo"}, "Sessão da Tarde":{pct:9,rede:"Globo"},
-    "Fantástico":{pct:17,rede:"Globo"},
-    "Programa do Ratinho":{pct:8,rede:"SBT"}, "Chiquititas":{pct:6,rede:"SBT"}, "Casos de Família":{pct:5,rede:"SBT"},
-    "Cidade Alerta":{pct:10,rede:"Record"}, "Jornal da Record":{pct:9,rede:"Record"}, "Hoje em Dia":{pct:7,rede:"Record"},
-    "Jornal da Band":{pct:5,rede:"Band"}, "Custe o Que Custar":{pct:4,rede:"Band"},
-    "A Fazenda":{pct:13,rede:"RedeTV!"},
+    // GLOBO
+    "Bom Dia Brasil":{rede:"Globo",horario:"07h00",rating:4.2},
+    "Mais Você":{rede:"Globo",horario:"08h15",rating:5.5},
+    "Encontro":{rede:"Globo",horario:"10h15",rating:4.8},
+    "SPTV 1ª Edição":{rede:"Globo",horario:"12h00",rating:6.8},
+    "Globo Esporte":{rede:"Globo",horario:"12h50",rating:5.0},
+    "Jornal Hoje":{rede:"Globo",horario:"13h15",rating:9.5},
+    "Vídeo Show":{rede:"Globo",horario:"15h15",rating:7.2},
+    "Sessão da Tarde":{rede:"Globo",horario:"15h45",rating:8.0},
+    "Novela das 18h":{rede:"Globo",horario:"18h00",rating:14.5},
+    "Novela das 19h":{rede:"Globo",horario:"19h15",rating:18.0},
+    "Jornal Nacional":{rede:"Globo",horario:"20h30",rating:24.5},
+    "Novela das 21h":{rede:"Globo",horario:"21h25",rating:22.0},
+    "The Voice Brasil":{rede:"Globo",horario:"22h30",rating:13.0},
+    "Big Brother Brasil":{rede:"Globo",horario:"22h45",rating:23.5},
+    "Fantástico":{rede:"Globo",horario:"19h30 (domingo)",rating:16.5},
+    "Domingão com Huck":{rede:"Globo",horario:"15h30 (domingo)",rating:12.0},
+    // SBT
+    "Primeiro Impacto":{rede:"SBT",horario:"06h00",rating:2.0},
+    "Bom Dia & Cia":{rede:"SBT",horario:"07h30",rating:2.5},
+    "Casos de Família":{rede:"SBT",horario:"11h30",rating:3.8},
+    "Chega Mais":{rede:"SBT",horario:"14h30",rating:3.2},
+    "Chiquititas":{rede:"SBT",horario:"15h00",rating:5.5},
+    "A Praça é Nossa":{rede:"SBT",horario:"16h00",rating:4.2},
+    "SBT Brasil":{rede:"SBT",horario:"19h30",rating:6.5},
+    "Roda a Roda Jequiti":{rede:"SBT",horario:"20h30",rating:5.8},
+    "Programa do Ratinho":{rede:"SBT",horario:"22h30",rating:7.0},
+    // RECORD
+    "Hoje em Dia":{rede:"Record",horario:"08h00",rating:3.5},
+    "Balanço Geral":{rede:"Record",horario:"12h30",rating:5.5},
+    "Cidade Alerta":{rede:"Record",horario:"16h00",rating:6.8},
+    "Jornal da Record":{rede:"Record",horario:"19h30",rating:6.0},
+    "Novela das 21h (Record)":{rede:"Record",horario:"21h00",rating:8.5},
+    "A Fazenda":{rede:"Record",horario:"22h45",rating:11.0},
+    "Domingo Espetacular":{rede:"Record",horario:"21h00 (domingo)",rating:6.0},
+    // BAND
+    "Massa News":{rede:"Band",horario:"12h00",rating:2.2},
+    "Custe o Que Custar":{rede:"Band",horario:"15h00",rating:2.5},
+    "Brasil Urgente":{rede:"Band",horario:"16h00",rating:3.8},
+    "Jornal da Band":{rede:"Band",horario:"19h45",rating:3.0},
+    "The Noite com Danilo Gentili":{rede:"Band",horario:"23h30",rating:2.0},
+    // REDETV!
+    "Superpop":{rede:"RedeTV!",horario:"16h30",rating:1.6},
+    "Fofocalizando":{rede:"RedeTV!",horario:"15h30",rating:1.8},
+    "A Liga":{rede:"RedeTV!",horario:"22h30",rating:1.5},
   },
   radio: {
-    "Jornalismo (manhã)":{pct:6,rede:"CBN"}, "Manhã":{pct:4.5,rede:"Jovem Pan"}, "Musical (dia todo)":{pct:2,rede:"Antena 1"},
-    "Manhã (Band FM)":{pct:3.5,rede:"Band FM"}, "Musical (Transamérica)":{pct:2.5,rede:"Transamérica"}, "Tarde (Mix FM)":{pct:2.2,rede:"Mix FM"},
+    // CBN (jornalismo)
+    "CBN Manhã":{rede:"CBN",horario:"06h–09h",rating:5.5},
+    "CBN Total (meio-dia)":{rede:"CBN",horario:"12h–14h",rating:3.8},
+    "CBN Fim de Tarde":{rede:"CBN",horario:"17h–19h",rating:4.2},
+    // JOVEM PAN (jornalismo/talk)
+    "Jornal da Manhã (Jovem Pan)":{rede:"Jovem Pan",horario:"06h–09h",rating:4.5},
+    "Pânico":{rede:"Jovem Pan",horario:"09h–12h",rating:3.6},
+    "Os Pingos nos Is":{rede:"Jovem Pan",horario:"16h–19h",rating:3.2},
+    // BAND FM (musical/esporte)
+    "Bandnews Manhã":{rede:"Band FM",horario:"06h–09h",rating:2.4},
+    "Os Donos da Bola (rádio)":{rede:"Band FM",horario:"12h–14h",rating:2.0},
+    // ANTENA 1 (musical adulto contemporâneo)
+    "Antena 1 Manhã":{rede:"Antena 1",horario:"06h–10h",rating:1.8},
+    "Antena 1 Tarde":{rede:"Antena 1",horario:"14h–18h",rating:1.6},
+    // TRANSAMÉRICA (musical jovem/pop)
+    "Transamérica Manhã":{rede:"Transamérica",horario:"06h–10h",rating:2.2},
+    "Transamérica Hits":{rede:"Transamérica",horario:"14h–18h",rating:2.0},
+    // MIX FM (musical jovem)
+    "Mix Manhã":{rede:"Mix FM",horario:"06h–10h",rating:1.9},
+    "Mix Tarde":{rede:"Mix FM",horario:"14h–18h",rating:1.7},
   },
 };
-function programaRefPct(catKey, nome){
+function programaRef(catKey, nome){
   const table=PROGRAMAS_REF[catKey]; if(!table||!nome) return null;
   const key=Object.keys(table).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
-  return key?table[key].pct:null;
+  return key?table[key]:null;
+}
+// preenche horário, audiência, audiência no target e valor exato do programa a partir da rede+praça já
+// escolhidas na linha — chamado tanto pelo botão quanto automaticamente quando praça/programa mudam.
+function autoFillPrograma(line, catKey, criteria){
+  if(!line.extra||!line.extra.programa) return false;
+  const ref=programaRef(catKey, line.extra.programa); if(!ref) return false;
+  line.extra.audienciaPct=ref.rating;
+  if(!line.extra.horario) line.extra.horario=ref.horario;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct) line.extra.audienciaTarget=Math.round(pracaInfo.pop*targetPct*ref.rating/100);
+  const valorExato=valorProgramaNaPraca(catKey, ref, line.extra.praca);
+  if(valorExato!==null) line.custo=valorExato;
+  if(line.extra.insercoes) line.verba=Math.round(line.custo*parseFloat(line.extra.insercoes)*100)/100;
+  return true;
+}
+// valor exato do programa numa praça: escala o preço-base (calibrado pelo rating × multiplicador da rede,
+// numa referência de São Paulo Capital) pela população relativa da praça — mesma lógica de tabelas reais,
+// onde praças maiores custam proporcionalmente mais.
+function valorProgramaNaPraca(catKey, ref, pracaKey){
+  const mult = catKey==="tv" ? REDE_MULT_TV[ref.rede] : REDE_MULT_RADIO[ref.rede];
+  if(!mult) return null;
+  const valorBaseSP1 = ref.rating*mult;
+  const praca=MERCADOS_TV[pracaKey]; const sp1=MERCADOS_TV.SP1;
+  if(!praca||!sp1) return valorBaseSP1;
+  return Math.round(valorBaseSP1*(praca.pop/sp1.pop)*100)/100;
 }
 
 const GLOSSARY = [
@@ -627,10 +715,10 @@ let viewMode="criterios"; // 'criterios' | 'alocacao' | 'coerencia'
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sampleLines(){
   return [
-    {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",regiao:"nacional",titulo:"Carrossel remarketing",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:"",extra:{formatoAd:"Stories",segmentacao:"Lookalike 1% compradores"}},
-    {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",regiao:"nacional",titulo:"Busca marca + genéricas",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:"",extra:{campanhaTipo:"Pesquisa",palavrasChave:"marca, genéricas"}},
-    {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",regiao:"sudeste",titulo:"Filme 15s lançamento",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:"",extra:{formatoAd:"Skippable in-stream"}},
-    {id:uid(),veiculo:"tv_aberta",funil:"topo",papel:"alcance",regiao:"sudeste",titulo:"Filme 30s lançamento",modelo:"CPP",custo:12831,verba:102648,inicio:"",fim:"",extra:{praca:"SP1",emissora:"Globo",programa:"Vídeo Show",horario:"17h30",audienciaPct:12,audienciaTarget:1039696,insercoes:8}},
+    {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",titulo:"Carrossel remarketing",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:"",extra:{praca:"nacional",formatoAd:"Stories",segmentacao:"Lookalike 1% compradores"}},
+    {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",titulo:"Busca marca + genéricas",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:"",extra:{praca:"nacional",campanhaTipo:"Pesquisa",palavrasChave:"marca, genéricas"}},
+    {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",titulo:"Filme 15s lançamento",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:"",extra:{praca:"sudeste",formatoAd:"Skippable in-stream"}},
+    {id:uid(),veiculo:"tv_aberta",funil:"topo",papel:"alcance",titulo:"Filme 30s lançamento",modelo:"CPP",custo:0,verba:0,inicio:"",fim:"",extra:{praca:"SP1",emissora:"Globo",programa:"Vídeo Show",insercoes:8}},
   ];
 }
 function defaultCriteria(){
@@ -654,7 +742,10 @@ function samplePlan(){
     kpi:{topo:"alcance",meio:"engajamento",fundo:"roas",retencao:"leads"},
   };
   criteria.publicoTamanho=publicoEstimado(criteria);
-  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 18-35, classe ABC, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines:sampleLines(),criteria,justificativas:{}};
+  const lines=sampleLines();
+  const tvLine=lines.find(l=>l.veiculo==="tv_aberta");
+  if(tvLine) autoFillPrograma(tvLine, "tv", criteria); // garante que rating/audiência/valor batam com a grade de programação atual
+  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 18-35, classe ABC, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines,criteria,justificativas:{}};
 }
 function ensurePlanShape(p){
   if(!p.criteria) p.criteria=defaultCriteria();
@@ -672,7 +763,6 @@ function ensurePlanShape(p){
   if(!p.justificativas) p.justificativas={};
   (p.lines||[]).forEach(l=>{
     if(!l.papel) l.papel=PAPEL_POR_FUNIL[l.funil]||"alcance";
-    if(!l.regiao) l.regiao="nacional";
     if(l.titulo===undefined) l.titulo="";
     if(!l.extra) l.extra={};
     if(!l.insercoesPorDia) l.insercoesPorDia={};
@@ -729,13 +819,18 @@ function num(n){return Math.round(n||0).toLocaleString("pt-BR");}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 function fmtd(s){ if(!s) return ""; const d=new Date(s+"T00:00:00"); if(isNaN(d)) return s; return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}); }
 
-// GRP = audiência (rating %) × nº de inserções. TRP aproxima o GRP "dentro do target" usando a
-// penetração do target escolhido nos critérios como proxy (não temos o universo exato por praça).
-function grpTrp(l, criteria){
+// GRP = audiência (rating % do universo da praça) × nº de inserções.
+// TRP = audiência no target (em % da praça, calculada a partir da audiência no target já preenchida) × inserções —
+// é o rating "de verdade" dentro do público-alvo, não uma normalização genérica.
+function grpTrp(l){
   if(!(l.extra&&l.extra.audienciaPct&&l.extra.insercoes)) return null;
   const grp=parseFloat(l.extra.audienciaPct)*parseFloat(l.extra.insercoes);
-  const pct=criteria&&combinedTargetPct(criteria);
-  const trp=pct? grp*pct/0.55 : null; // normaliza pela penetração do público geral (AS ABC 15+ ~55%)
+  const pracaPop=(MERCADOS_TV[l.extra.praca]&&MERCADOS_TV[l.extra.praca].pop)||0;
+  let trp=null;
+  if(pracaPop && l.extra.audienciaTarget){
+    const ratingNoTarget=parseFloat(l.extra.audienciaTarget)/pracaPop*100;
+    trp=ratingNoTarget*parseFloat(l.extra.insercoes);
+  }
   return {grp,trp};
 }
 function lineResult(l){
@@ -755,7 +850,7 @@ function planTotals(p){
     byCat[v.cat]=(byCat[v.cat]||0)+verba;
     byFunil[l.funil]=(byFunil[l.funil]||0)+verba;
     byClass[c.cls]=(byClass[c.cls]||0)+verba;
-    byRegiao[l.regiao||"nacional"]=(byRegiao[l.regiao||"nacional"]||0)+verba;
+    if(l.extra&&l.extra.praca) byRegiao[l.extra.praca]=(byRegiao[l.extra.praca]||0)+verba;
     const r=lineResult(l);
     if(r.qty){
       if(l.modelo==="CPM") impressoes+=r.qty;
@@ -1187,10 +1282,10 @@ function renderJornada(p){
       </div>` : `<div class="hint">Informe o tamanho do público-alvo nos critérios (etapa 1) e aloque verba em linhas de CPM/CPP.</div>`}
       ${(()=>{
         const tvRadio=p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&(v.cat==="tv"||v.cat==="radio"); });
-        const withGrp=tvRadio.map(l=>grpTrp(l,p.criteria)).filter(Boolean);
+        const withGrp=tvRadio.map(l=>grpTrp(l)).filter(Boolean);
         if(!withGrp.length) return "";
         const totalGrp=withGrp.reduce((s,g)=>s+g.grp,0), totalTrp=withGrp.reduce((s,g)=>s+(g.trp||0),0);
-        return `<div class="hint" style="margin-top:10px">TV/Rádio — GRP total: <b style="color:var(--ink)">${totalGrp.toFixed(1)}</b> · TRP no target (aproximado): <b style="color:var(--ink)">${totalTrp.toFixed(1)}</b>. TRP é uma aproximação didática (GRP escalado pela penetração do target declarado), não uma medição real de audiência.</div>`;
+        return `<div class="hint" style="margin-top:10px">TV/Rádio — GRP total: <b style="color:var(--ink)">${totalGrp.toFixed(1)}</b> · TRP no target: <b style="color:var(--ink)">${totalTrp.toFixed(1)}</b> (rating calculado sobre a audiência no target de cada linha, não sobre a praça inteira). Os valores de audiência são simulados para fins didáticos, não medição real de Ibope/Kantar.</div>`;
       })()}
     </div>
 
@@ -1309,8 +1404,8 @@ function renderGrid(p){
         }else{
           inp=`<input class="cellinput left" type="${f.type||"text"}" ${f.step?`step="${f.step}"`:""} data-line="${l.id}" data-k="extra.${f.k}" value="${val}" placeholder="${esc(f.ph||"")}">`;
         }
-        const refPct = f.k==="programa" ? programaRefPct(g.cat.key, l.extra&&l.extra.programa) : null;
-        const btn = refPct!==null ? `<button class="benchbtn" data-act="usar-audiencia-ref" data-id="${l.id}" data-pct="${refPct}" title="Preencher audiência e rating de referência para este programa">rating ~${refPct}%</button>` : "";
+        const ref = f.k==="programa" ? programaRef(g.cat.key, l.extra&&l.extra.programa) : null;
+        const btn = ref ? `<button class="benchbtn" data-act="usar-audiencia-ref" data-id="${l.id}" title="Preencher horário, audiência, GRP/TRP e valor deste programa automaticamente">preencher tudo (rating ${ref.rating}%)</button>` : "";
         return `<td>${inp}${btn}</td>`;
       }).join("");
       return `<tr data-id="${l.id}">
@@ -1318,7 +1413,6 @@ function renderGrid(p){
         <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsAllByCat}</select></td>
         <td><input class="cellinput left" type="text" data-line="${l.id}" data-k="titulo" value="${esc(l.titulo||"")}" placeholder="Título da peça/ação"></td>
         ${extraCells}
-        <td><select class="cellsel" data-line="${l.id}" data-k="regiao">${Object.entries(REGIOES).map(([k,v2])=>`<option value="${k}" ${l.regiao===k?"selected":""}>${v2}</option>`).join("")}</select></td>
         <td><select class="cellsel" data-line="${l.id}" data-k="funil">${Object.entries(FUNIL).map(([k,v2])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v2}</option>`).join("")}</select></td>
         <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
         <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
@@ -1328,7 +1422,7 @@ function renderGrid(p){
           <input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0">
           ${(l.extra&&l.extra.insercoes&&l.custo)?`<button class="benchbtn" data-act="usar-insercoes" data-id="${l.id}" title="Verba = custo unitário × nº de inserções">= ${l.extra.insercoes}× ${money(l.custo)}</button>`:""}
         </td>
-        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}${(l.extra&&l.extra.audienciaTarget&&l.custo)?`<div class="hint" style="font-size:10.5px;margin-top:2px">CPM real: ${money(l.custo/l.extra.audienciaTarget*1000)}</div>`:""}${(()=>{ const gt=grpTrp(l,p.criteria); return gt?`<div class="hint" style="font-size:10.5px;margin-top:2px">GRP ${gt.grp.toFixed(1)}${gt.trp!==null?` · TRP~${gt.trp.toFixed(1)}`:""}</div>`:""; })()}</td>
+        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}${(l.extra&&l.extra.audienciaTarget&&l.custo)?`<div class="hint" style="font-size:10.5px;margin-top:2px">CPM real: ${money(l.custo/l.extra.audienciaTarget*1000)}</div>`:""}${(()=>{ const gt=grpTrp(l); return gt?`<div class="hint" style="font-size:10.5px;margin-top:2px">GRP ${gt.grp.toFixed(1)}${gt.trp!==null?` · TRP ${gt.trp.toFixed(1)}`:""}</div>`:""; })()}</td>
         <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
         <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="fim" value="${l.fim||""}"></td>
         <td class="delcell">
@@ -1337,13 +1431,13 @@ function renderGrid(p){
         </td>
       </tr>`;
     }).join("");
-    const totalCols=14+extraFields.length; // rownum,veiculo,titulo,extras...,regiao,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
+    const totalCols=13+extraFields.length; // rownum,veiculo,titulo,extras...,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
     return `<div class="sheetgroup">
       <div class="sheetgrouphead"><span class="badge ${g.cat.cls}">${esc(g.cat.label)}</span><span>${g.lines.length} ${g.lines.length===1?"linha":"linhas"}</span><span class="sp"></span><b>${money(subtotal)}</b></div>
       <table class="sheet">
         <thead><tr>
           <th class="rownum">#</th><th>Veículo</th><th>Título da ação</th>${extraFields.map(f=>`<th>${esc(f.label)}</th>`).join("")}
-          <th>Região</th><th>Funil</th><th>Papel</th><th>Modelo</th>
+          <th>Funil</th><th>Papel</th><th>Modelo</th>
           <th class="num">Custo unit.</th><th>Ref. mercado</th><th class="num">Verba</th><th class="num">Resultado est.</th>
           <th>Início</th><th>Fim</th><th></th>
         </tr></thead>
@@ -1389,6 +1483,10 @@ function renderGrid(p){
       }
       if(k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
       if(k==="papel"){ line._papelManual=true; }
+      if(k==="extra.praca"||k==="extra.programa"){
+        const veh=vehicle(line.veiculo);
+        if(veh&&(veh.cat==="tv"||veh.cat==="radio")) autoFillPrograma(line, veh.cat, p.criteria);
+      }
       save();
       render();
     });
@@ -1397,7 +1495,7 @@ function renderGrid(p){
   const addBtn=el.querySelector('[data-act="add-line-select"]');
   if(addBtn) addBtn.addEventListener("click",()=>{
     const p2=curPlan(); const veh=vehicle(addSel.value);
-    p2.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],regiao:"nacional",titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
+    p2.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
     save(); render();
   });
 }
@@ -1481,8 +1579,8 @@ function openAnalytics(){
       ${stackBar(t.byFunil, FUNILFULL, t.totalVerba, funilColor)}
       <h4>Offline × Digital</h4>
       ${stackBar(t.byClass, {off:"Offline",dig:"Digital"}, t.totalVerba, c=>c==="off"?"var(--off)":"var(--dig)")}
-      <h4>Verba por região</h4>
-      ${barList(t.byRegiao, REGIOES, t.totalVerba, ()=>"var(--brand)")}
+      <h4>Verba por praça</h4>
+      ${barList(t.byRegiao, Object.keys(t.byRegiao).reduce((o,k)=>{o[k]=pracaLabelAny(k);return o;},{}), t.totalVerba, ()=>"var(--brand)")}
       <h4>Cronograma de veiculação</h4>
       ${timelineHTML(p)}
     </div>`;
@@ -1589,12 +1687,12 @@ async function exportExcel(){
 
   // Linhas de veiculação
   const allExtraKeys=[...new Set(p.lines.flatMap(l=>Object.keys(l.extra||{})))];
-  const header=["#","Categoria","Veículo","Título","Funil","Papel","Modelo","Custo unitário","Verba","Resultado estimado","Região","Início","Fim",...allExtraKeys];
+  const header=["#","Categoria","Veículo","Título","Funil","Papel","Modelo","Custo unitário","Verba","Resultado estimado","Início","Fim",...allExtraKeys];
   const linhas=[header, ...p.lines.map((l,i)=>{
     const v=vehicle(l.veiculo); const cat=v?catInfo(v.cat):null; const r=lineResult(l);
     return [i+1, cat?cat.label:"", v?v.label:l.veiculo, l.titulo||"", FUNIL[l.funil]||"", PAPEL[l.papel]||"", MODELO[l.modelo]||"",
       l.custo||0, l.verba||0, r.qty?`${Math.round(r.qty)} ${r.label}`:(l.modelo==="FIXO"?"pacote fechado":""),
-      REGIOES[l.regiao]||"", l.inicio||"", l.fim||"", ...allExtraKeys.map(k=>(l.extra&&l.extra[k])||"")];
+      l.inicio||"", l.fim||"", ...allExtraKeys.map(k=>(l.extra&&l.extra[k])||"")];
   })];
   const wsLinhas=XLSX.utils.aoa_to_sheet(linhas);
   XLSX.utils.book_append_sheet(wb, wsLinhas, "Linhas de veiculação");
@@ -1704,7 +1802,7 @@ document.addEventListener("click",e=>{
   else if(act==="add-line"){
     const p=curPlan();
     const veh = b.dataset.veiculo ? vehicle(b.dataset.veiculo) : VEHICLES[0];
-    p.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],regiao:"nacional",titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
+    p.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
     save(); render();
   }
   else if(act==="del-line"){ const p=curPlan(); p.lines=p.lines.filter(x=>x.id!==id); save(); render(); }
@@ -1715,14 +1813,10 @@ document.addEventListener("click",e=>{
   else if(act==="grade-dias") openGradeDias(id);
   else if(act==="save-grade-dias") saveGradeDias(id);
   else if(act==="usar-audiencia-ref"){
-    const p=curPlan(); const line=p.lines.find(x=>x.id===id);
-    if(line){
-      if(!line.extra) line.extra={};
-      const pct=parseFloat(b.dataset.pct);
-      line.extra.audienciaPct=pct;
-      const pracaPop=(MERCADOS_TV[line.extra.praca]&&MERCADOS_TV[line.extra.praca].pop)||0;
-      const targetPct=combinedTargetPct(p.criteria);
-      if(pracaPop && targetPct) line.extra.audienciaTarget=Math.round(pracaPop*targetPct*pct/100);
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo);
+    if(line&&v){
+      const ok=autoFillPrograma(line, v.cat, p.criteria);
+      if(ok && !MERCADOS_TV[line.extra.praca]) toast("Selecione a praça/mercado desta linha para calcular audiência no target e valor exato.");
       save(); render();
     }
   }
