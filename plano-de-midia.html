@@ -863,9 +863,40 @@ function renderCriterios(p){
   });
 }
 
+function monthlyMap(p){
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length) return null;
+  let min=null,max=null;
+  dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+  const months=[];
+  let cur=new Date(min.getFullYear(),min.getMonth(),1);
+  const last=new Date(max.getFullYear(),max.getMonth(),1);
+  while(cur<=last){
+    const start=new Date(cur), end=new Date(cur.getFullYear(),cur.getMonth()+1,0);
+    months.push({key:cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0"), label:cur.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}), start, end});
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  const rows=dated.slice().sort((a,b)=>{ const va=vehicle(a.veiculo), vb=vehicle(b.veiculo); return (va?va.cat:"").localeCompare(vb?vb.cat:""); }).map(l=>{
+    const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
+    const totalLineDays=Math.max(1,Math.round((lf-li)/86400000)+1);
+    const verba=parseFloat(l.verba)||0;
+    const values={};
+    months.forEach(m=>{
+      const overlapStart=li>m.start?li:m.start;
+      const overlapEnd=lf<m.end?lf:m.end;
+      const overlapDays=Math.max(0,Math.round((overlapEnd-overlapStart)/86400000)+1);
+      values[m.key]=verba*(overlapDays/totalLineDays);
+    });
+    return {line:l, values};
+  });
+  const totals={}; months.forEach(m=>{ totals[m.key]=rows.reduce((s,r)=>s+r.values[m.key],0); });
+  return {months,rows,totals};
+}
+
 function renderJornada(p){
   const el=document.getElementById("stepview");
   const t=planTotals(p); const rf=reachFreq(p);
+  const mm=monthlyMap(p);
   // matriz funil x papel
   const matrix={};
   Object.keys(FUNIL).forEach(f=>{ matrix[f]={}; Object.keys(PAPEL).forEach(pp=>matrix[f][pp]={verba:0,n:0}); });
@@ -925,6 +956,32 @@ function renderJornada(p){
           }).join("")}
         </tr>`).join("")}</tbody>
       </table></div>
+    </div>
+
+    <div class="critcard">
+      <h3>Mapa mensal por veículo</h3>
+      <div class="desc">Verba de cada linha distribuída mês a mês (prorateada pelos dias de veiculação dentro de cada mês) — a leitura clássica de mapa de mídia para acompanhar o ritmo de investimento por veículo ao longo do plano.</div>
+      ${mm ? `<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:${560+mm.months.length*90}px">
+        <thead><tr>
+          <th style="text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:6px 8px;position:sticky;left:0;background:var(--surface-2)">Veículo</th>
+          ${mm.months.map(m=>`<th class="num" style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:6px 8px">${m.label}</th>`).join("")}
+          <th class="num" style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:6px 8px">Total</th>
+        </tr></thead>
+        <tbody>${mm.rows.map(r=>{
+          const v=vehicle(r.line.veiculo); const c=catInfo(v?v.cat:"");
+          const totalLinha=Object.values(r.values).reduce((s,x)=>s+x,0);
+          return `<tr style="border-top:1px solid var(--grid)">
+            <td style="padding:7px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:var(--surface)">${esc(r.line.titulo||(v?v.label:r.line.veiculo))} <span class="badge ${c?c.cls:""}" style="margin-left:4px">${c?esc(c.label):""}</span></td>
+            ${mm.months.map(m=>`<td class="num" style="padding:7px 8px;font-size:12px;color:${r.values[m.key]>0?"var(--ink)":"var(--faint)"}">${r.values[m.key]>0?money(r.values[m.key]):"—"}</td>`).join("")}
+            <td class="num" style="padding:7px 8px;font-size:12px;font-weight:700">${money(totalLinha)}</td>
+          </tr>`;
+        }).join("")}</tbody>
+        <tfoot><tr style="border-top:2px solid var(--grid-strong)">
+          <td style="padding:7px 8px;font-size:12px;font-weight:800;position:sticky;left:0;background:var(--surface-2)">Total do mês</td>
+          ${mm.months.map(m=>`<td class="num" style="padding:7px 8px;font-size:12px;font-weight:800">${money(mm.totals[m.key])}</td>`).join("")}
+          <td class="num" style="padding:7px 8px;font-size:12px;font-weight:800">${money(Object.values(mm.totals).reduce((s,x)=>s+x,0))}</td>
+        </tr></tfoot>
+      </table></div>` : `<div class="hint">Defina início e fim nas linhas (aba Alocação) para gerar o mapa mensal.</div>`}
     </div>
 
     <div class="critcard">
