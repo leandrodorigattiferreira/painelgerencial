@@ -316,13 +316,43 @@ const REGIOES = {nacional:"Nacional", norte:"Norte", nordeste:"Nordeste", centro
 
 // campos táticos específicos de cada tipo de veículo — o nível de detalhe que uma planilha real de mídia tem
 // (veículo específico, praça, programa/horário, formato, nº de inserções etc.), além do título da peça/ação.
+// campos padronizados que alimentam o media math automático quando presentes em qualquer categoria:
+// "praca" (mercado nomeado), "audienciaTarget" (pessoas no target atingidas por inserção/exibição — para CPM real)
+// e "insercoes" (nº de inserções — para o botão de preencher verba = custo unitário × inserções).
 const TACTICAL_FIELDS = {
-  tv: [{k:"emissora",label:"Emissora/Canal",ph:"Ex.: Globo, SBT, Record"},{k:"programa",label:"Programa",ph:"Ex.: Jornal Nacional"},{k:"horario",label:"Faixa horária",ph:"Ex.: 20h30"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 12",type:"number"}],
-  radio: [{k:"emissora",label:"Emissora",ph:"Ex.: Jovem Pan, Band FM"},{k:"programa",label:"Programa/Horário",ph:"Ex.: 7h–9h"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 20",type:"number"}],
-  ooh: [{k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: outdoor, busdoor, painel LED"},{k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros, SP"}],
-  cinema: [{k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis"},{k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"}],
-  impresso: [{k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo"},{k:"formatoImp",label:"Formato/Página",ph:"Ex.: página dupla"}],
-  audio: [{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"}],
+  tv: [
+    {k:"praca",label:"Praça/Mercado",ph:"Ex.: Grande São Paulo, Rio de Janeiro"},
+    {k:"emissora",label:"Emissora/Canal",ph:"Ex.: Globo, SBT, Record"},
+    {k:"programa",label:"Programa",ph:"Ex.: Jornal Nacional"},
+    {k:"horario",label:"Faixa horária",ph:"Ex.: 20h30"},
+    {k:"audienciaTarget",label:"Audiência no target",ph:"Ex.: 704060",type:"number"},
+    {k:"insercoes",label:"Nº inserções",ph:"Ex.: 12",type:"number"},
+  ],
+  radio: [
+    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo, Campinas"},
+    {k:"emissora",label:"Emissora",ph:"Ex.: Jovem Pan, Band FM"},
+    {k:"programa",label:"Programa/Horário",ph:"Ex.: 06h às 09h"},
+    {k:"audienciaTarget",label:"Audiência no target",ph:"Ex.: 402277",type:"number"},
+    {k:"insercoes",label:"Nº inserções",ph:"Ex.: 20",type:"number"},
+  ],
+  ooh: [
+    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo"},
+    {k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: outdoor, busdoor, painel LED"},
+    {k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros"},
+  ],
+  cinema: [
+    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo"},
+    {k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis"},
+    {k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"},
+  ],
+  impresso: [
+    {k:"praca",label:"Praça/Mercado",ph:"Ex.: São Paulo, nacional"},
+    {k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo"},
+    {k:"formatoImp",label:"Formato/Colocação",ph:"Ex.: 1 pág. 4 cores, rodapé, 1/2 pág."},
+    {k:"audienciaTarget",label:"Leitores no target",ph:"Ex.: 157699",type:"number"},
+    {k:"insercoes",label:"Nº inserções",ph:"Ex.: 3",type:"number"},
+  ],
+  audio: [{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 8",type:"number"}],
   busca: [{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"}],
   social: [{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"}],
   display: [{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"}],
@@ -464,6 +494,7 @@ function sampleLines(){
     {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",regiao:"nacional",titulo:"Carrossel remarketing",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:"",extra:{formatoAd:"Stories",segmentacao:"Lookalike 1% compradores"}},
     {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",regiao:"nacional",titulo:"Busca marca + genéricas",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:"",extra:{campanhaTipo:"Pesquisa",palavrasChave:"marca, genéricas"}},
     {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",regiao:"sudeste",titulo:"Filme 15s lançamento",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:"",extra:{formatoAd:"Skippable in-stream"}},
+    {id:uid(),veiculo:"tv_aberta",funil:"topo",papel:"alcance",regiao:"sudeste",titulo:"Filme 30s lançamento",modelo:"CPP",custo:12831,verba:102648,inicio:"",fim:"",extra:{praca:"Grande São Paulo",emissora:"TV Globo",programa:"Vídeo Show",horario:"17h30",audienciaTarget:1039696,insercoes:8}},
   ];
 }
 function defaultCriteria(){
@@ -471,7 +502,7 @@ function defaultCriteria(){
 }
 function samplePlan(){
   const criteria={funil:{topo:40,meio:25,fundo:35,retencao:0},publico:["social","busca","video"],postura:"padrao",timing:"continuo",picoInicio:"",picoFim:"",competitiva:"moderado",kpi:"roas",publicoTamanho:800000,coberturaAlvo:55,freqMin:3,freqMax:8};
-  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 25-40, classe AB, interesse em moda e bem-estar",inicio:"",fim:"",verba:13000,lines:sampleLines(),criteria,justificativas:{}};
+  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 25-40, classe AB, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines:sampleLines(),criteria,justificativas:{}};
 }
 function ensurePlanShape(p){
   if(!p.criteria) p.criteria=defaultCriteria();
@@ -1052,8 +1083,11 @@ function renderGrid(p){
         <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
         <td><input class="cellinput" type="number" min="0" step="0.01" data-line="${l.id}" data-k="custo" value="${l.custo||""}" placeholder="0,00" ${l.modelo==="FIXO"?"disabled":""}></td>
         <td class="benchcell">${BENCHNUM[v.k]?`<button class="benchbtn" data-act="usar-bench" data-id="${l.id}" title="Preencher com a média da faixa de mercado">${money(BENCHNUM[v.k][0])}–${money(BENCHNUM[v.k][1])}</button>`:`<span class="hint" style="font-size:11px">${esc(v.bench)}</span>`}</td>
-        <td><input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0"></td>
-        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}</td>
+        <td>
+          <input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0">
+          ${(l.extra&&l.extra.insercoes&&l.custo)?`<button class="benchbtn" data-act="usar-insercoes" data-id="${l.id}" title="Verba = custo unitário × nº de inserções">= ${l.extra.insercoes}× ${money(l.custo)}</button>`:""}
+        </td>
+        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}${(l.extra&&l.extra.audienciaTarget&&l.custo)?`<div class="hint" style="font-size:10.5px;margin-top:2px">CPM real: ${money(l.custo/l.extra.audienciaTarget*1000)}</div>`:""}</td>
         <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
         <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="fim" value="${l.fim||""}"></td>
         <td class="delcell"><button class="rmbtn" data-act="del-line" data-id="${l.id}" title="Excluir linha">×</button></td>
@@ -1291,6 +1325,10 @@ document.addEventListener("click",e=>{
   else if(act==="usar-bench"){
     const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo); const range=v&&BENCHNUM[v.k];
     if(line&&range){ line.custo=Math.round(((range[0]+range[1])/2)*100)/100; save(); render(); }
+  }
+  else if(act==="usar-insercoes"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id);
+    if(line&&line.extra&&line.extra.insercoes&&line.custo){ line.verba=Math.round(parseFloat(line.custo)*parseFloat(line.extra.insercoes)*100)/100; save(); render(); }
   }
   else if(act==="glossary") openGlossary();
   else if(act==="close-modal") closeModal();
