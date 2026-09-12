@@ -157,6 +157,9 @@ td.catcell{padding:0 8px}
 .badge.retencao{background:#FBF1E2;color:var(--ret)} .badge.retencao .d{background:var(--ret)}
 .badge.off{background:var(--off-bg);color:var(--off)}
 .badge.dig{background:var(--dig-bg);color:var(--dig)}
+td.benchcell{padding:0 8px}
+.benchbtn{border:1px dashed var(--grid-strong);background:transparent;border-radius:7px;padding:3px 8px;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;white-space:nowrap}
+.benchbtn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
 td.delcell{width:32px;text-align:center}
 .rmbtn{border:0;background:transparent;color:var(--faint);width:26px;height:26px;border-radius:6px;font-size:15px;line-height:1;visibility:hidden}
 tr:hover .rmbtn{visibility:visible}
@@ -934,6 +937,7 @@ function renderGrid(p){
       <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
       <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
       <td><input class="cellinput" type="number" min="0" step="0.01" data-line="${l.id}" data-k="custo" value="${l.custo||""}" placeholder="0,00" ${l.modelo==="FIXO"?"disabled":""}></td>
+      <td class="benchcell">${BENCHNUM[v.k]?`<button class="benchbtn" data-act="usar-bench" data-id="${l.id}" title="Preencher com a média da faixa de mercado">${money(BENCHNUM[v.k][0])}–${money(BENCHNUM[v.k][1])}</button>`:`<span class="hint" style="font-size:11px">${esc(v.bench)}</span>`}</td>
       <td><input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0"></td>
       <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}</td>
       <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
@@ -945,17 +949,18 @@ function renderGrid(p){
   el.innerHTML=`<table class="sheet">
     <thead><tr>
       <th class="rownum">#</th><th>Veículo</th><th>Categoria</th><th>Funil</th><th>Papel</th><th>Modelo</th>
-      <th class="num">Custo unit.</th><th class="num">Verba</th><th class="num">Resultado est.</th>
+      <th class="num">Custo unit.</th><th>Ref. mercado</th><th class="num">Verba</th><th class="num">Resultado est.</th>
       <th>Início</th><th>Fim</th><th></th>
     </tr></thead>
     <tbody>${rows}</tbody>
     <tfoot><tr>
       <td colspan="7">Total (${p.lines.length} ${p.lines.length===1?"linha":"linhas"})</td>
+      <td></td>
       <td class="num">${money(t.totalVerba)}</td>
       <td class="num">${num(t.impressoes)} impr. · ${num(t.cliques)} cliq.</td>
       <td colspan="3"></td>
     </tr></tfoot>
-    <tbody><tr class="addrow"><td colspan="12"><button class="addrowbtn" data-act="add-line">+ Adicionar linha de veiculação</button></td></tr></tbody>
+    <tbody><tr class="addrow"><td colspan="13"><button class="addrowbtn" data-act="add-line">+ Adicionar linha de veiculação</button></td></tr></tbody>
   </table>`;
   // select vehicle values (can't set selected in template safely with dynamic optgroups) + bind
   p.lines.forEach(l=>{
@@ -1143,6 +1148,10 @@ document.addEventListener("click",e=>{
     save(); render();
   }
   else if(act==="del-line"){ const p=curPlan(); p.lines=p.lines.filter(x=>x.id!==id); save(); render(); }
+  else if(act==="usar-bench"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo); const range=v&&BENCHNUM[v.k];
+    if(line&&range){ line.custo=Math.round(((range[0]+range[1])/2)*100)/100; save(); render(); }
+  }
   else if(act==="glossary") openGlossary();
   else if(act==="close-modal") closeModal();
   else if(act==="analytics") openAnalytics();
