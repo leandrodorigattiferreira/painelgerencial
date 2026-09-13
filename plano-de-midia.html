@@ -1006,15 +1006,29 @@ function planTotals(p){
 }
 
 /* ===================== critérios: validação e checagens ===================== */
-function criteriaComplete(p){
+// lista, em português, exatamente o que falta preencher nos critérios — usado tanto para travar a aba de
+// Coerência quanto para mostrar ao aluno o que falta (em vez de um "complete os critérios" genérico).
+function criteriaMissing(p){
   const c=p.criteria||{};
+  const missing=[];
   const sum=Object.values(c.funil||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
-  const kpiOk = c.kpi && Object.values(c.kpi).every(v=>!!v);
-  const timingOk = c.timing==="continuo" || (c.picos&&c.picos.length && c.picos.every(pc=>pc.inicio&&pc.fim));
-  const alvoOk = c.pracas&&c.pracas.length && c.targets&&c.targets.length && c.targets.some(t=>t.papel==="primario");
-  return Math.abs(sum-100)<0.5 && c.publico&&c.publico.length && kpiOk && timingOk && alvoOk
-    && parseFloat(c.publicoTamanho)>0 && parseFloat(c.coberturaAlvo)>0 && parseFloat(c.freqMin)>0 && parseFloat(c.freqMax)>0;
+  if(Math.abs(sum-100)>=0.5) missing.push(`a distribuição por funil precisa somar 100% (está em ${sum}%)`);
+  if(!c.publico||!c.publico.length) missing.push("marque ao menos uma categoria em \"onde o público consome mídia\"");
+  if(!c.pracas||!c.pracas.length) missing.push("adicione ao menos uma praça no briefing (etapa 0)");
+  if(!c.targets||!c.targets.length||!c.targets.some(t=>t.papel==="primario"&&t.key)) missing.push("adicione ao menos um target primário (etapa 2)");
+  else if(c.targets.some(t=>!t.key)) missing.push("selecione o target em todas as linhas de \"targets do plano\" que você adicionou");
+  if(!(parseFloat(c.publicoTamanho)>0)) missing.push("praças e target precisam gerar uma população estimada maior que zero");
+  if(!(parseFloat(c.coberturaAlvo)>0)) missing.push("informe a cobertura desejada (%)");
+  if(!(parseFloat(c.freqMin)>0)) missing.push("informe a frequência efetiva mínima");
+  if(!(parseFloat(c.freqMax)>0)) missing.push("informe a frequência efetiva máxima");
+  if(!c.kpi||!Object.values(c.kpi).every(v=>!!v)) missing.push("escolha um KPI de sucesso para cada uma das 4 etapas do funil");
+  if(c.timing!=="continuo"){
+    if(!c.picos||!c.picos.length) missing.push("adicione ao menos um período de pico (você escolheu timing pulsado/concentrado)");
+    else if(!c.picos.every(pc=>pc.inicio&&pc.fim)) missing.push("preencha início e fim de todos os períodos de pico adicionados");
+  }
+  return missing;
 }
+function criteriaComplete(p){ return criteriaMissing(p).length===0; }
 
 // modelo simplificado de alcance/frequência para fins didáticos: assume distribuição de exposição
 // tipo Poisson por linha (reach = 1 - e^-impressões/população) e combina canais por independência estatística.
@@ -1485,8 +1499,16 @@ function renderJornada(p){
 
 function renderCoerencia(p){
   const el=document.getElementById("stepview");
-  if(!criteriaComplete(p)){
-    el.innerHTML=`<div class="wrap"><div class="incomplete"><b>Complete os critérios de planejamento primeiro</b>Volte para a aba "1. Critérios de planejamento" e preencha todos os campos — a checagem de coerência compara a alocação real com o que você declarou ali.<br><br><button class="tbtn pri" data-act="set-view" data-view="criterios">Ir para Critérios</button></div></div>`;
+  const missing=criteriaMissing(p);
+  if(missing.length){
+    el.innerHTML=`<div class="wrap"><div class="incomplete">
+      <b>Falta completar os critérios de planejamento</b>
+      <p style="margin:8px 0 12px;color:var(--ink-soft)">A checagem de coerência compara a alocação real com o que você declarou nos Critérios. Ainda falta:</p>
+      <ul style="text-align:left;max-width:480px;margin:0 auto 16px;padding-left:20px;color:var(--ink-soft);font-size:13.5px;line-height:1.7">
+        ${missing.map(m=>`<li>${esc(m)}</li>`).join("")}
+      </ul>
+      <button class="tbtn pri" data-act="set-view" data-view="criterios">Ir para Critérios</button>
+    </div></div>`;
     return;
   }
   const checks=computeChecks(p);
