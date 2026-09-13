@@ -877,6 +877,7 @@ const KEY="plano-midia-v2";
 let data={plans:[]};
 let activePlanId=null;
 let viewMode="criterios"; // 'criterios' | 'alocacao' | 'coerencia'
+let blockedMsg=null; // mensagem exibida quando o aluno tenta pular etapa sem completar os critérios
 
 function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
 function sampleLines(){
@@ -895,6 +896,9 @@ function defaultCriteria(){
     publicoTamanho:"", coberturaAlvo:"", freqMin:"", freqMax:"",
     timing:"continuo", picos:[],
     kpi:{topo:[],meio:[],fundo:[],retencao:[]},
+    metaNumerica:{valor:"",unidade:"",etapa:"fundo"},
+    custoPostura:"",
+    sovAlvo:"", verbaConcorrencia:"",
   };
 }
 function samplePlan(){
@@ -1059,6 +1063,8 @@ function criteriaMissing(p){
   if(!(parseFloat(c.coberturaAlvo)>0)) missing.push("informe a cobertura desejada (%)");
   if(!(parseFloat(c.freqMin)>0)) missing.push("informe a frequência efetiva mínima");
   if(!(parseFloat(c.freqMax)>0)) missing.push("informe a frequência efetiva máxima");
+  if(!c.metaNumerica||!(parseFloat(c.metaNumerica.valor)>0)||!c.metaNumerica.unidade) missing.push("defina a meta numérica ligada ao objetivo, com valor e unidade (etapa 0)");
+  if(!c.custoPostura) missing.push("declare a postura de custo do plano (etapa 0)");
   if(!c.kpi||!Object.values(c.kpi).every(v=>Array.isArray(v)&&v.length)) missing.push("escolha ao menos um KPI de sucesso para cada uma das 4 etapas do funil");
   if(c.timing!=="continuo"){
     if(!c.picos||!c.picos.length) missing.push("adicione ao menos um período de pico (você escolheu timing pulsado/concentrado)");
@@ -1175,6 +1181,67 @@ function computeChecks(p){
       : {id:"frequencia",status:"ok",title:"Frequência efetiva média",detail:`Frequência média estimada de ${rf.avgFreq.toFixed(1)}x, dentro da faixa desejada de ${min}x–${max}x.`});
   }
 
+  // 9b) orçamento: alocado x verba total do plano
+  if(!(parseFloat(p.verba)>0)) checks.push({id:"orcamento",status:"na",title:"Uso do orçamento",detail:"Informe a verba total do plano (infostrip) para checar quanto já foi alocado."});
+  else{
+    const pctAlocado=t.totalVerba/parseFloat(p.verba)*100;
+    if(pctAlocado<90) checks.push({id:"orcamento",status:"warn",title:"Uso do orçamento",detail:`Só ${pctAlocado.toFixed(0)}% da verba total foi alocada em linhas — ${money(parseFloat(p.verba)-t.totalVerba)} ainda sem destino.`});
+    else if(pctAlocado>102) checks.push({id:"orcamento",status:"warn",title:"Uso do orçamento",detail:`O plano estourou o orçamento: ${pctAlocado.toFixed(0)}% da verba total, ${money(t.totalVerba-parseFloat(p.verba))} acima do previsto.`});
+    else checks.push({id:"orcamento",status:"ok",title:"Uso do orçamento",detail:`${pctAlocado.toFixed(0)}% da verba total está alocada em linhas.`});
+  }
+
+  // 9c) postura de custo declarada x preço efetivamente pago frente ao benchmark de mercado
+  if(!c.custoPostura) checks.push({id:"custo",status:"na",title:"Postura de custo",detail:"Declare a postura de custo do plano (etapa 0 dos critérios) para checar."});
+  else{
+    let somaPos=0, somaVerba=0;
+    p.lines.forEach(l=>{
+      const v=vehicle(l.veiculo); if(!v||!BENCHNUM[v.k]) return;
+      const custo=parseFloat(l.custo), verba=parseFloat(l.verba)||0;
+      if(!(custo>0)||!verba) return;
+      const [min,max]=BENCHNUM[v.k]; if(max<=min) return;
+      const pos=Math.max(0,Math.min(1,(custo-min)/(max-min)));
+      somaPos+=pos*verba; somaVerba+=verba;
+    });
+    if(!somaVerba) checks.push({id:"custo",status:"na",title:"Postura de custo",detail:"Nenhuma linha com custo e faixa de benchmark de mercado preenchidos ainda."});
+    else{
+      const posMedia=somaPos/somaVerba;
+      const label={eficiencia:"Eficiência",premium:"Premium",misto:"Misto"}[c.custoPostura];
+      if(c.custoPostura==="eficiencia"&&posMedia>0.65) checks.push({id:"custo",status:"warn",title:"Postura de custo",detail:`Você declarou postura "${label}", mas o custo médio ponderado está no ${(posMedia*100).toFixed(0)}º percentil da faixa de mercado — pagando na faixa alta apesar de buscar eficiência.`});
+      else if(c.custoPostura==="premium"&&posMedia<0.35) checks.push({id:"custo",status:"warn",title:"Postura de custo",detail:`Você declarou postura "${label}", mas o custo médio ponderado está no ${(posMedia*100).toFixed(0)}º percentil da faixa de mercado — próximo do piso de preço, o que pode não sustentar um posicionamento premium.`});
+      else checks.push({id:"custo",status:"ok",title:"Postura de custo",detail:`Custo médio ponderado no ${(posMedia*100).toFixed(0)}º percentil da faixa de mercado, coerente com a postura "${label}" declarada.`});
+    }
+  }
+
+  // 9d) share of voice frente à concorrência (opcional — depende de dado que o aluno/professor precisa levantar)
+  if(!(parseFloat(c.sovAlvo)>0)||!(parseFloat(c.verbaConcorrencia)>0)) checks.push({id:"sov",status:"na",title:"Share of voice",detail:"Informe o SOV desejado e a verba estimada da concorrência (etapa 0) para checar — dado opcional, depende de pesquisa externa."});
+  else{
+    const sovReal=t.totalVerba/(t.totalVerba+parseFloat(c.verbaConcorrencia))*100;
+    const alvo=parseFloat(c.sovAlvo);
+    checks.push(Math.abs(sovReal-alvo)>10
+      ? {id:"sov",status:"warn",title:"Share of voice",detail:`SOV estimado de ${sovReal.toFixed(1)}% frente à concorrência, contra os ${alvo}% desejados.`}
+      : {id:"sov",status:"ok",title:"Share of voice",detail:`SOV estimado de ${sovReal.toFixed(1)}%, próximo da meta de ${alvo}%.`});
+  }
+
+  // 9e) meta numérica ligada ao objetivo — só valida automaticamente quando a unidade é conversão/lead direto
+  const meta=c.metaNumerica;
+  if(!meta||!(parseFloat(meta.valor)>0)||!meta.unidade) checks.push({id:"meta",status:"na",title:"Meta numérica do objetivo",detail:"Defina a meta numérica do objetivo (etapa 0 dos critérios) para acompanhar."});
+  else{
+    const unidadeLc=meta.unidade.toLowerCase();
+    const ehConversaoDireta=/venda|lead|convers/.test(unidadeLc);
+    const stageLines=p.lines.filter(l=>l.funil===meta.etapa&&(l.modelo==="CPA"||l.modelo==="CPL"));
+    if(!ehConversaoDireta||!stageLines.length){
+      checks.push({id:"meta",status:"na",title:"Meta numérica do objetivo",detail:`Meta declarada: ${num(meta.valor)} ${esc(meta.unidade)} em ${FUNIL[meta.etapa]}. Como a unidade não é uma conversão direta calculável pelo sistema (ou não há linhas de CPA/CPL nessa etapa), essa meta precisa ser avaliada qualitativamente por você e pelo professor — o sistema não estima isso sozinho.`});
+    }else{
+      const totalEstimado=stageLines.reduce((s,l)=>s+(lineResult(l).qty||0),0);
+      const metaValor=parseFloat(meta.valor);
+      checks.push(totalEstimado<metaValor*0.7
+        ? {id:"meta",status:"warn",title:"Meta numérica do objetivo",detail:`As linhas de conversão direta em ${FUNIL[meta.etapa]} estimam ${num(totalEstimado)} ${esc(meta.unidade)}, abaixo da meta de ${num(metaValor)}.`}
+        : totalEstimado>metaValor*1.5
+        ? {id:"meta",status:"warn",title:"Meta numérica do objetivo",detail:`As linhas de conversão direta em ${FUNIL[meta.etapa]} estimam ${num(totalEstimado)} ${esc(meta.unidade)}, bem acima da meta de ${num(metaValor)} — vale reconferir se a meta ou a estimativa fazem sentido.`}
+        : {id:"meta",status:"ok",title:"Meta numérica do objetivo",detail:`As linhas de conversão direta em ${FUNIL[meta.etapa]} estimam ${num(totalEstimado)} ${esc(meta.unidade)}, compatível com a meta de ${num(metaValor)}.`});
+    }
+  }
+
   // 9) papel dos veículos x etapa do funil — gaps de jornada
   if(t.totalVerba<=0) checks.push({id:"jornada",status:"na",title:"Jornada e papel dos veículos",detail:"Adicione linhas para checar se a jornada do público está coberta ponta a ponta."});
   else{
@@ -1259,6 +1326,7 @@ function renderCriterios(p){
   const FUNCAO_FUNIL={topo:"Conhecimento de marca",meio:"Consideração / Engajamento",fundo:"Conversão / Venda",retencao:"Fidelização / Recompra"};
   const el=document.getElementById("stepview");
   el.innerHTML=`<div class="wrap">
+    ${blockedMsg?`<div class="critcard" style="border-color:var(--warn,#D98A2B);background:rgba(217,138,43,.08)"><b>⚠ ${esc(blockedMsg)}</b></div>`:""}
     <div class="critcard">
       <h3>0. Briefing da campanha</h3>
       <div class="desc">As informações que vão nortear todo o plano — preencha antes de qualquer alocação.</div>
@@ -1283,6 +1351,30 @@ function renderCriterios(p){
           <button class="tbtn pri" data-act="add-praca">+ Adicionar</button>
         </div>
       </div>
+      <div class="critrow2" style="margin-top:14px">
+        <div class="f"><label>Meta numérica ligada ao objetivo</label><input type="number" min="0" step="any" data-meta="valor" value="${esc(c.metaNumerica.valor)}" placeholder="Ex.: 5000"></div>
+        <div class="f"><label>Unidade da meta</label><input data-meta="unidade" value="${esc(c.metaNumerica.unidade)}" placeholder="Ex.: vendas, leads, % de lembrança de marca"></div>
+      </div>
+      <div class="f"><label>Essa meta pertence a qual etapa do funil?</label>
+        <select class="critselect" data-meta="etapa">${Object.entries(FUNIL).map(([k,label])=>`<option value="${k}" ${c.metaNumerica.etapa===k?"selected":""}>${label}</option>`).join("")}</select>
+      </div>
+      <div class="desc" style="margin-top:2px">Todo plano parte de um número concreto, não só de uma intenção. Se o objetivo é "gerar awareness", quantas pessoas devem lembrar da marca? Se é "vender", quantas vendas? Sem esse número, não dá pra saber depois se o plano funcionou.</div>
+      <div class="critrow2" style="margin-top:14px">
+        <div class="f"><label>Postura de custo do plano</label>
+          <select class="critselect" data-crit="custoPostura">
+            <option value="">Selecione...</option>
+            <option value="eficiencia" ${c.custoPostura==="eficiencia"?"selected":""}>Eficiência — priorizar o menor custo por resultado</option>
+            <option value="premium" ${c.custoPostura==="premium"?"selected":""}>Premium — aceitar pagar mais por contexto/qualidade</option>
+            <option value="misto" ${c.custoPostura==="misto"?"selected":""}>Misto — parte eficiência, parte premium</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+      <div class="critrow2">
+        <div class="f"><label>Share of voice desejado (%) — opcional</label><input type="number" min="0" max="100" class="critdate" data-crit="sovAlvo" value="${c.sovAlvo||""}" placeholder="ex.: 20"></div>
+        <div class="f"><label>Verba estimada da concorrência no período (R$) — opcional</label><input type="number" min="0" step="1000" class="critdate" data-crit="verbaConcorrencia" value="${c.verbaConcorrencia||""}" placeholder="ex.: 400000"></div>
+      </div>
+      <div class="desc" style="margin-top:2px">Se você tiver uma estimativa (pesquisada ou dada em sala) do investimento da concorrência, o sistema calcula seu share of voice real e compara com o desejado — mídia não existe no vácuo, existe frente a quem disputa a mesma atenção.</div>
     </div>
 
     <div class="critcard">
@@ -1400,6 +1492,11 @@ function renderCriterios(p){
       c.targets[+idx][field]=input.value;
       c.publicoTamanho=publicoEstimado(c);
       save(); render();
+    });
+  });
+  el.querySelectorAll("[data-meta]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      c.metaNumerica[input.dataset.meta]=input.value; save(); render();
     });
   });
 }
@@ -2177,6 +2274,12 @@ function buildPrintReportHTML(p){
 
   const mapaInsercoesHtml = buildMapaInsercoesHTML(p);
 
+  const checks = criteriaComplete(p) ? computeChecks(p) : null;
+  const statusLabel={ok:"OK",warn:"Atenção",na:"N/D"};
+  const coerenciaHtml = checks ? `<table class="pr-table"><thead><tr><th>Critério</th><th>Status</th><th>Detalhe</th><th>Justificativa do aluno</th></tr></thead><tbody>
+    ${checks.map(ch=>`<tr><td>${esc(ch.title)}</td><td>${statusLabel[ch.status]||ch.status}</td><td style="font-size:11px">${esc(ch.detail)}</td><td style="font-size:11px">${ch.status==="warn"?esc(p.justificativas[ch.id]||"— não justificado —"):"—"}</td></tr>`).join("")}
+  </tbody></table>` : `<p style="font-size:13px;color:#7A7D93">Critérios de planejamento incompletos — a checagem de coerência não pôde ser calculada.</p>`;
+
   return `<div class="pr-page">
     <div class="pr-cover">
       <div class="pr-eyebrow">Plano de Mídia</div>
@@ -2200,6 +2303,8 @@ function buildPrintReportHTML(p){
 
     <div class="pr-section"><h2>Estratégia</h2>
       <div class="pr-grid2">
+        <div class="pr-kv"><b>Meta numérica do objetivo</b><span>${(c.metaNumerica&&c.metaNumerica.valor)?`${num(c.metaNumerica.valor)} ${esc(c.metaNumerica.unidade)} em ${FUNIL[c.metaNumerica.etapa]}`:"—"}</span></div>
+        <div class="pr-kv"><b>Postura de custo</b><span>${({eficiencia:"Eficiência",premium:"Premium",misto:"Misto"})[c.custoPostura]||"—"}</span></div>
         <div class="pr-kv"><b>Distribuição por funil</b><span>${Object.entries(c.funil).map(([k,v])=>`${FUNIL[k]} ${v}%`).join(" · ")}</span></div>
         <div class="pr-kv"><b>KPI por etapa</b><span>${Object.entries(c.kpi).map(([k,arr])=>`${FUNIL[k]}: ${arr.map(kk=>KPI_OPTS[kk]?KPI_OPTS[kk].label:kk).join(", ")||"—"}`).join(" · ")}</span></div>
         <div class="pr-kv"><b>População estimada no target</b><span>${num(publicoEstimado(c))} pessoas</span></div>
@@ -2220,6 +2325,8 @@ function buildPrintReportHTML(p){
     <div class="pr-section"><h2>Mapa mensal de investimento</h2>${mapaHtml}</div>
 
     <div class="pr-section"><h2>Mapa de inserções</h2>${mapaInsercoesHtml||`<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa de inserções.</p>`}</div>
+
+    <div class="pr-section"><h2>Coerência do plano</h2>${coerenciaHtml}</div>
 
     <div class="pr-footer">Gerado pela ferramenta de Plano de Mídia · valores de audiência/rating estimados para fins didáticos, não são medição real de mercado.</div>
   </div>`;
@@ -2381,7 +2488,14 @@ document.addEventListener("click",e=>{
   const act=b.dataset.act, id=b.dataset.id;
   if(act==="new-plan") newPlan();
   else if(act==="select-plan"){ activePlanId=id; viewMode=criteriaComplete(curPlan())?"alocacao":"criterios"; render(); }
-  else if(act==="set-view"){ viewMode=b.dataset.view; render(); }
+  else if(act==="set-view"){
+    const p=curPlan();
+    const gated=["alocacao","jornada","coerencia"];
+    if(gated.includes(b.dataset.view) && !criteriaComplete(p)){
+      viewMode="criterios"; blockedMsg=`Complete os critérios de planejamento antes de ir para "${{alocacao:"Alocação de verba",jornada:"Jornada e multicanalidade",coerencia:"Coerência do plano"}[b.dataset.view]}". É essa etapa que obriga você a decidir o racional do plano antes de escolher veículos.`;
+    }else{ viewMode=b.dataset.view; blockedMsg=null; }
+    render();
+  }
   else if(act==="toggle-line-target"){
     const p=curPlan(); const line=p.lines.find(x=>x.id===id); const targetId=b.dataset.target;
     if(line){
