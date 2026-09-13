@@ -938,6 +938,8 @@ function ensurePlanShape(p){
     if(l.titulo===undefined) l.titulo="";
     if(!l.extra) l.extra={};
     if(!l.insercoesPorDia) l.insercoesPorDia={};
+    if(!Array.isArray(l.targetIds)) l.targetIds=[];
+    else l.targetIds=l.targetIds.filter(tid=>p.criteria.targets.some(t=>t.id===tid));
   });
   return p;
 }
@@ -1446,15 +1448,39 @@ function monthlyMap(p){
 }
 
 const AVATARES=["🧑","👩","👨","🧕","👴","👵","🧑‍🦱","👩‍🦱","🧑‍🦳","👨‍🦳","🧑‍🎓","👩‍💼","👨‍💼","🧑‍🍳","👩‍🏫","🧑‍🌾","🧑‍🎨","🧑‍💻"];
+const PERSONA_CAMPOS_TEXTO=[
+  {k:"nome",label:"Nome",ph:"Ex.: Mariana Souza"},
+  {k:"idade",label:"Idade",ph:"Ex.: 28 anos"},
+  {k:"generoIdentidade",label:"Gênero",ph:"Ex.: mulher cisgênero"},
+  {k:"estadoCivil",label:"Estado civil / família",ph:"Ex.: casada, 1 filho"},
+  {k:"cidade",label:"Cidade / UF",ph:"Ex.: Belo Horizonte, MG"},
+  {k:"ocupacao",label:"Ocupação",ph:"Ex.: Analista de marketing"},
+  {k:"escolaridade",label:"Escolaridade",ph:"Ex.: superior completo"},
+  {k:"classeRenda",label:"Classe social / renda",ph:"Ex.: classe B, R$ 6-9 mil/mês"},
+  {k:"citacao",label:"Frase que a define",ph:"Ex.: “Quero praticidade sem abrir mão de qualidade”"},
+];
+const PERSONA_CAMPOS_TEXTAREA=[
+  {k:"rotina",label:"Rotina / dia a dia",ph:"Como é o dia dela — trabalho, deslocamento, telas que usa"},
+  {k:"comportamentoCompra",label:"Comportamento de compra",ph:"Como ela pesquisa e decide antes de comprar"},
+  {k:"gatilhos",label:"Gatilhos de decisão",ph:"O que a faz fechar a compra (preço, prova social, urgência...)"},
+  {k:"objetivos",label:"Objetivos / motivações",ph:"O que ela busca?"},
+  {k:"frustracoes",label:"Frustrações / objeções",ph:"O que trava a decisão dela?"},
+  {k:"dispositivos",label:"Dispositivos e hábitos digitais",ph:"Ex.: só celular, wi-fi em casa, prefere vídeo curto"},
+];
+function blankPersona(targetId){
+  const p={targetId, avatar:AVATARES[0]};
+  PERSONA_CAMPOS_TEXTO.forEach(f=>p[f.k]="");
+  PERSONA_CAMPOS_TEXTAREA.forEach(f=>p[f.k]="");
+  return p;
+}
 // garante um cartão de persona pra cada target declarado nos critérios (cria os que faltam, remove órfãos)
 function syncPersonas(p){
   if(!Array.isArray(p.personas)) p.personas=[];
   const ids=p.criteria.targets.map(t=>t.id);
   p.personas=p.personas.filter(per=>ids.includes(per.targetId));
   p.criteria.targets.forEach(t=>{
-    if(!p.personas.some(per=>per.targetId===t.id)){
-      p.personas.push({targetId:t.id, nome:"", idade:"", cidade:"", ocupacao:"", avatar:AVATARES[0], citacao:"", objetivos:"", frustracoes:""});
-    }
+    if(!p.personas.some(per=>per.targetId===t.id)) p.personas.push(blankPersona(t.id));
+    else{ const per=p.personas.find(x=>x.targetId===t.id); const blank=blankPersona(t.id); Object.keys(blank).forEach(k=>{ if(per[k]===undefined) per[k]=blank[k]; }); }
   });
 }
 function renderPersonas(p){
@@ -1465,7 +1491,7 @@ function renderPersonas(p){
     return;
   }
   el.innerHTML=`<div class="wrap">
-    <div class="hint" style="margin-bottom:-6px">Dê um rosto e uma história a cada target declarado — isso ajuda a decidir tom, formatos e canais na hora de montar o plano. Idade, classe e canais favoritos vêm sugeridos a partir do target e das categorias marcadas em "onde o público consome mídia"; o resto é você quem desenha.</div>
+    <div class="hint" style="margin-bottom:-6px">Dê um rosto e uma história completa a cada target declarado — isso ajuda a decidir tom, formatos e canais na hora de montar o plano, e cada linha de veiculação (na Alocação) pode ser marcada com a persona que ela deve atingir. Os canais de alta aderência vêm sugeridos automaticamente; o resto é você quem desenha.</div>
     ${p.criteria.targets.map(t=>{
       const per=p.personas.find(x=>x.targetId===t.id);
       const target=TARGET_PROFILES[t.key];
@@ -1473,30 +1499,28 @@ function renderPersonas(p){
         .map(catKey=>({catKey,aff:affinityFor(catKey,t.key)}))
         .filter(x=>x.aff==="alta")
         .map(x=>catInfo(x.catKey).label);
-      return `<div class="critcard" style="display:flex;gap:18px;flex-wrap:wrap">
-        <div style="flex:0 0 auto;text-align:center">
-          <select data-persona="${t.id}.avatar" style="font-size:44px;border:0;background:var(--surface-2);border-radius:12px;padding:6px;cursor:pointer">
-            ${AVATARES.map(a=>`<option value="${a}" ${per.avatar===a?"selected":""}>${a}</option>`).join("")}
-          </select>
-          <div style="margin-top:6px"><span class="badge ${t.papel==="primario"?"topo":"meio"}"><span class="d"></span>${t.papel==="primario"?"Primário":t.papel==="secundario"?"Secundário":"Terciário"}</span></div>
-        </div>
-        <div style="flex:1;min-width:240px">
-          <div class="critrow2">
-            <div class="f"><label>Nome</label><input data-persona="${t.id}.nome" value="${esc(per.nome)}" placeholder="Ex.: Mariana Souza"></div>
-            <div class="f"><label>Idade</label><input data-persona="${t.id}.idade" value="${esc(per.idade)}" placeholder="Ex.: 28 anos"></div>
+      const linhasDaPersona=p.lines.filter(l=>(l.targetIds||[]).includes(t.id));
+      const verbaPersona=linhasDaPersona.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+      return `<div class="critcard">
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div style="flex:0 0 auto;text-align:center">
+            <select data-persona="${t.id}.avatar" style="font-size:44px;border:0;background:var(--surface-2);border-radius:12px;padding:6px;cursor:pointer">
+              ${AVATARES.map(a=>`<option value="${a}" ${per.avatar===a?"selected":""}>${a}</option>`).join("")}
+            </select>
+            <div style="margin-top:6px"><span class="badge ${t.papel==="primario"?"topo":"meio"}"><span class="d"></span>${t.papel==="primario"?"Primário":t.papel==="secundario"?"Secundário":"Terciário"}</span></div>
+            <div class="hint" style="margin-top:8px">${linhasDaPersona.length} linha(s)<br>${money(verbaPersona)}</div>
           </div>
-          <div class="critrow2">
-            <div class="f"><label>Cidade</label><input data-persona="${t.id}.cidade" value="${esc(per.cidade)}" placeholder="Ex.: Belo Horizonte, MG"></div>
-            <div class="f"><label>Ocupação</label><input data-persona="${t.id}.ocupacao" value="${esc(per.ocupacao)}" placeholder="Ex.: Analista de marketing"></div>
-          </div>
-          <div class="f"><label>Frase que a define</label><input data-persona="${t.id}.citacao" value="${esc(per.citacao)}" placeholder="Ex.: “Quero praticidade sem abrir mão de qualidade”"></div>
-          <div class="critrow2">
-            <div class="f"><label>Objetivos / motivações</label><textarea data-persona="${t.id}.objetivos" rows="2" style="width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical" placeholder="O que ela busca?">${esc(per.objetivos)}</textarea></div>
-            <div class="f"><label>Frustrações / barreiras</label><textarea data-persona="${t.id}.frustracoes" rows="2" style="width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical" placeholder="O que trava a decisão dela?">${esc(per.frustracoes)}</textarea></div>
-          </div>
-          <div class="hint" style="margin-top:6px">
-            <b style="color:var(--ink)">Perfil de mídia (do target ${target?esc(target.label):""}):</b>
-            ${canaisFav.length?` alta aderência a ${canaisFav.join(", ")}.`:" nenhuma categoria de alta aderência marcada ainda em Critérios."}
+          <div style="flex:1;min-width:280px">
+            <div class="critrow2">
+              ${PERSONA_CAMPOS_TEXTO.map(f=>`<div class="f"><label>${esc(f.label)}</label><input data-persona="${t.id}.${f.k}" value="${esc(per[f.k])}" placeholder="${esc(f.ph)}"></div>`).join("")}
+            </div>
+            <div class="critrow2">
+              ${PERSONA_CAMPOS_TEXTAREA.map(f=>`<div class="f"><label>${esc(f.label)}</label><textarea data-persona="${t.id}.${f.k}" rows="2" style="width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical" placeholder="${esc(f.ph)}">${esc(per[f.k])}</textarea></div>`).join("")}
+            </div>
+            <div class="hint" style="margin-top:6px">
+              <b style="color:var(--ink)">Perfil de mídia (do target ${target?esc(target.label):""}):</b>
+              ${canaisFav.length?` alta aderência a ${canaisFav.join(", ")}.`:" nenhuma categoria de alta aderência marcada ainda em Critérios."}
+            </div>
           </div>
         </div>
       </div>`;
@@ -1715,6 +1739,11 @@ function renderGrid(p){
         <td class="rownum">${idx}</td>
         <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsAllByCat}</select></td>
         <td><input class="cellinput left" type="text" data-line="${l.id}" data-k="titulo" value="${esc(l.titulo||"")}" placeholder="Título da peça/ação"></td>
+        <td>${p.criteria.targets.length?p.criteria.targets.map(t=>{
+          const per=(p.personas||[]).find(x=>x.targetId===t.id);
+          const nomeCurto=(per&&per.nome)?per.nome.split(" ")[0]:(t.papel==="primario"?"Primário":t.papel==="secundario"?"Secundário":"Terciário");
+          return `<button class="chip ${((l.targetIds||[]).includes(t.id))?"on":""}" style="padding:3px 8px;font-size:10.5px;margin:1px" data-act="toggle-line-target" data-id="${l.id}" data-target="${t.id}" title="Persona alvo desta linha">${esc(nomeCurto)}</button>`;
+        }).join(""):`<span class="hint" style="font-size:10.5px">sem targets</span>`}</td>
         ${extraCells}
         <td><select class="cellsel" data-line="${l.id}" data-k="funil">${Object.entries(FUNIL).map(([k,v2])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v2}</option>`).join("")}</select></td>
         <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
@@ -1734,12 +1763,12 @@ function renderGrid(p){
         </td>
       </tr>`;
     }).join("");
-    const totalCols=13+extraFields.length; // rownum,veiculo,titulo,extras...,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
+    const totalCols=14+extraFields.length; // rownum,veiculo,titulo,personas,extras...,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
     return `<div class="sheetgroup">
       <div class="sheetgrouphead"><span class="badge ${g.cat.cls}">${esc(g.cat.label)}</span><span>${g.lines.length} ${g.lines.length===1?"linha":"linhas"}</span><span class="sp"></span><b>${money(subtotal)}</b></div>
       <table class="sheet">
         <thead><tr>
-          <th class="rownum">#</th><th>Veículo</th><th>Título da ação</th>${extraFields.map(f=>`<th>${esc(f.label)}</th>`).join("")}
+          <th class="rownum">#</th><th>Veículo</th><th>Título da ação</th><th>Persona(s)</th>${extraFields.map(f=>`<th>${esc(f.label)}</th>`).join("")}
           <th>Funil</th><th>Papel</th><th>Modelo</th>
           <th class="num">Custo unit.</th><th>Ref. mercado</th><th class="num">Verba</th><th class="num">Resultado est.</th>
           <th>Início</th><th>Fim</th><th></th>
@@ -2046,6 +2075,44 @@ function closeModal(){ document.getElementById("backdrop").classList.remove("ope
 // monta um registro formatado do plano (capa, briefing, estratégia, linhas por veículo, mapa mensal,
 // personas) só pra impressão/"salvar como PDF" — não aparece na tela, só no @media print.
 function renderPrintReport(p){ document.getElementById("printReport").innerHTML=buildPrintReportHTML(p); }
+// mapa de inserções no formato tradicional (linhas = veiculação, colunas = semanas do período do plano,
+// célula = nº de inserções naquela semana) — usa a grade de dias real quando o aluno preencheu; senão
+// marca "•" nas semanas em que a linha está ativa, sem quantidade exata.
+function buildMapaInsercoesHTML(p){
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length) return null;
+  let min=null,max=null;
+  dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+  const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
+  const nWeeks=Math.max(1, Math.ceil(totalDays/7));
+  const rows=dated.map(l=>{
+    const v=vehicle(l.veiculo);
+    const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
+    const semanas=Array(nWeeks).fill(null);
+    const diasMap=l.insercoesPorDia||{};
+    if(Object.keys(diasMap).length){
+      semanas.fill(0);
+      Object.entries(diasMap).forEach(([dayKey,n])=>{
+        const d=new Date(dayKey+"T00:00:00");
+        const idx=Math.floor((d-min)/(7*86400000));
+        if(idx>=0&&idx<nWeeks) semanas[idx]+=n;
+      });
+    }else{
+      for(let w=0; w<nWeeks; w++){
+        const wStart=new Date(min.getTime()+w*7*86400000), wEnd=new Date(min.getTime()+(w+1)*7*86400000-1);
+        if(li<=wEnd && lf>=wStart) semanas[w]="•";
+      }
+    }
+    return {label:(l.titulo||(v?v.label:l.veiculo)), semanas};
+  });
+  const totalsPorSemana=Array(nWeeks).fill(0);
+  rows.forEach(r=>r.semanas.forEach((val,i)=>{ if(typeof val==="number") totalsPorSemana[i]+=val; }));
+  const header=`<tr><th>Veículo / Ação</th>${Array.from({length:nWeeks},(_,i)=>`<th class="num">S${i+1}</th>`).join("")}</tr>`;
+  const body=rows.map(r=>`<tr><td>${esc(r.label)}</td>${r.semanas.map(v=>`<td class="num">${v===null?"—":v}</td>`).join("")}</tr>`).join("");
+  const foot=`<tr class="pr-totalrow"><td>Total de inserções/semana</td>${totalsPorSemana.map(v=>`<td class="num">${v||"—"}</td>`).join("")}</tr>`;
+  return `<div style="overflow-x:auto"><table class="pr-table" style="font-size:10px"><thead>${header}</thead><tbody>${body}${foot}</tbody></table></div>
+    <div class="hint" style="font-size:10px;color:#7A7D93;margin-top:2px">Semanas contadas a partir de ${min.toLocaleDateString("pt-BR")}. "•" indica linha ativa na semana sem grade de dias preenchida; números vêm da grade de inserções por dia (📅 na Alocação).</div>`;
+}
 function buildPrintReportHTML(p){
   const t=planTotals(p); const c=p.criteria; const rf=reachFreq(p);
   const hoje=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
@@ -2088,6 +2155,28 @@ function buildPrintReportHTML(p){
     </div></div>`;
   }).join("") : "";
 
+  const estrategiaPorPersonaHtml = c.targets.length ? c.targets.map(tg=>{
+    const per=(p.personas||[]).find(x=>x.targetId===tg.id);
+    const target=TARGET_PROFILES[tg.key];
+    const linhasDaPersona=p.lines.filter(l=>(l.targetIds||[]).includes(tg.id));
+    const subtotal=linhasDaPersona.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    const papelLbl=tg.papel==="primario"?"Primário":tg.papel==="secundario"?"Secundário":"Terciário";
+    const nomePersona=(per&&per.nome)?per.nome:(target?target.label:"—");
+    if(!linhasDaPersona.length){
+      return `<div class="pr-cat"><h3>${papelLbl}: ${esc(nomePersona)} — sem linhas atribuídas</h3></div>`;
+    }
+    return `<div class="pr-cat">
+      <h3>${papelLbl}: ${esc(nomePersona)} — ${money(subtotal)} (${((subtotal/(t.totalVerba||1))*100).toFixed(0)}% do plano)</h3>
+      <table class="pr-table"><thead><tr><th>Veículo</th><th>Título</th><th>Funil</th><th class="num">Verba</th></tr></thead><tbody>
+        ${linhasDaPersona.map(l=>{ const v=vehicle(l.veiculo);
+          return `<tr><td>${esc(v?v.label:l.veiculo)}</td><td>${esc(l.titulo||"—")}</td><td>${FUNIL[l.funil]||""}</td><td class="num">${money(l.verba)}</td></tr>`;
+        }).join("")}
+      </tbody></table>
+    </div>`;
+  }).join("") : "";
+
+  const mapaInsercoesHtml = buildMapaInsercoesHTML(p);
+
   return `<div class="pr-page">
     <div class="pr-cover">
       <div class="pr-eyebrow">Plano de Mídia</div>
@@ -2126,7 +2215,11 @@ function buildPrintReportHTML(p){
       <table class="pr-table"><tr class="pr-totalrow"><td>Total do plano</td><td class="num">${money(t.totalVerba)}</td></tr></table>
     </div>
 
+    ${estrategiaPorPersonaHtml?`<div class="pr-section"><h2>Estratégia por persona</h2>${estrategiaPorPersonaHtml}</div>`:""}
+
     <div class="pr-section"><h2>Mapa mensal de investimento</h2>${mapaHtml}</div>
+
+    <div class="pr-section"><h2>Mapa de inserções</h2>${mapaInsercoesHtml||`<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa de inserções.</p>`}</div>
 
     <div class="pr-footer">Gerado pela ferramenta de Plano de Mídia · valores de audiência/rating estimados para fins didáticos, não são medição real de mercado.</div>
   </div>`;
@@ -2289,6 +2382,15 @@ document.addEventListener("click",e=>{
   if(act==="new-plan") newPlan();
   else if(act==="select-plan"){ activePlanId=id; viewMode=criteriaComplete(curPlan())?"alocacao":"criterios"; render(); }
   else if(act==="set-view"){ viewMode=b.dataset.view; render(); }
+  else if(act==="toggle-line-target"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id); const targetId=b.dataset.target;
+    if(line){
+      if(!line.targetIds) line.targetIds=[];
+      const i=line.targetIds.indexOf(targetId);
+      if(i>=0) line.targetIds.splice(i,1); else line.targetIds.push(targetId);
+      save(); render();
+    }
+  }
   else if(act==="toggle-cat"){
     const p=curPlan(); const key=b.dataset.key; const i=p.criteria.publico.indexOf(key);
     if(i>=0) p.criteria.publico.splice(i,1); else p.criteria.publico.push(key);
