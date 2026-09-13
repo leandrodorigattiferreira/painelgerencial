@@ -255,12 +255,32 @@ tfoot td.num{text-align:right}
 .empty .em{font-family:"Manrope";color:var(--ink);font-weight:800;font-size:18px;margin-bottom:6px}
 .empty button{margin-top:14px;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13.5px}
 
+#printReport{display:none}
 @media print{
-  .topbar,.tabs,.statusbar,.addrowbtn,.rmbtn,.panelback,.panel{display:none!important}
-  .app{height:auto;overflow:visible}
-  .gridwrap{overflow:visible}
-  body{background:#fff}
+  .app,.backdrop,.panelback,.panel{display:none!important}
+  #printReport{display:block}
+  body{background:#fff;color:#111}
 }
+.pr-page{max-width:800px;margin:0 auto;font-family:"Inter",sans-serif;color:#111;padding:0 8px}
+.pr-cover{padding:60px 0 30px;border-bottom:3px solid #191A2B;margin-bottom:22px}
+.pr-cover .pr-eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7A7D93}
+.pr-cover h1{font-family:"Manrope",sans-serif;font-size:30px;font-weight:800;margin:6px 0 10px}
+.pr-cover .pr-meta{font-size:13px;color:#454764;display:flex;gap:18px;flex-wrap:wrap}
+.pr-section{margin-bottom:26px;break-inside:avoid}
+.pr-section h2{font-family:"Manrope",sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #D6D4EC;padding-bottom:6px;margin-bottom:12px}
+.pr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.pr-kv b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#7A7D93;margin-bottom:2px}
+.pr-kv span{font-size:13.5px;color:#191A2B}
+.pr-cat{margin-bottom:16px;break-inside:avoid}
+.pr-cat h3{font-family:"Manrope",sans-serif;font-size:12.5px;font-weight:800;margin:0 0 6px;color:#3F6BF0}
+table.pr-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:6px}
+table.pr-table th{text-align:left;background:#F3F4F8;padding:5px 7px;font-weight:700;border-bottom:1px solid #D6D4EC}
+table.pr-table td{padding:5px 7px;border-bottom:1px solid #E7E6F5}
+table.pr-table td.num,table.pr-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+.pr-totalrow{font-weight:800;background:#F7F6FD}
+.pr-persona{display:flex;gap:12px;border:1px solid #D6D4EC;border-radius:10px;padding:12px;margin-bottom:10px;break-inside:avoid}
+.pr-persona .pr-av{font-size:32px}
+.pr-footer{font-size:10px;color:#AEB0C2;text-align:center;margin-top:30px;padding-top:10px;border-top:1px solid #E7E6F5}
 @media (max-width:860px){
   .infostrip{grid-template-columns:1fr 1fr;grid-auto-rows:auto}
   .icell{border-bottom:1px solid var(--grid)}
@@ -284,12 +304,14 @@ tfoot td.num{text-align:right}
     <div class="spacer"></div>
     <div class="toolgrp">
       <button class="tbtn" data-act="glossary">📘 Glossário</button>
+      <button class="tbtn" data-act="midiakits">🔗 Mídia Kits</button>
       <button class="tbtn" data-act="analytics">📊 Análises</button>
       <button class="tbtn" data-act="print">🖨 Imprimir / PDF</button>
       <button class="tbtn" data-act="export-excel">📊 Excel</button>
       <button class="tbtn" data-act="export">⬇ Backup (JSON)</button>
       <button class="tbtn" data-act="import">⬆ Importar</button>
       <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      <button class="tbtn danger" data-act="reset-plan" title="Apaga os dados deste plano e começa do zero">🔄 Recomeçar</button>
       <button class="tbtn pri" data-act="add-line">+ Linha</button>
     </div>
   </div>
@@ -308,6 +330,7 @@ tfoot td.num{text-align:right}
 <div class="panelback" id="panelback"></div>
 <div class="panel" id="panel"></div>
 <div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+<div id="printReport"></div>
 
 <script>
 "use strict";
@@ -871,7 +894,7 @@ function defaultCriteria(){
     pracas:[], targets:[],
     publicoTamanho:"", coberturaAlvo:"", freqMin:"", freqMax:"",
     timing:"continuo", picos:[],
-    kpi:{topo:"",meio:"",fundo:"",retencao:""},
+    kpi:{topo:[],meio:[],fundo:[],retencao:[]},
   };
 }
 function samplePlan(){
@@ -882,20 +905,26 @@ function samplePlan(){
     targets:[{id:uid(),papel:"primario",key:"mm_18_35_abc"},{id:uid(),papel:"secundario",key:"as_15_24"}],
     publicoTamanho:0, coberturaAlvo:55, freqMin:3, freqMax:8,
     timing:"continuo", picos:[],
-    kpi:{topo:"alcance",meio:"engajamento",fundo:"roas",retencao:"leads"},
+    kpi:{topo:["alcance","brandlift"],meio:["engajamento"],fundo:["roas","cpa"],retencao:["leads"]},
   };
   criteria.publicoTamanho=publicoEstimado(criteria);
   const lines=sampleLines();
   const tvLine=lines.find(l=>l.veiculo==="tv_aberta");
   if(tvLine) autoFillPrograma(tvLine, "tv", criteria); // garante que rating/audiência/valor batam com a grade de programação atual
-  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 18-35, classe ABC, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines,criteria,justificativas:{}};
+  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 18-35, classe ABC, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines,criteria,justificativas:{},personas:[]};
 }
 function ensurePlanShape(p){
   if(!p.criteria) p.criteria=defaultCriteria();
   const dc=defaultCriteria();
   Object.keys(dc).forEach(k=>{ if(p.criteria[k]===undefined) p.criteria[k]=dc[k]; });
-  if(typeof p.criteria.kpi==="string") p.criteria.kpi={topo:"",meio:"",fundo:p.criteria.kpi||"",retencao:""};
+  if(typeof p.criteria.kpi==="string") p.criteria.kpi={topo:[],meio:[],fundo:[p.criteria.kpi],retencao:[]};
+  Object.keys(FUNIL).forEach(stage=>{
+    const v=p.criteria.kpi[stage];
+    if(typeof v==="string") p.criteria.kpi[stage]=v?[v]:[];
+    else if(!Array.isArray(v)) p.criteria.kpi[stage]=[];
+  });
   if(!Array.isArray(p.criteria.picos)) p.criteria.picos=[];
+  if(!Array.isArray(p.personas)) p.personas=[];
   if(!Array.isArray(p.criteria.targets)){
     p.criteria.targets = p.criteria.targetPrincipal ? [{id:uid(),papel:"primario",key:p.criteria.targetPrincipal}] : [];
   }
@@ -945,7 +974,7 @@ function setSaveStat(s){
 }
 
 function newPlan(){
-  const p={id:uid(),nome:"Novo plano",cliente:"",objetivo:"",publico:"",inicio:"",fim:"",verba:0,lines:[],criteria:defaultCriteria(),justificativas:{}};
+  const p={id:uid(),nome:"Novo plano",cliente:"",objetivo:"",publico:"",inicio:"",fim:"",verba:0,lines:[],criteria:defaultCriteria(),justificativas:{},personas:[]};
   data.plans.push(p); activePlanId=p.id; viewMode="criterios"; save(); render();
 }
 function delPlan(id){
@@ -953,6 +982,13 @@ function delPlan(id){
   data.plans=data.plans.filter(x=>x.id!==id);
   if(activePlanId===id) activePlanId=data.plans[0].id;
   save(); render();
+}
+// apaga tudo do plano atual e recomeça do zero — pra simular um cenário novo sem precisar abrir outra aba
+function resetPlan(id){
+  const p=data.plans.find(x=>x.id===id); if(!p) return;
+  Object.assign(p,{nome:"Novo plano",cliente:"",objetivo:"",publico:"",inicio:"",fim:"",verba:0,lines:[],criteria:defaultCriteria(),justificativas:{},personas:[]});
+  viewMode="criterios"; save(); render();
+  toast("Plano reiniciado — pode começar a simular de novo.");
 }
 function curPlan(){return data.plans.find(p=>p.id===activePlanId)||data.plans[0];}
 function vehicle(k){return VEHICLES.find(v=>v.k===k);}
@@ -1021,7 +1057,7 @@ function criteriaMissing(p){
   if(!(parseFloat(c.coberturaAlvo)>0)) missing.push("informe a cobertura desejada (%)");
   if(!(parseFloat(c.freqMin)>0)) missing.push("informe a frequência efetiva mínima");
   if(!(parseFloat(c.freqMax)>0)) missing.push("informe a frequência efetiva máxima");
-  if(!c.kpi||!Object.values(c.kpi).every(v=>!!v)) missing.push("escolha um KPI de sucesso para cada uma das 4 etapas do funil");
+  if(!c.kpi||!Object.values(c.kpi).every(v=>Array.isArray(v)&&v.length)) missing.push("escolha ao menos um KPI de sucesso para cada uma das 4 etapas do funil");
   if(c.timing!=="continuo"){
     if(!c.picos||!c.picos.length) missing.push("adicione ao menos um período de pico (você escolheu timing pulsado/concentrado)");
     else if(!c.picos.every(pc=>pc.inicio&&pc.fim)) missing.push("preencha início e fim de todos os períodos de pico adicionados");
@@ -1103,12 +1139,14 @@ function computeChecks(p){
     Object.keys(FUNIL).forEach(stage=>{
       const stageLines=p.lines.filter(l=>l.funil===stage);
       const stageVerba=stageLines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
-      if(stageVerba<=0 || !c.kpi[stage]) return;
+      const kpisStage=c.kpi[stage]||[];
+      if(stageVerba<=0 || !kpisStage.length) return;
       const byModelo={};
       stageLines.forEach(l=>{ byModelo[l.modelo]=(byModelo[l.modelo]||0)+(parseFloat(l.verba)||0); });
       const dominante=Object.entries(byModelo).sort((a,b)=>b[1]-a[1])[0];
-      const esperado=KPI_OPTS[c.kpi[stage]].modelos;
-      if(dominante && !esperado.includes(dominante[0])) offenders.push(`${FUNIL[stage]}: KPI "${KPI_OPTS[c.kpi[stage]].label}" mas modelo dominante é ${MODELO[dominante[0]]}`);
+      const esperado=[...new Set(kpisStage.flatMap(k=>KPI_OPTS[k].modelos))];
+      const labels=kpisStage.map(k=>KPI_OPTS[k].label).join(" + ");
+      if(dominante && !esperado.includes(dominante[0])) offenders.push(`${FUNIL[stage]}: KPIs "${labels}" mas modelo dominante é ${MODELO[dominante[0]]}`);
     });
     checks.push(offenders.length
       ? {id:"kpi",status:"warn",title:"KPI de sucesso por etapa",detail:"Divergência entre KPI e modelo de compra: "+offenders.join("; ")+"."}
@@ -1166,6 +1204,7 @@ function render(){
   }else{
     sv.classList.add("show");
     if(viewMode==="criterios") renderCriterios(p);
+    else if(viewMode==="persona") renderPersonas(p);
     else if(viewMode==="jornada") renderJornada(p);
     else renderCoerencia(p);
   }
@@ -1177,9 +1216,10 @@ function renderStepbar(p){
   const warnCount = complete ? computeChecks(p).filter(c=>c.status==="warn").length : null;
   const steps=[
     {k:"criterios",n:"1",label:"Critérios de planejamento",extra: complete?`<span class="okcheck">✓</span>`:""},
-    {k:"alocacao",n:"2",label:"Alocação de verba"},
-    {k:"jornada",n:"3",label:"Jornada e multicanalidade"},
-    {k:"coerencia",n:"4",label:"Coerência do plano",extra: warnCount?`<span class="warncount">${warnCount}</span>`:(complete?`<span class="okcheck">✓</span>`:"")},
+    {k:"persona",n:"2",label:"Persona"},
+    {k:"alocacao",n:"3",label:"Alocação de verba"},
+    {k:"jornada",n:"4",label:"Jornada e multicanalidade"},
+    {k:"coerencia",n:"5",label:"Coerência do plano",extra: warnCount?`<span class="warncount">${warnCount}</span>`:(complete?`<span class="okcheck">✓</span>`:"")},
   ];
   document.getElementById("stepbar").innerHTML=steps.map(s=>`
     <button class="step ${viewMode===s.k?"on":""}" data-act="set-view" data-view="${s.k}"><span class="n">${s.n}</span>${s.label}${s.extra||""}</button>
@@ -1308,11 +1348,17 @@ function renderCriterios(p){
 
     <div class="critcard">
       <h3>5. KPI de sucesso por etapa do funil</h3>
-      <div class="desc">O KPI que julga o sucesso muda por etapa — e às vezes por meio. Defina um KPI principal para cada etapa do funil.</div>
+      <div class="desc">O KPI que julga o sucesso muda por etapa — e às vezes uma etapa precisa de mais de um (ex.: alcance + brand lift no topo). Marque um ou mais por etapa.</div>
       <div class="funilrow">
         ${Object.entries(FUNIL).map(([k,label])=>`
           <div class="funilfield"><label>${label}</label>
-            <select class="critselect" data-crit="kpi.${k}" style="font-size:12.5px;padding:6px 8px"><option value="">Selecione...</option>${Object.entries(KPI_OPTS).map(([kk,vv])=>`<option value="${kk}" ${c.kpi[k]===kk?"selected":""}>${vv.label}</option>`).join("")}</select>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+              ${Object.entries(KPI_OPTS).map(([kk,vv])=>`
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;color:var(--ink-soft);cursor:pointer">
+                  <input type="checkbox" data-kpi="${k}.${kk}" ${c.kpi[k].includes(kk)?"checked":""}> ${vv.label}
+                </label>
+              `).join("")}
+            </div>
           </div>
         `).join("")}
       </div>
@@ -1327,8 +1373,16 @@ function renderCriterios(p){
     input.addEventListener(evt,()=>{
       const path=input.dataset.crit;
       if(path.startsWith("funil.")) c.funil[path.split(".")[1]]=parseFloat(input.value)||0;
-      else if(path.startsWith("kpi.")) c.kpi[path.split(".")[1]]=input.value;
       else c[path]=input.value;
+      save(); render();
+    });
+  });
+  el.querySelectorAll("[data-kpi]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [stage,kpiKey]=input.dataset.kpi.split(".");
+      const arr=c.kpi[stage];
+      const i=arr.indexOf(kpiKey);
+      if(input.checked){ if(i<0) arr.push(kpiKey); } else if(i>=0) arr.splice(i,1);
       save(); render();
     });
   });
@@ -1389,6 +1443,73 @@ function monthlyMap(p){
   });
   const totals={}; months.forEach(m=>{ totals[m.key]=rows.reduce((s,r)=>s+r.values[m.key],0); });
   return {months,rows,totals};
+}
+
+const AVATARES=["🧑","👩","👨","🧕","👴","👵","🧑‍🦱","👩‍🦱","🧑‍🦳","👨‍🦳","🧑‍🎓","👩‍💼","👨‍💼","🧑‍🍳","👩‍🏫","🧑‍🌾","🧑‍🎨","🧑‍💻"];
+// garante um cartão de persona pra cada target declarado nos critérios (cria os que faltam, remove órfãos)
+function syncPersonas(p){
+  if(!Array.isArray(p.personas)) p.personas=[];
+  const ids=p.criteria.targets.map(t=>t.id);
+  p.personas=p.personas.filter(per=>ids.includes(per.targetId));
+  p.criteria.targets.forEach(t=>{
+    if(!p.personas.some(per=>per.targetId===t.id)){
+      p.personas.push({targetId:t.id, nome:"", idade:"", cidade:"", ocupacao:"", avatar:AVATARES[0], citacao:"", objetivos:"", frustracoes:""});
+    }
+  });
+}
+function renderPersonas(p){
+  syncPersonas(p);
+  const el=document.getElementById("stepview");
+  if(!p.criteria.targets.length){
+    el.innerHTML=`<div class="wrap"><div class="incomplete"><b>Nenhum target declarado ainda</b><p style="margin:8px 0 16px;color:var(--ink-soft)">Volte aos Critérios (etapa 1) e adicione ao menos um target — a persona é construída em cima dele.</p><button class="tbtn pri" data-act="set-view" data-view="criterios">Ir para Critérios</button></div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="wrap">
+    <div class="hint" style="margin-bottom:-6px">Dê um rosto e uma história a cada target declarado — isso ajuda a decidir tom, formatos e canais na hora de montar o plano. Idade, classe e canais favoritos vêm sugeridos a partir do target e das categorias marcadas em "onde o público consome mídia"; o resto é você quem desenha.</div>
+    ${p.criteria.targets.map(t=>{
+      const per=p.personas.find(x=>x.targetId===t.id);
+      const target=TARGET_PROFILES[t.key];
+      const canaisFav=p.criteria.publico
+        .map(catKey=>({catKey,aff:affinityFor(catKey,t.key)}))
+        .filter(x=>x.aff==="alta")
+        .map(x=>catInfo(x.catKey).label);
+      return `<div class="critcard" style="display:flex;gap:18px;flex-wrap:wrap">
+        <div style="flex:0 0 auto;text-align:center">
+          <select data-persona="${t.id}.avatar" style="font-size:44px;border:0;background:var(--surface-2);border-radius:12px;padding:6px;cursor:pointer">
+            ${AVATARES.map(a=>`<option value="${a}" ${per.avatar===a?"selected":""}>${a}</option>`).join("")}
+          </select>
+          <div style="margin-top:6px"><span class="badge ${t.papel==="primario"?"topo":"meio"}"><span class="d"></span>${t.papel==="primario"?"Primário":t.papel==="secundario"?"Secundário":"Terciário"}</span></div>
+        </div>
+        <div style="flex:1;min-width:240px">
+          <div class="critrow2">
+            <div class="f"><label>Nome</label><input data-persona="${t.id}.nome" value="${esc(per.nome)}" placeholder="Ex.: Mariana Souza"></div>
+            <div class="f"><label>Idade</label><input data-persona="${t.id}.idade" value="${esc(per.idade)}" placeholder="Ex.: 28 anos"></div>
+          </div>
+          <div class="critrow2">
+            <div class="f"><label>Cidade</label><input data-persona="${t.id}.cidade" value="${esc(per.cidade)}" placeholder="Ex.: Belo Horizonte, MG"></div>
+            <div class="f"><label>Ocupação</label><input data-persona="${t.id}.ocupacao" value="${esc(per.ocupacao)}" placeholder="Ex.: Analista de marketing"></div>
+          </div>
+          <div class="f"><label>Frase que a define</label><input data-persona="${t.id}.citacao" value="${esc(per.citacao)}" placeholder="Ex.: “Quero praticidade sem abrir mão de qualidade”"></div>
+          <div class="critrow2">
+            <div class="f"><label>Objetivos / motivações</label><textarea data-persona="${t.id}.objetivos" rows="2" style="width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical" placeholder="O que ela busca?">${esc(per.objetivos)}</textarea></div>
+            <div class="f"><label>Frustrações / barreiras</label><textarea data-persona="${t.id}.frustracoes" rows="2" style="width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical" placeholder="O que trava a decisão dela?">${esc(per.frustracoes)}</textarea></div>
+          </div>
+          <div class="hint" style="margin-top:6px">
+            <b style="color:var(--ink)">Perfil de mídia (do target ${target?esc(target.label):""}):</b>
+            ${canaisFav.length?` alta aderência a ${canaisFav.join(", ")}.`:" nenhuma categoria de alta aderência marcada ainda em Critérios."}
+          </div>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+  el.querySelectorAll("[data-persona]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [targetId,field]=input.dataset.persona.split(".");
+      const per=p.personas.find(x=>x.targetId===targetId);
+      if(per) per[field]=input.value;
+      save(); render();
+    });
+  });
 }
 
 function renderJornada(p){
@@ -1829,6 +1950,82 @@ function saveGradeDias(lineId){
   save(); closeModal(); render();
 }
 
+// links oficiais de anunciante/mídia kit levantados por pesquisa (checados, não inventados). Quando não
+// encontrei uma página oficial confiável, deixo o termo de busca sugerido em vez de arriscar um link errado.
+const MIDIA_KITS = [
+  {grupo:"TV aberta", itens:[
+    {nome:"TV Globo — Globo Ads", busca:"Globo Ads anunciar TV Globo"},
+    {nome:"SBT — Anuncie", busca:"SBT anuncie conosco mídia kit"},
+    {nome:"Record TV — Comercial", busca:"Record TV comercial anuncie"},
+    {nome:"Band — Comercial", busca:"Band TV comercial anuncie"},
+    {nome:"RedeTV! — Comercial", busca:"RedeTV comercial anuncie"},
+  ]},
+  {grupo:"Rádio", itens:[
+    {nome:"Jovem Pan — Anuncie", busca:"Jovem Pan anuncie comercial"},
+    {nome:"CBN — Anuncie", busca:"CBN anuncie comercial"},
+    {nome:"Grupo Bandeirantes de Rádio", busca:"Bandnews FM anuncie comercial"},
+  ]},
+  {grupo:"OOH / Mídia Exterior", itens:[
+    {nome:"Eletromidia", url:"https://home.eletromidia.com.br/midia-kit-institucional"},
+    {nome:"JCDecaux Brasil", url:"https://www.jcdecaux.com.br/"},
+    {nome:"Outros pontos (busdoor, mobiliário urbano)", busca:"mídia exterior OOH anunciar São Paulo mídia kit"},
+  ]},
+  {grupo:"Impresso (revista/jornal)", itens:[
+    {nome:"Editora Abril (Veja, Claudia, Época) — Publiabril", url:"https://publiabril.abril.com.br/"},
+    {nome:"Folha de S.Paulo — Anuncie", busca:"Folha de S.Paulo anuncie mídia kit"},
+    {nome:"O Estado de S. Paulo — Anuncie", busca:"Estadão anuncie mídia kit"},
+  ]},
+  {grupo:"Cinema", itens:[
+    {nome:"Cinemark Mídia", busca:"Cinemark mídia publicidade cinema anuncie"},
+    {nome:"Cinépolis Mídia", busca:"Cinépolis mídia publicidade cinema anuncie"},
+  ]},
+  {grupo:"Áudio / Streaming", itens:[
+    {nome:"Spotify Advertising", url:"https://ads.spotify.com/pt-BR/"},
+    {nome:"Deezer Ads", busca:"Deezer Ads anunciar publicidade"},
+  ]},
+  {grupo:"Busca e Vídeo", itens:[
+    {nome:"Google Ads", url:"https://ads.google.com/home/"},
+    {nome:"YouTube Ads (via Google Ads)", busca:"YouTube for Business anunciar vídeo"},
+    {nome:"Microsoft (Bing) Advertising", busca:"Microsoft Advertising Bing Ads anunciar"},
+  ]},
+  {grupo:"Social Ads", itens:[
+    {nome:"Meta for Business (Facebook/Instagram)", url:"https://business.meta.com/"},
+    {nome:"TikTok for Business", url:"https://business.tiktok.com/pt-BR"},
+    {nome:"LinkedIn Marketing Solutions", url:"https://business.linkedin.com/marketing-solutions/ads"},
+    {nome:"Pinterest Business", url:"https://business.pinterest.com/advertise/"},
+    {nome:"X Ads (Twitter)", busca:"X Ads anunciar business.x.com"},
+    {nome:"Snapchat for Business", busca:"Snapchat for Business anunciar ads"},
+    {nome:"Kwai Ads", busca:"Kwai for Business anunciar"},
+  ]},
+  {grupo:"Retail Media", itens:[
+    {nome:"Mercado Ads (Mercado Livre)", url:"https://ads.mercadolivre.com.br/"},
+    {nome:"Amazon Ads Brasil", url:"https://advertising.amazon.com/pt-br"},
+    {nome:"Magalu Ads", busca:"Magalu Ads anunciar marketplace"},
+    {nome:"Shopee Ads", busca:"Shopee Ads anunciar marketplace"},
+  ]},
+  {grupo:"Influenciadores / Afiliados", itens:[
+    {nome:"Plataformas de influenciadores (para pesquisa de perfis e valores)", busca:"plataforma de influenciadores marketing de influência Brasil"},
+    {nome:"Redes de afiliados", busca:"rede de afiliados marketing de afiliados Brasil Lomadee Awin"},
+  ]},
+];
+function openMidiaKits(){
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Mídia Kits do mercado</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="glossary" style="padding:12px 20px 20px">
+      <div class="hint" style="margin-bottom:12px">Links oficiais checados por pesquisa. Onde não achei uma página confiável, deixei o termo pronto pra você buscar — grades e páginas de anunciante mudam com frequência.</div>
+      ${MIDIA_KITS.map(g=>`
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px">${esc(g.grupo)}</div>
+          ${g.itens.map(it=>it.url
+            ? `<div class="gitem"><b>${esc(it.nome)}</b><p><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a></p></div>`
+            : `<div class="gitem"><b>${esc(it.nome)}</b><p>Busque: <i>"${esc(it.busca)}"</i></p></div>`
+          ).join("")}
+        </div>
+      `).join("")}
+    </div>`;
+  document.getElementById("modal").classList.add("wide");
+  document.getElementById("backdrop").classList.add("open");
+}
 function openGlossary(){
   document.getElementById("modal").innerHTML=`
     <header><h3>Glossário de mídia</h3><button class="x" data-act="close-modal">×</button></header>
@@ -1843,9 +2040,97 @@ function openGlossary(){
   document.getElementById("gSearch").addEventListener("input",e=>renderList(e.target.value));
   renderList("");
 }
-function closeModal(){ document.getElementById("backdrop").classList.remove("open"); }
+function closeModal(){ document.getElementById("backdrop").classList.remove("open"); document.getElementById("modal").classList.remove("wide"); }
 
 /* ===================== import/export ===================== */
+// monta um registro formatado do plano (capa, briefing, estratégia, linhas por veículo, mapa mensal,
+// personas) só pra impressão/"salvar como PDF" — não aparece na tela, só no @media print.
+function renderPrintReport(p){
+  const t=planTotals(p); const c=p.criteria; const rf=reachFreq(p);
+  const hoje=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+  const pracasLbl=c.pracas.map(pr=>{ const [tipo,key]=pr.split(":"); return tipo==="nacional"?"Nacional":tipo==="regiao"?REGIOES[key]:ESTADOS[key]; }).join(", ")||"—";
+  const targetsLbl=c.targets.map(tg=>`${tg.papel==="primario"?"Primário":tg.papel==="secundario"?"Secundário":"Terciário"}: ${TARGET_PROFILES[tg.key]?TARGET_PROFILES[tg.key].label:"—"}`).join(" · ")||"—";
+
+  const groups=CATS.map(cat=>({cat, lines:p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&v.cat===cat.key; })})).filter(g=>g.lines.length);
+  const linhasHtml=groups.map(g=>{
+    const subtotal=g.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    return `<div class="pr-cat">
+      <h3>${esc(g.cat.label)} — ${money(subtotal)}</h3>
+      <table class="pr-table"><thead><tr>
+        <th>Veículo</th><th>Título</th><th>Funil</th><th>Modelo</th><th class="num">Custo</th><th class="num">Verba</th><th>Resultado est.</th>
+      </tr></thead><tbody>
+        ${g.lines.map(l=>{
+          const v=vehicle(l.veiculo); const r=lineResult(l);
+          return `<tr><td>${esc(v?v.label:l.veiculo)}</td><td>${esc(l.titulo||"—")}</td><td>${FUNIL[l.funil]||""}</td><td>${MODELO[l.modelo]||""}</td>
+            <td class="num">${l.modelo==="FIXO"?"—":money(l.custo)}</td><td class="num">${money(l.verba)}</td><td>${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote":"—")}</td></tr>`;
+        }).join("")}
+      </tbody></table>
+    </div>`;
+  }).join("")||`<p style="font-size:13px;color:#7A7D93">Nenhuma linha de veiculação cadastrada.</p>`;
+
+  const mm=monthlyMap(p);
+  const mapaHtml = mm ? `<table class="pr-table"><thead><tr><th>Veículo</th>${mm.months.map(m=>`<th class="num">${m.label}</th>`).join("")}<th class="num">Total</th></tr></thead>
+    <tbody>${mm.rows.map(r=>{ const v=vehicle(r.line.veiculo); const total=Object.values(r.values).reduce((s,x)=>s+x,0);
+      return `<tr><td>${esc(v?v.label:r.line.veiculo)}</td>${mm.months.map(m=>`<td class="num">${money(r.values[m.key])}</td>`).join("")}<td class="num">${money(total)}</td></tr>`;
+    }).join("")}
+    <tr class="pr-totalrow"><td>Total do mês</td>${mm.months.map(m=>`<td class="num">${money(mm.totals[m.key])}</td>`).join("")}<td class="num">${money(Object.values(mm.totals).reduce((s,x)=>s+x,0))}</td></tr>
+    </tbody></table>` : `<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa mensal.</p>`;
+
+  const personasComNome=(p.personas||[]).filter(per=>per.nome);
+  const personasHtml = personasComNome.length ? personasComNome.map(per=>{
+    const tg=c.targets.find(x=>x.id===per.targetId); const target=tg&&TARGET_PROFILES[tg.key];
+    return `<div class="pr-persona"><div class="pr-av">${esc(per.avatar||"🧑")}</div><div>
+      <b>${esc(per.nome)}</b>${per.idade?", "+esc(per.idade):""}${per.cidade?" — "+esc(per.cidade):""}<br>
+      ${per.ocupacao?`<span style="color:#454764">${esc(per.ocupacao)}</span><br>`:""}
+      ${per.citacao?`<i>"${esc(per.citacao)}"</i><br>`:""}
+      ${target?`<span style="font-size:11px;color:#7A7D93">Target: ${esc(target.label)}</span>`:""}
+    </div></div>`;
+  }).join("") : "";
+
+  document.getElementById("printReport").innerHTML=`<div class="pr-page">
+    <div class="pr-cover">
+      <div class="pr-eyebrow">Plano de Mídia</div>
+      <h1>${esc(p.nome)}</h1>
+      <div class="pr-meta">
+        <span><b>Cliente:</b> ${esc(p.cliente||"—")}</span>
+        <span><b>Período:</b> ${p.inicio?fmtd(p.inicio):"—"} – ${p.fim?fmtd(p.fim):"—"}</span>
+        <span><b>Verba total:</b> ${money(p.verba)}</span>
+        <span><b>Gerado em:</b> ${hoje}</span>
+      </div>
+    </div>
+
+    <div class="pr-section"><h2>Briefing</h2>
+      <div class="pr-grid2">
+        <div class="pr-kv"><b>Objetivo</b><span>${esc(p.objetivo||"—")}</span></div>
+        <div class="pr-kv"><b>Persona / observações</b><span>${esc(p.publico||"—")}</span></div>
+        <div class="pr-kv"><b>Praças</b><span>${esc(pracasLbl)}</span></div>
+        <div class="pr-kv"><b>Target(s)</b><span>${esc(targetsLbl)}</span></div>
+      </div>
+    </div>
+
+    <div class="pr-section"><h2>Estratégia</h2>
+      <div class="pr-grid2">
+        <div class="pr-kv"><b>Distribuição por funil</b><span>${Object.entries(c.funil).map(([k,v])=>`${FUNIL[k]} ${v}%`).join(" · ")}</span></div>
+        <div class="pr-kv"><b>KPI por etapa</b><span>${Object.entries(c.kpi).map(([k,arr])=>`${FUNIL[k]}: ${arr.map(kk=>KPI_OPTS[kk]?KPI_OPTS[kk].label:kk).join(", ")||"—"}`).join(" · ")}</span></div>
+        <div class="pr-kv"><b>População estimada no target</b><span>${num(publicoEstimado(c))} pessoas</span></div>
+        <div class="pr-kv"><b>Cobertura / Frequência desejadas</b><span>${c.coberturaAlvo||"—"}% · ${c.freqMin||"—"}x–${c.freqMax||"—"}x</span></div>
+        ${rf?`<div class="pr-kv"><b>Cobertura estimada</b><span>${rf.reachPct.toFixed(1)}%</span></div>
+        <div class="pr-kv"><b>Frequência média estimada</b><span>${rf.avgFreq.toFixed(1)}x</span></div>`:""}
+      </div>
+    </div>
+
+    ${personasHtml?`<div class="pr-section"><h2>Personas</h2>${personasHtml}</div>`:""}
+
+    <div class="pr-section"><h2>Linhas de veiculação</h2>${linhasHtml}
+      <table class="pr-table"><tr class="pr-totalrow"><td>Total do plano</td><td class="num">${money(t.totalVerba)}</td></tr></table>
+    </div>
+
+    <div class="pr-section"><h2>Mapa mensal de investimento</h2>${mapaHtml}</div>
+
+    <div class="pr-footer">Gerado pela ferramenta de Plano de Mídia · valores de audiência/rating estimados para fins didáticos, não são medição real de mercado.</div>
+  </div>`;
+}
+
 async function exportExcel(){
   if(typeof XLSX==="undefined"){ toast("Biblioteca de Excel não carregou — tente novamente."); return; }
   const p=curPlan(); const t=planTotals(p); const rf=reachFreq(p); const c=p.criteria;
@@ -2020,9 +2305,11 @@ document.addEventListener("click",e=>{
   else if(act==="close-modal") closeModal();
   else if(act==="analytics") openAnalytics();
   else if(act==="close-panel") closeAnalytics();
-  else if(act==="print") window.print();
+  else if(act==="print"){ renderPrintReport(curPlan()); window.print(); }
   else if(act==="export") exportJSON();
   else if(act==="export-excel") exportExcel();
+  else if(act==="reset-plan"){ if(confirm("Apagar todos os dados deste plano e começar do zero? Essa ação não pode ser desfeita.")) resetPlan(curPlan().id); }
+  else if(act==="midiakits") openMidiaKits();
   else if(act==="import") document.getElementById("importFile").click();
 });
 document.getElementById("backdrop").addEventListener("click",e=>{ if(e.target.id==="backdrop") closeModal(); });
