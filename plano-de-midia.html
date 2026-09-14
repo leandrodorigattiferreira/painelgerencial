@@ -190,6 +190,7 @@ tfoot td.num{text-align:right}
 
 /* ===== barra de status (rodapé estilo planilha) ===== */
 .statusbar{flex:0 0 auto;display:flex;align-items:center;gap:0;background:var(--surface);border-top:1px solid var(--grid);overflow-x:auto}
+.legalnotice{flex:0 0 auto;padding:6px 16px;font-size:10px;line-height:1.4;color:var(--faint);background:var(--surface-2);border-top:1px solid var(--grid);text-align:center}
 .stat{padding:8px 16px;border-right:1px solid var(--grid);font-size:11.5px;color:var(--muted);white-space:nowrap;display:flex;gap:6px;align-items:baseline}
 .stat b{font-family:"JetBrains Mono",monospace;color:var(--ink);font-size:12.5px;font-weight:700}
 
@@ -325,6 +326,7 @@ table.pr-table td.num,table.pr-table th.num{text-align:right;font-variant-numeri
 
   <div class="statusbar" id="statusbar"></div>
   <div class="tabs" id="tabs"></div>
+  <div class="legalnotice">Simulador educacional desenvolvido com apoio de inteligência artificial por Leandro Dorigatti, para uso exclusivo na disciplina de Mídia II na ESAMC. Dados, valores e estimativas são fictícios, com finalidade estritamente didática — não têm valor legal, comercial ou de mercado e não devem ser usados como referência real. Uso restrito aos alunos da disciplina; reprodução ou distribuição fora desse contexto não é autorizada.</div>
 </div>
 
 <div class="panelback" id="panelback"></div>
@@ -2194,40 +2196,96 @@ function renderPrintReport(p){ document.getElementById("printReport").innerHTML=
 // mapa de inserções no formato tradicional (linhas = veiculação, colunas = semanas do período do plano,
 // célula = nº de inserções naquela semana) — usa a grade de dias real quando o aluno preencheu; senão
 // marca "•" nas semanas em que a linha está ativa, sem quantidade exata.
+// Formato clássico de mapa de mídia (o mesmo usado em planilhas profissionais do mercado):
+// um bloco técnico com os dados do plano, e uma grade dia-a-dia (TV/rádio/áudio) ou
+// semana-a-semana (impresso/OOH/cinema) marcando "X" nos dias/semanas em que cada linha veicula,
+// com totais de inserção e investimento por linha e por mês.
+const MAPA_MIDIA_GRADE_DIARIA = new Set(["tv_aberta","tv_paga","ctv_avod","radio_am_fm","podcast_hostread","podcast_prog","audio_streaming"]);
 function buildMapaInsercoesHTML(p){
   const dated=p.lines.filter(l=>l.inicio&&l.fim);
   if(!dated.length) return null;
-  let min=null,max=null;
-  dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
-  const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
-  const nWeeks=Math.max(1, Math.ceil(totalDays/7));
-  const rows=dated.map(l=>{
-    const v=vehicle(l.veiculo);
-    const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
-    const semanas=Array(nWeeks).fill(null);
-    const diasMap=l.insercoesPorDia||{};
-    if(Object.keys(diasMap).length){
-      semanas.fill(0);
-      Object.entries(diasMap).forEach(([dayKey,n])=>{
-        const d=new Date(dayKey+"T00:00:00");
-        const idx=Math.floor((d-min)/(7*86400000));
-        if(idx>=0&&idx<nWeeks) semanas[idx]+=n;
+  const c=p.criteria; const rf=reachFreq(p);
+  const pracasLbl=c.pracas.map(pr=>{ const [tipo,key]=pr.split(":"); return tipo==="nacional"?"Nacional":tipo==="regiao"?REGIOES[key]:ESTADOS[key]; }).join(", ")||"—";
+  const targetsLbl=c.targets.map(tg=>`${tg.papel==="primario"?"Primário":tg.papel==="secundario"?"Secundário":"Terciário"}: ${TARGET_PROFILES[tg.key]?TARGET_PROFILES[tg.key].label:"—"}`).join(" · ")||"—";
+
+  const headerHtml=`<table class="pr-table" style="margin-bottom:14px;font-size:11px"><tbody>
+    <tr><td><b>Mercado</b></td><td>${esc(pracasLbl)}</td><td><b>Target</b></td><td>${esc(targetsLbl)}</td></tr>
+    <tr><td><b>População estimada no target</b></td><td>${num(publicoEstimado(c))}</td><td><b>Cobertura / frequência desejadas</b></td><td>${c.coberturaAlvo||"—"}% · ${c.freqMin||"—"}x–${c.freqMax||"—"}x</td></tr>
+    <tr><td><b>Cobertura estimada</b></td><td>${rf?rf.reachPct.toFixed(1)+"%":"—"}</td><td><b>Frequência média estimada</b></td><td>${rf?rf.avgFreq.toFixed(1)+"x":"—"}</td></tr>
+  </tbody></table>`;
+
+  const groups=CATS.map(cat=>({cat, lines:dated.filter(l=>{ const v=vehicle(l.veiculo); return v&&v.cat===cat.key; })})).filter(g=>g.lines.length);
+  if(!groups.length) return null;
+
+  const blocksHtml=groups.map(g=>{
+    const isDayGrid=MAPA_MIDIA_GRADE_DIARIA.has(g.cat.key);
+    let min=null,max=null;
+    g.lines.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+    const months=[]; let cur=new Date(min.getFullYear(),min.getMonth(),1); const last=new Date(max.getFullYear(),max.getMonth(),1);
+    while(cur<=last){ months.push(new Date(cur)); cur=new Date(cur.getFullYear(),cur.getMonth()+1,1); }
+
+    const monthTables=months.map(monthStart=>{
+      const monthEnd=new Date(monthStart.getFullYear(),monthStart.getMonth()+1,0);
+      const daysInMonth=monthEnd.getDate();
+      const linesNoMes=g.lines.filter(l=>{ const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00"); return li<=monthEnd && lf>=monthStart; });
+      if(!linesNoMes.length) return null;
+      const weeksInMonth=Math.ceil(daysInMonth/7);
+      const colHeaders=isDayGrid?Array.from({length:daysInMonth},(_,i)=>i+1):Array.from({length:weeksInMonth},(_,i)=>`${i+1}S`);
+
+      const rows=linesNoMes.map(l=>{
+        const v=vehicle(l.veiculo);
+        const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
+        const diasMap=l.insercoesPorDia||{};
+        const temGrade=Object.keys(diasMap).length>0;
+        const cells=Array(colHeaders.length).fill(null);
+        let totalInsercoesMes=0;
+        if(isDayGrid){
+          for(let d=1; d<=daysInMonth; d++){
+            const dayDate=new Date(monthStart.getFullYear(),monthStart.getMonth(),d);
+            const dayKey=dayDate.getFullYear()+"-"+String(dayDate.getMonth()+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+            const n=diasMap[dayKey];
+            if(n>0){ cells[d-1]="X".repeat(Math.min(n,3)); totalInsercoesMes+=n; }
+            else if(!temGrade && dayDate>=li && dayDate<=lf){ cells[d-1]="X"; totalInsercoesMes+=1; }
+          }
+        }else{
+          for(let w=0; w<weeksInMonth; w++){
+            const wStart=new Date(monthStart.getFullYear(),monthStart.getMonth(),w*7+1);
+            const wEnd=new Date(Math.min(new Date(monthStart.getFullYear(),monthStart.getMonth(),(w+1)*7).getTime(), monthEnd.getTime()));
+            let n=0;
+            Object.entries(diasMap).forEach(([dk,cnt])=>{ const d=new Date(dk+"T00:00:00"); if(d>=wStart&&d<=wEnd) n+=cnt; });
+            if(n>0){ cells[w]="X"; totalInsercoesMes+=n; }
+            else if(!temGrade && li<=wEnd && lf>=wStart){ cells[w]="X"; totalInsercoesMes+=1; }
+          }
+        }
+        const gt=grpTrp(l);
+        const totalInsercoesLinha=(l.extra&&l.extra.insercoes)?parseFloat(l.extra.insercoes):totalInsercoesMes;
+        const verbaMes=(temGrade&&totalInsercoesLinha)?(parseFloat(l.verba)||0)*(totalInsercoesMes/totalInsercoesLinha):parseFloat(l.verba)||0;
+        return {label:(l.titulo||(v?v.label:l.veiculo)), horario:(l.extra&&l.extra.horario)||"—", custo:l.custo, cells, totalInsercoesMes, trp:gt?gt.trp:null, verbaMes};
       });
-    }else{
-      for(let w=0; w<nWeeks; w++){
-        const wStart=new Date(min.getTime()+w*7*86400000), wEnd=new Date(min.getTime()+(w+1)*7*86400000-1);
-        if(li<=wEnd && lf>=wStart) semanas[w]="•";
-      }
-    }
-    return {label:(l.titulo||(v?v.label:l.veiculo)), semanas};
-  });
-  const totalsPorSemana=Array(nWeeks).fill(0);
-  rows.forEach(r=>r.semanas.forEach((val,i)=>{ if(typeof val==="number") totalsPorSemana[i]+=val; }));
-  const header=`<tr><th>Veículo / Ação</th>${Array.from({length:nWeeks},(_,i)=>`<th class="num">S${i+1}</th>`).join("")}</tr>`;
-  const body=rows.map(r=>`<tr><td>${esc(r.label)}</td>${r.semanas.map(v=>`<td class="num">${v===null?"—":v}</td>`).join("")}</tr>`).join("");
-  const foot=`<tr class="pr-totalrow"><td>Total de inserções/semana</td>${totalsPorSemana.map(v=>`<td class="num">${v||"—"}</td>`).join("")}</tr>`;
-  return `<div style="overflow-x:auto"><table class="pr-table" style="font-size:10px"><thead>${header}</thead><tbody>${body}${foot}</tbody></table></div>
-    <div class="hint" style="font-size:10px;color:#7A7D93;margin-top:2px">Semanas contadas a partir de ${min.toLocaleDateString("pt-BR")}. "•" indica linha ativa na semana sem grade de dias preenchida; números vêm da grade de inserções por dia (📅 na Alocação).</div>`;
+      const totalInsercoes=rows.reduce((s,r)=>s+r.totalInsercoesMes,0);
+      const totalInvest=rows.reduce((s,r)=>s+(r.verbaMes||0),0);
+      return {monthLabel:monthStart.toLocaleDateString("pt-BR",{month:"long",year:"numeric"}), colHeaders, rows, totalInsercoes, totalInvest};
+    }).filter(Boolean);
+    if(!monthTables.length) return null;
+
+    const tablesHtml=monthTables.map(mt=>`<div style="margin-bottom:10px">
+      <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#7A7D93;margin-bottom:4px">Mês: ${esc(mt.monthLabel)}</div>
+      <div style="overflow-x:auto"><table class="pr-table" style="font-size:9px"><thead><tr>
+        <th>Programa / Veículo</th><th>Horário</th><th class="num">Valor unit.</th>
+        ${mt.colHeaders.map(h=>`<th class="num">${h}</th>`).join("")}
+        <th class="num">Inserções</th><th class="num">TRP</th><th class="num">Investimento</th>
+      </tr></thead><tbody>
+        ${mt.rows.map(r=>`<tr><td>${esc(r.label)}</td><td>${esc(r.horario)}</td><td class="num">${r.custo?money(r.custo):"—"}</td>
+          ${r.cells.map(cell=>`<td class="num">${cell||"—"}</td>`).join("")}
+          <td class="num">${r.totalInsercoesMes||"—"}</td><td class="num">${r.trp!==null?r.trp.toFixed(1):"—"}</td><td class="num">${money(r.verbaMes)}</td></tr>`).join("")}
+        <tr class="pr-totalrow"><td colspan="${3+mt.colHeaders.length}">TOTAL DO MÊS</td><td class="num">${mt.totalInsercoes||"—"}</td><td class="num">—</td><td class="num">${money(mt.totalInvest)}</td></tr>
+      </tbody></table></div>
+    </div>`).join("");
+    return `<div class="pr-cat"><h3>${esc(g.cat.label)}</h3>${tablesHtml}</div>`;
+  }).filter(Boolean).join("");
+
+  return headerHtml + blocksHtml +
+    `<div class="hint" style="font-size:10px;color:#7A7D93;margin-top:2px">"X" marca o dia (rádio/TV/áudio) ou a semana (impresso/OOH/cinema) em que a linha está no ar; onde a grade de inserções por dia (📅 na Alocação) não foi preenchida, o sistema estima com base só no período de início/fim da linha.</div>`;
 }
 function buildPrintReportHTML(p){
   const t=planTotals(p); const c=p.criteria; const rf=reachFreq(p);
@@ -2343,11 +2401,11 @@ function buildPrintReportHTML(p){
 
     <div class="pr-section"><h2>Mapa mensal de investimento</h2>${mapaHtml}</div>
 
-    <div class="pr-section"><h2>Mapa de inserções</h2>${mapaInsercoesHtml||`<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa de inserções.</p>`}</div>
+    <div class="pr-section"><h2>Mapa de mídia</h2>${mapaInsercoesHtml||`<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa de mídia.</p>`}</div>
 
     <div class="pr-section"><h2>Coerência do plano</h2>${coerenciaHtml}</div>
 
-    <div class="pr-footer">Gerado pela ferramenta de Plano de Mídia · valores de audiência/rating estimados para fins didáticos, não são medição real de mercado.</div>
+    <div class="pr-footer">Simulador educacional desenvolvido com apoio de inteligência artificial por Leandro Dorigatti, para uso exclusivo na disciplina de Mídia II na ESAMC. Dados, valores e estimativas são fictícios, com finalidade estritamente didática — não têm valor legal, comercial ou de mercado e não devem ser usados como referência real. Uso restrito aos alunos da disciplina; reprodução ou distribuição fora desse contexto não é autorizada.</div>
   </div>`;
 }
 
