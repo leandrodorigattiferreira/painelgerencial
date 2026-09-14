@@ -2168,6 +2168,23 @@ function openGlossary(){
 }
 function closeModal(){ document.getElementById("backdrop").classList.remove("open"); document.getElementById("modal").classList.remove("wide"); }
 
+// substitui window.confirm — dentro do artefato publicado o confirm() nativo pode ser bloqueado
+// silenciosamente pelo sandbox (o mesmo problema que já tivemos com window.print()), fazendo o
+// botão "parecer" que não funciona. Este modal próprio funciona em qualquer contexto.
+function askConfirm(message, onYes){
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Confirmar ação</h3><button class="x" data-act="close-modal">×</button></header>
+    <div style="padding:4px 20px 20px">
+      <p style="font-size:14px;color:var(--ink-soft);line-height:1.5;margin:0 0 16px">${esc(message)}</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="tbtn" data-act="close-modal">Cancelar</button>
+        <button class="tbtn danger" id="askConfirmYes">Confirmar</button>
+      </div>
+    </div>`;
+  document.getElementById("backdrop").classList.add("open");
+  document.getElementById("askConfirmYes").addEventListener("click",()=>{ closeModal(); onYes(); });
+}
+
 /* ===================== import/export ===================== */
 // monta um registro formatado do plano (capa, briefing, estratégia, linhas por veículo, mapa mensal,
 // personas) só pra impressão/"salvar como PDF" — não aparece na tela, só no @media print.
@@ -2538,7 +2555,7 @@ document.addEventListener("click",e=>{
   else if(act==="del-pico"){
     const p=curPlan(); p.criteria.picos.splice(+b.dataset.idx,1); save(); render();
   }
-  else if(act==="del-plan"){ e.stopPropagation(); if(confirm("Excluir este plano de mídia?")) delPlan(id); }
+  else if(act==="del-plan"){ e.stopPropagation(); askConfirm("Excluir este plano de mídia? Essa ação não pode ser desfeita.", ()=>delPlan(id)); }
   else if(act==="add-line"){
     const p=curPlan();
     const veh = b.dataset.veiculo ? vehicle(b.dataset.veiculo) : VEHICLES[0];
@@ -2572,7 +2589,7 @@ document.addEventListener("click",e=>{
   else if(act==="print") exportPDF();
   else if(act==="export") exportJSON();
   else if(act==="export-excel") exportExcel();
-  else if(act==="reset-plan"){ if(confirm("Apagar todos os dados deste plano e começar do zero? Essa ação não pode ser desfeita.")) resetPlan(curPlan().id); }
+  else if(act==="reset-plan"){ askConfirm("Apagar todos os dados deste plano e começar do zero? Essa ação não pode ser desfeita.", ()=>resetPlan(curPlan().id)); }
   else if(act==="midiakits") openMidiaKits();
   else if(act==="import") document.getElementById("importFile").click();
 });
