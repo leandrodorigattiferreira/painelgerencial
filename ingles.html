@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Inglês Diário</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F6; --surface:#FFFFFF; --surface-2:#F8F9FC;
+    --ink:#171C28; --ink-soft:#414A5E; --muted:#838C9E; --faint:#AEB5C2;
+    --line:#E7EAF0; --line-strong:#D6DAE3;
+    --accent:#171C28; --accent-bg:#EBEDF2;
+    --good:#159069; --good-bg:#E4F3EE;
+    --bad:#DA3B41; --bad-bg:#FBEAEA;
+    --warn:#D08412; --warn-bg:#FBF1E2;
+    --brand:#5759D1; --brand-bg:#ECEDFB;
+    --r:16px; --r-sm:11px;
+    --sh:0 1px 2px rgba(23,28,40,.04), 0 4px 16px rgba(23,28,40,.05);
+    --sh-pop:0 16px 50px rgba(23,28,40,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;min-height:100%}
+  body{
+    background:radial-gradient(1100px 520px at 15% -8%, #F3F6FB 0%, rgba(243,246,251,0) 60%),
+      radial-gradient(900px 480px at 100% 0%, #F0EDF6 0%, rgba(240,237,246,0) 55%), var(--bg);
+    color:var(--ink); font-family:"Hanken Grotesk",system-ui,sans-serif; font-size:15px; line-height:1.45;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",monospace;font-feature-settings:"tnum"}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  input,select,textarea{font-family:inherit}
+  .wrap{max-width:760px;margin:0 auto;padding:26px 18px 90px}
+  a.back{font-size:12.5px;font-weight:700;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+  a.back:hover{color:var(--ink)}
+  .top{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:10px 0 20px}
+  .top h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:27px;letter-spacing:-.02em;margin:0}
+  .top .sub{color:var(--muted);font-size:13.5px;margin-top:5px}
+
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:22px}
+  .tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;box-shadow:var(--sh)}
+  .tile .v{font-family:"Bricolage Grotesque";font-size:24px;font-weight:800;line-height:1}
+  .tile .k{font-size:12px;color:var(--muted);margin-top:3px;font-weight:600}
+
+  .seg{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;gap:2px;box-shadow:var(--sh);margin-bottom:18px;width:fit-content}
+  .seg button{border:0;background:transparent;border-radius:8px;padding:8px 15px;font-weight:600;font-size:13.5px;color:var(--muted)}
+  .seg button.on{background:var(--accent);color:#fff}
+
+  .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:20px;box-shadow:var(--sh);margin-bottom:18px}
+  .panel h2{font-family:"Bricolage Grotesque";font-size:14px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+
+  /* flashcard */
+  .card3d{perspective:1200px;max-width:520px;margin:0 auto}
+  .flip{position:relative;min-height:200px;border-radius:16px;cursor:pointer;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.8,.2,1)}
+  .flip.on{transform:rotateY(180deg)}
+  .face{position:absolute;inset:0;backface-visibility:hidden;border-radius:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;border:1px solid var(--line)}
+  .face.front{background:var(--surface-2)}
+  .face.back{background:var(--brand-bg);transform:rotateY(180deg)}
+  .face .w{font-family:"Bricolage Grotesque";font-size:28px;font-weight:800}
+  .face .hint{margin-top:8px;font-size:12.5px;color:var(--muted)}
+  .face .ex{margin-top:12px;font-size:13.5px;color:var(--ink-soft);font-style:italic}
+  .cardmeta{text-align:center;margin-top:10px;font-size:12px;color:var(--muted)}
+
+  .gradebar{display:flex;gap:8px;margin-top:16px;max-width:520px;margin-left:auto;margin-right:auto}
+  .gradebar button{flex:1;border:0;border-radius:11px;padding:11px 6px;font-weight:700;font-size:13px;color:#fff}
+  .g0{background:var(--bad)} .g1{background:var(--warn)} .g2{background:#3E8FD0} .g3{background:var(--good)}
+  .gradebar button:disabled{opacity:.4;cursor:default}
+
+  .empty{background:var(--surface);border:1px dashed var(--line-strong);border-radius:var(--r);padding:36px 22px;text-align:center;color:var(--muted)}
+  .empty .em{font-family:"Bricolage Grotesque";color:var(--ink);font-weight:700;font-size:16px;margin-bottom:5px}
+
+  .f{margin-bottom:12px}
+  .f label{display:block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+  .f input,.f textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:10px 12px;font-size:14.5px;color:var(--ink);background:var(--surface-2)}
+  .f textarea{resize:vertical;min-height:56px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .addbtn{border:0;border-radius:11px;padding:10px 16px;font-weight:700;font-size:14px;color:#fff;background:var(--accent)}
+  .addbtn:hover{filter:brightness(1.1)}
+  .addbtn.ghost{background:transparent;color:var(--bad);font-weight:600}
+
+  .wlist{display:flex;flex-direction:column;gap:8px}
+  .wrow{display:flex;align-items:center;gap:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+  .wrow .ww{flex:1;font-weight:600;font-size:14px}
+  .wrow .tt{color:var(--muted);font-size:13px}
+  .wrow .due{font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+  .due.today{background:var(--warn-bg);color:var(--warn)}
+  .due.late{background:var(--bad-bg);color:var(--bad)}
+  .due.future{background:var(--good-bg);color:var(--good)}
+  .rm{border:0;background:transparent;color:var(--faint);width:26px;height:26px;border-radius:7px;flex:0 0 auto}
+  .rm:hover{background:var(--bad-bg);color:var(--bad)}
+
+  .prompt{font-family:"Bricolage Grotesque";font-size:19px;font-weight:700;margin-bottom:12px;line-height:1.35}
+  .streakflame{font-size:13px}
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:var(--ink);color:#fff;padding:11px 18px;border-radius:12px;font-weight:600;font-size:14px;box-shadow:var(--sh-pop);z-index:90;opacity:0;transition:.28s;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  @media(max-width:560px){.tiles{grid-template-columns:1fr 1fr}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; Painel</a>
+  <div class="top">
+    <div><h1>Inglês Diário</h1><div class="sub" id="sub"></div></div>
+  </div>
+
+  <div class="tiles">
+    <div class="tile"><div class="v" id="statStreak">0</div><div class="k">Dias seguidos 🔥</div></div>
+    <div class="tile"><div class="v" id="statDue">0</div><div class="k">Palavras pra revisar hoje</div></div>
+    <div class="tile"><div class="v" id="statTotal">0</div><div class="k">Palavras no baralho</div></div>
+  </div>
+
+  <div class="seg" id="tabs">
+    <button data-tab="review" class="on">Revisar</button>
+    <button data-tab="write">Escrever</button>
+    <button data-tab="deck">Meu vocabulário</button>
+  </div>
+
+  <div id="content"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+"use strict";
+const KEY="ingles-diario-v1";
+const SEED=[
+  ["nevertheless","mesmo assim / não obstante","She was tired; nevertheless, she kept working."],
+  ["to overwhelm","sobrecarregar / dominar","The amount of work overwhelmed the new manager."],
+  ["deadline","prazo final","We need to hit the deadline by Friday."],
+  ["to figure out","descobrir / entender","I need to figure out why the report failed."],
+  ["thorough","minucioso / completo","He did a thorough review of the contract."],
+  ["to catch up","se atualizar / colocar em dia","Let's catch up on the project status tomorrow."],
+  ["worthwhile","que vale a pena","Investing time in training is worthwhile."],
+  ["to bring up","trazer à tona / mencionar","She brought up an important point in the meeting."],
+  ["reliable","confiável","We need a more reliable supplier."],
+  ["to tackle","enfrentar / lidar com","The team decided to tackle the issue head-on."],
+  ["on the other hand","por outro lado","The plan is risky; on the other hand, it could pay off."],
+  ["to point out","apontar / destacar","He pointed out a flaw in the strategy."],
+  ["straightforward","simples / direto","The instructions were straightforward."],
+  ["to come up with","criar / propor","We need to come up with a better solution."],
+  ["ongoing","em andamento","This is an ongoing negotiation."]
+];
+const PROMPTS=[
+  "Describe your work day using at least three words you've learned recently.",
+  "Write 3 sentences about a goal you have for this month.",
+  "Explain a recent decision you made at work, in English.",
+  "Write a short email asking a colleague for an update on a project.",
+  "Describe a challenge you're facing right now and how you plan to solve it.",
+  "Write about something that went well this week.",
+  "Summarize the plot of a movie or show you watched recently.",
+  "Write instructions for a task you know well, as if teaching someone.",
+  "Describe your ideal weekend in English.",
+  "Write a short opinion about remote work vs. office work."
+];
+
+let data=load();
+function load(){
+  try{
+    const v=localStorage.getItem(KEY);
+    if(v) return JSON.parse(v);
+  }catch(e){}
+  return {
+    words: SEED.map(seedWord),
+    streak:0, lastDay:null,
+    writing:{}
+  };
+}
+function seedWord([w,t,ex]){
+  return {id:cryptoId(), word:w, translation:t, example:ex, box:0, due:todayStr(), reps:0};
+}
+function cryptoId(){return Date.now().toString(36)+Math.random().toString(36).slice(2,8);}
+function save(){ try{ localStorage.setItem(KEY, JSON.stringify(data)); }catch(e){} }
+function todayStr(){ const d=new Date(); d.setHours(0,0,0,0); return d.toISOString().slice(0,10); }
+function addDays(str,n){ const d=new Date(str+"T00:00:00"); d.setDate(d.getDate()+n); return d.toISOString().slice(0,10); }
+function esc(s){return(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* Leitner-style spaced repetition: box 0..4, intervals in days */
+const INTERVALS=[0,1,3,7,16];
+function markStreak(){
+  const t=todayStr();
+  if(data.lastDay===t) return;
+  const y=addDays(t,-1);
+  data.streak = (data.lastDay===y) ? data.streak+1 : 1;
+  data.lastDay=t;
+  save();
+}
+
+let activeTab="review";
+let curCard=null, flipped=false;
+
+function dueWords(){
+  const t=todayStr();
+  return data.words.filter(w=>w.due<=t);
+}
+
+function render(){
+  document.getElementById("sub").textContent=new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"numeric",month:"long"});
+  document.getElementById("statStreak").textContent=data.streak;
+  document.getElementById("statDue").textContent=dueWords().length;
+  document.getElementById("statTotal").textContent=data.words.length;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===activeTab));
+  const c=document.getElementById("content");
+  if(activeTab==="review") c.innerHTML=renderReview();
+  else if(activeTab==="write") c.innerHTML=renderWrite();
+  else c.innerHTML=renderDeck();
+  wire();
+}
+
+function renderReview(){
+  const due=dueWords();
+  if(!due.length){
+    return `<div class="empty"><div class="em">Tudo revisado por hoje 🎉</div>Volte amanhã ou adicione novas palavras na aba "Meu vocabulário".</div>`;
+  }
+  if(!curCard || !due.find(w=>w.id===curCard.id)) curCard=due[0];
+  flipped=false;
+  return `
+    <div class="panel">
+      <h2>Cartão ${due.indexOf(curCard)+1} de ${due.length}</h2>
+      <div class="card3d">
+        <div class="flip" id="flipEl">
+          <div class="face front"><div class="w">${esc(curCard.word)}</div><div class="hint">Toque para ver a tradução</div></div>
+          <div class="face back"><div class="w">${esc(curCard.translation)}</div><div class="ex">${esc(curCard.example)}</div></div>
+        </div>
+      </div>
+      <div class="cardmeta">Caixa ${curCard.box+1}/5 · ${curCard.reps} revisões</div>
+      <div class="gradebar">
+        <button class="g0" data-grade="0" ${flipped?"":"disabled"}>Não sabia</button>
+        <button class="g1" data-grade="1" ${flipped?"":"disabled"}>Difícil</button>
+        <button class="g2" data-grade="2" ${flipped?"":"disabled"}>Bom</button>
+        <button class="g3" data-grade="3" ${flipped?"":"disabled"}>Fácil</button>
+      </div>
+    </div>`;
+}
+
+function renderWrite(){
+  const t=todayStr();
+  const idx=Math.abs(hash(t))%PROMPTS.length;
+  const prompt=PROMPTS[idx];
+  const savedText=data.writing[t]||"";
+  return `
+    <div class="panel">
+      <h2>Prática de escrita de hoje</h2>
+      <div class="prompt">${esc(prompt)}</div>
+      <textarea id="writeArea" rows="8" placeholder="Write your answer in English...">${esc(savedText)}</textarea>
+      <div style="margin-top:12px;display:flex;gap:10px;align-items:center">
+        <button class="addbtn" id="saveWrite">Salvar</button>
+        <span style="font-size:12.5px;color:var(--muted)">${savedText?"Salvo hoje ✔":"Ainda não salvo"}</span>
+      </div>
+    </div>`;
+}
+function hash(s){let h=0;for(let i=0;i<s.length;i++){h=(h<<5)-h+s.charCodeAt(i);h|=0;}return h;}
+
+function renderDeck(){
+  const t=todayStr();
+  const rows=data.words.slice().sort((a,b)=>a.due.localeCompare(b.due)).map(w=>{
+    const cls = w.due<t?"late": w.due===t?"today":"future";
+    const label = w.due<t?"atrasada": w.due===t?"hoje":w.due;
+    return `<div class="wrow">
+      <div class="ww">${esc(w.word)}</div>
+      <div class="tt">${esc(w.translation)}</div>
+      <span class="due ${cls}">${label}</span>
+      <button class="rm" data-del="${w.id}" aria-label="Remover">✕</button>
+    </div>`;
+  }).join("");
+  return `
+    <div class="panel">
+      <h2>Adicionar palavra</h2>
+      <div class="row2">
+        <div class="f"><label>Palavra / expressão (inglês)</label><input id="nWord" type="text" placeholder="e.g. to sort out"></div>
+        <div class="f"><label>Tradução</label><input id="nTrans" type="text" placeholder="e.g. resolver"></div>
+      </div>
+      <div class="f"><label>Frase de exemplo (opcional)</label><input id="nEx" type="text" placeholder="e.g. Let's sort out this issue today."></div>
+      <button class="addbtn" id="addWord">Adicionar ao baralho</button>
+    </div>
+    <div class="panel">
+      <h2>Baralho (${data.words.length})</h2>
+      <div class="wlist">${rows || '<div class="empty">Nenhuma palavra ainda.</div>'}</div>
+    </div>`;
+}
+
+function wire(){
+  document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{activeTab=b.dataset.tab;render();});
+
+  const flip=document.getElementById("flipEl");
+  if(flip) flip.onclick=()=>{ flipped=!flipped; flip.classList.toggle("on",flipped); document.querySelectorAll(".gradebar button").forEach(b=>b.disabled=!flipped); };
+
+  document.querySelectorAll("[data-grade]").forEach(b=>b.onclick=()=>{
+    const g=+b.dataset.grade;
+    if(!curCard) return;
+    if(g===0) curCard.box=0;
+    else if(g===1) curCard.box=Math.max(0,curCard.box-1);
+    else if(g===2) curCard.box=Math.min(4,curCard.box+1);
+    else curCard.box=Math.min(4,curCard.box+2);
+    curCard.reps++;
+    curCard.due=addDays(todayStr(),INTERVALS[curCard.box]);
+    markStreak();
+    save();
+    curCard=null;
+    render();
+  });
+
+  const saveWrite=document.getElementById("saveWrite");
+  if(saveWrite) saveWrite.onclick=()=>{
+    const t=todayStr();
+    const txt=document.getElementById("writeArea").value.trim();
+    data.writing[t]=txt;
+    if(txt) markStreak();
+    save();
+    toast("Salvo!");
+    render();
+  };
+
+  const addWord=document.getElementById("addWord");
+  if(addWord) addWord.onclick=()=>{
+    const w=document.getElementById("nWord").value.trim();
+    const tr=document.getElementById("nTrans").value.trim();
+    const ex=document.getElementById("nEx").value.trim();
+    if(!w||!tr){ toast("Preencha a palavra e a tradução"); return; }
+    data.words.push({id:cryptoId(),word:w,translation:tr,example:ex||"—",box:0,due:todayStr(),reps:0});
+    save();
+    toast("Palavra adicionada");
+    render();
+  };
+
+  document.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    data.words=data.words.filter(w=>w.id!==b.dataset.del);
+    save();
+    render();
+  });
+}
+
+render();
+</script>
+</body>
+</html>
