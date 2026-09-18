@@ -92,6 +92,16 @@
   table.tx td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
   table.tx tr:last-child td{border-bottom:0}
   table.tx tr:hover td{background:var(--surface-2)}
+  table.tx tr.clickable{cursor:pointer}
+  .badge-parcel{display:inline-block;font-size:10.5px;font-weight:700;color:var(--card);background:var(--card-bg);border-radius:99px;padding:1px 7px;margin-left:6px}
+  .filters{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+  .filters input,.filters select{border:1px solid var(--line-strong);border-radius:10px;padding:8px 11px;background:var(--surface)}
+  .filters input[type=search]{flex:1;min-width:180px}
+  .commit{margin-top:4px}
+  .commit .row{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px}
+  .commit .row b{font-weight:700}
+  .pbar{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+  .pbar>i{display:block;height:100%;border-radius:99px;transition:width .4s}
   .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px}
   .pill.in{background:var(--in-bg);color:var(--in)}
   .pill.out{background:var(--out-bg);color:var(--out)}
@@ -148,6 +158,7 @@
     <button class="navbtn on" data-view="dash">📊 Painel do mês</button>
     <button class="navbtn" data-view="lista">📋 Lançamentos</button>
     <button class="navbtn" data-view="cartoes">💳 Cartões</button>
+    <button class="navbtn" data-view="parcelamentos">🧾 Parcelamentos</button>
     <button class="navbtn" data-view="recorrentes">🔁 Recorrentes</button>
     <button class="navbtn" data-view="categorias">🏷️ Categorias</button>
 
@@ -253,6 +264,43 @@ function cardInvoice(card, y, m){
   return {total, items};
 }
 
+/* ============ parcelamentos ============ */
+function activeParcelGroups(fromDate){
+  const groups={};
+  for(const t of data.tx){
+    if(!t.parcel) continue;
+    const g=groups[t.parcel.groupId] || (groups[t.parcel.groupId]={desc:t.desc, cat:t.cat, cardId:t.cardId, total:t.parcel.total, items:[]});
+    g.items.push(t);
+  }
+  return Object.entries(groups).map(([groupId,g])=>{
+    g.items.sort((a,b)=>a.parcel.idx-b.parcel.idx);
+    const remaining=g.items.filter(t=>t.date>=fromDate);
+    return {groupId, desc:g.desc, cat:g.cat, cardId:g.cardId, totalParcelas:g.total, itemValue:g.items[0]?.amount||0,
+      remainingCount:remaining.length, remainingValue:remaining.reduce((s,t)=>s+t.amount,0),
+      nextDate: remaining[0]?.date || null, items:g.items};
+  }).filter(g=>g.remainingCount>0).sort((a,b)=>(a.nextDate||"").localeCompare(b.nextDate||""));
+}
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+
+function committedFuture(monthsAhead){
+  // soma de parcelas futuras (a partir de hoje) + recorrentes fixas de saída, projetadas por N meses
+  const from=todayISO();
+  const groups=activeParcelGroups(from);
+  const parcelSum=groups.reduce((s,g)=>s+g.remainingValue,0);
+  const recurMonthly=data.recur.filter(r=>r.type==="saida").reduce((s,r)=>s+r.amount,0);
+  return parcelSum + recurMonthly*monthsAhead;
+}
+function avgIncome(){
+  const now=new Date();
+  let sum=0,n=0;
+  for(let i=0;i<3;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const v=monthTx(d.getFullYear(),d.getMonth()).filter(t=>t.type==="entrada").reduce((s,t)=>s+t.amount,0);
+    if(v>0){ sum+=v; n++; }
+  }
+  return n? sum/n : monthTx(now.getFullYear(),now.getMonth()).filter(t=>t.type==="entrada").reduce((s,t)=>s+t.amount,0);
+}
+
 /* ============ render shell ============ */
 function render(){
   document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
@@ -260,6 +308,7 @@ function render(){
   if(view==="dash") main.innerHTML=renderDash();
   else if(view==="lista") main.innerHTML=renderLista();
   else if(view==="cartoes") main.innerHTML=renderCartoes();
+  else if(view==="parcelamentos") main.innerHTML=renderParcelamentos();
   else if(view==="recorrentes") main.innerHTML=renderRecorrentes();
   else if(view==="categorias") main.innerHTML=renderCategorias();
   wireDynamic();
@@ -282,7 +331,14 @@ function renderDash(){
   const maxCat=catList.length?catList[0][1]:1;
   const catColor=Object.fromEntries(data.cats.saida.map(c=>c));
 
-  const recent=[...txs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+  const recent=[...txs].sort((a,b)=>b.date.localeCompare(a.date));
+
+  const income=avgIncome();
+  const committed3=committedFuture(3);
+  const pctCommit=income>0?Math.min(999,Math.round(committed3/income/3*100)):0;
+  const parcelGroups=activeParcelGroups(todayISO());
+  const parcelRemaining=parcelGroups.reduce((s,g)=>s+g.remainingValue,0);
+  const recurMonthly=data.recur.filter(r=>r.type==="saida").reduce((s,r)=>s+r.amount,0);
 
   return `
   <div class="head">
@@ -297,20 +353,32 @@ function renderDash(){
   </div>
   <div class="grid2">
     <div class="card">
-      <h3>Últimos lançamentos <span class="n">${txs.length} no mês</span></h3>
+      <h3>Lançamentos do mês <span class="n">${txs.length} no total · clique para editar</span></h3>
       ${recent.length?`<table class="tx"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
         ${recent.map(rowTx).join("")}
       </tbody></table>`:`<div class="empty">Nada lançado ainda neste mês. Use "＋ Lançar agora".</div>`}
     </div>
-    <div class="card">
-      <h3>Por categoria (saídas)</h3>
-      ${catList.length?catList.map(([c,v])=>`
-        <div class="catrow">
-          <span class="dot" style="background:${catColor[c]||"#838C9E"}"></span>
-          <span class="nm">${c}</span>
-          <span class="bar"><i style="width:${Math.round(v/maxCat*100)}%;background:${catColor[c]||"#838C9E"}"></i></span>
-          <span class="val mono">${BRL(v)}</span>
-        </div>`).join(""):`<div class="empty">Sem saídas registradas.</div>`}
+    <div>
+      <div class="card">
+        <h3>Por categoria (saídas)</h3>
+        ${catList.length?catList.map(([c,v])=>`
+          <div class="catrow">
+            <span class="dot" style="background:${catColor[c]||"#838C9E"}"></span>
+            <span class="nm">${c}</span>
+            <span class="bar"><i style="width:${Math.round(v/maxCat*100)}%;background:${catColor[c]||"#838C9E"}"></i></span>
+            <span class="val mono">${BRL(v)}</span>
+          </div>`).join(""):`<div class="empty">Sem saídas registradas.</div>`}
+      </div>
+      <div class="card">
+        <h3>Comprometimento de receita</h3>
+        <div class="commit">
+          <div class="row"><span>Renda média (3 últ. meses)</span><b class="mono">${BRL(income)}</b></div>
+          <div class="row"><span>Parcelas em aberto</span><b class="mono">${BRL(parcelRemaining)}</b></div>
+          <div class="row"><span>Fixas recorrentes / mês</span><b class="mono">${BRL(recurMonthly)}</b></div>
+          <div class="pbar" style="margin:10px 0 6px"><i style="width:${Math.min(100,pctCommit)}%;background:${pctCommit>60?"var(--out)":pctCommit>35?"var(--warn)":"var(--in)"}"></i></div>
+          <div class="row" style="margin-bottom:0"><span>Da renda já comprometida (próx. 3 meses)</span><b style="color:${pctCommit>60?"var(--out)":pctCommit>35?"var(--warn)":"var(--in)"}">${pctCommit}%</b></div>
+        </div>
+      </div>
     </div>
   </div>`;
 }
@@ -318,9 +386,10 @@ function renderDash(){
 function rowTx(t){
   const cardName=t.cardId?(data.cards.find(c=>c.id===t.cardId)?.name||""):"";
   const methodLbl=t.method==="cartao"?`💳 ${cardName}`:(t.method==="pix"?"Pix":(t.method==="debito"?"Débito":"Dinheiro"));
-  return `<tr>
+  const parcelBadge=t.parcel?`<span class="badge-parcel">${t.parcel.idx}/${t.parcel.total}</span>`:"";
+  return `<tr class="clickable" data-edit="${t.id}">
     <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}</td>
-    <td>${esc(t.desc)}<div style="font-size:11px;color:var(--muted)">${methodLbl}</div></td>
+    <td>${esc(t.desc)}${parcelBadge}<div style="font-size:11px;color:var(--muted)">${methodLbl}</div></td>
     <td><span class="pill ${t.type==="entrada"?"in":"out"}">${esc(t.cat)}</span></td>
     <td class="amt ${t.type==="entrada"?"pos":"neg"} mono">${t.type==="entrada"?"+":"−"} ${BRL(t.amount)}</td>
     <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
@@ -337,26 +406,64 @@ function monthNav(){
   </div>`;
 }
 
+let listaAllMonths=false, listaSearch="", listaCat="";
 function renderLista(){
   const y=viewYear,m=viewMonth;
-  const txs=[...monthTx(y,m)].sort((a,b)=>b.date.localeCompare(a.date));
+  let txs = listaAllMonths ? [...data.tx] : [...monthTx(y,m)];
+  if(listaSearch.trim()){
+    const q=listaSearch.trim().toLowerCase();
+    txs=txs.filter(t=>t.desc.toLowerCase().includes(q));
+  }
+  if(listaCat) txs=txs.filter(t=>t.cat===listaCat);
+  txs.sort((a,b)=>b.date.localeCompare(a.date));
+  const allCats=[...new Set(data.tx.map(t=>t.cat))].sort();
+  const total=txs.reduce((s,t)=>s+(t.type==="entrada"?t.amount:-t.amount),0);
+
   return `
-  <div class="head"><div><h2>Lançamentos</h2><p>Todas as entradas e saídas do mês</p></div>${monthNav()}</div>
+  <div class="head"><div><h2>Lançamentos</h2><p>${listaAllMonths?"Todo o histórico":"Somente o mês selecionado"} · ${txs.length} itens · saldo ${BRL(total)}</p></div>${listaAllMonths?"":monthNav()}</div>
   <div class="card">
+    <div class="filters">
+      <input type="search" id="listaSearch" placeholder="Buscar por descrição..." value="${esc(listaSearch)}">
+      <select id="listaCatFilter"><option value="">Todas categorias</option>${allCats.map(c=>`<option value="${esc(c)}" ${listaCat===c?"selected":""}>${esc(c)}</option>`).join("")}</select>
+      <button class="chip ${listaAllMonths?"on":""}" id="toggleAllMonths">${listaAllMonths?"Ver só este mês":"Ver todos os meses"}</button>
+    </div>
     ${txs.length?`<table class="tx"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
       ${txs.map(t=>{
         const cardName=t.cardId?(data.cards.find(c=>c.id===t.cardId)?.name||""):"";
         const methodLbl=t.method==="cartao"?`💳 ${cardName}`:(t.method==="pix"?"Pix":(t.method==="debito"?"Débito":"Dinheiro"));
-        return `<tr>
-          <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}</td>
-          <td>${esc(t.desc)}</td>
+        const parcelBadge=t.parcel?`<span class="badge-parcel">${t.parcel.idx}/${t.parcel.total}</span>`:"";
+        return `<tr class="clickable" data-edit="${t.id}">
+          <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}${listaAllMonths?`<div style="font-size:10.5px;color:var(--faint)">${t.date.slice(0,4)}</div>`:""}</td>
+          <td>${esc(t.desc)}${parcelBadge}</td>
           <td><span class="pill ${t.type==="entrada"?"in":"out"}">${esc(t.cat)}</span></td>
           <td style="color:var(--muted);font-size:12.5px">${methodLbl}</td>
           <td class="amt ${t.type==="entrada"?"pos":"neg"} mono">${t.type==="entrada"?"+":"−"} ${BRL(t.amount)}</td>
           <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
         </tr>`;
       }).join("")}
-    </tbody></table>`:`<div class="empty">Nenhum lançamento neste mês.</div>`}
+    </tbody></table>`:`<div class="empty">Nenhum lançamento encontrado.</div>`}
+  </div>`;
+}
+
+function renderParcelamentos(){
+  const groups=activeParcelGroups(todayISO());
+  const totalRemaining=groups.reduce((s,g)=>s+g.remainingValue,0);
+  return `
+  <div class="head"><div><h2>Parcelamentos</h2><p>${groups.length} parcelamentos em aberto · total restante ${BRL(totalRemaining)}</p></div></div>
+  <div class="card">
+    ${groups.length?`<table class="tx"><thead><tr><th>Descrição</th><th>Categoria</th><th>Cartão</th><th>Restam</th><th>Próxima parcela</th><th style="text-align:right">Valor restante</th></tr></thead><tbody>
+      ${groups.map(g=>{
+        const cardName=g.cardId?(data.cards.find(c=>c.id===g.cardId)?.name||""):"";
+        return `<tr>
+          <td>${esc(g.desc)}</td>
+          <td><span class="pill out">${esc(g.cat)}</span></td>
+          <td style="color:var(--muted);font-size:12.5px">💳 ${esc(cardName)}</td>
+          <td class="mono">${g.remainingCount}/${g.totalParcelas}</td>
+          <td class="mono" style="color:var(--muted)">${g.nextDate?fmtDate(g.nextDate):"—"}</td>
+          <td class="amt neg mono">${BRL(g.remainingValue)}</td>
+        </tr>`;
+      }).join("")}
+    </tbody></table>`:`<div class="empty">Nenhum parcelamento em aberto. Lance uma compra no cartão e informe o número de parcelas.</div>`}
   </div>`;
 }
 
@@ -420,19 +527,26 @@ let draft=null;
 function openQuick(prefill){
   ensureCats();
   draft=Object.assign({
-    type:"saida", amount:"", desc:"", cat:lastCat.saida, method:"pix", cardId:data.cards[0]?.id||null,
-    date:new Date().toISOString().slice(0,10), repeat:false
+    id:null, type:"saida", amount:"", desc:"", cat:lastCat.saida, method:"pix", cardId:data.cards[0]?.id||null,
+    date:new Date().toISOString().slice(0,10), repeat:false, parcelas:1
   }, prefill||{});
   renderModal();
   document.getElementById("overlay").classList.remove("hidden");
   setTimeout(()=>document.getElementById("amountInput")?.focus(),30);
 }
+function openEdit(id){
+  const t=data.tx.find(x=>x.id===id);
+  if(!t) return;
+  openQuick({id:t.id, type:t.type, amount:String(t.amount).replace(".",","), desc:t.desc, cat:t.cat, method:t.method, cardId:t.cardId, date:t.date, repeat:!!t.recurId, parcelas:1});
+}
 function closeModal(){ document.getElementById("overlay").classList.add("hidden"); draft=null; }
 
 function renderModal(){
   const cats=data.cats[draft.type];
+  const isEdit=!!draft.id;
+  const isParceled=isEdit && data.tx.find(t=>t.id===draft.id)?.parcel;
   document.getElementById("modal").innerHTML=`
-    <h3>Lançar</h3>
+    <h3>${isEdit?"Editar lançamento":"Lançar"}</h3>
     <div class="seg">
       <button type="button" data-t="entrada" class="${draft.type==="entrada"?"on":""}">↓ Entrada</button>
       <button type="button" data-t="saida" class="${draft.type==="saida"?"on":""}">↑ Saída</button>
@@ -451,16 +565,20 @@ function renderModal(){
         <option value="cartao" ${draft.method==="cartao"?"selected":""} ${data.cards.length?"":"disabled"}>Cartão de crédito</option>
       </select></div>
     </div>
-    ${draft.method==="cartao"?`<div class="f"><label>Cartão</label><select id="cardSelect">
-      ${data.cards.map(c=>`<option value="${c.id}" ${draft.cardId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
-    </select></div>`:""}
+    ${draft.method==="cartao"?`<div class="row2">
+      <div class="f"><label>Cartão</label><select id="cardSelect">
+        ${data.cards.map(c=>`<option value="${c.id}" ${draft.cardId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
+      </select></div>
+      <div class="f"><label>Parcelas</label><input id="parcelasInput" type="number" min="1" max="48" value="${draft.parcelas}" ${isParceled?"disabled title=\"Edite a parcela individualmente\"":""}></div>
+    </div>`:""}
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-weight:600;margin-top:4px">
       <input type="checkbox" id="repeatInput" ${draft.repeat?"checked":""}> Repetir todo mês (recorrente)
     </label>
     <div class="modalactions">
-      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      ${isEdit?`<button class="btn" style="background:var(--out-bg);color:var(--out)" id="deleteBtn">Excluir</button>`:`<button class="btn ghost" id="cancelBtn">Cancelar</button>`}
       <button class="btn primary" id="saveBtn">Salvar</button>
-    </div>`;
+    </div>
+    ${isEdit?`<button class="btn ghost" id="cancelBtn" style="margin-top:8px;width:100%">Cancelar</button>`:""}`;
   wireModal();
 }
 
@@ -476,6 +594,11 @@ function wireModal(){
   if(cardSel) cardSel.onchange=()=>{ draft.cardId=cardSel.value; };
   document.getElementById("cancelBtn").onclick=closeModal;
   document.getElementById("saveBtn").onclick=commitDraft;
+  const delBtn=document.getElementById("deleteBtn");
+  if(delBtn) delBtn.onclick=()=>{
+    if(!confirm("Excluir este lançamento?")) return;
+    data.tx=data.tx.filter(t=>t.id!==draft.id); save(); closeModal(); render();
+  };
   const amtEl=document.getElementById("amountInput");
   amtEl.onkeydown=(e)=>{ if(e.key==="Enter") commitDraft(); };
 }
@@ -488,6 +611,15 @@ function parseAmount(s){
   return isNaN(n)?0:n;
 }
 
+function addMonths(dateStr, n){
+  const d=new Date(dateStr+"T00:00:00");
+  const day=d.getDate();
+  d.setDate(1); d.setMonth(d.getMonth()+n);
+  const lastDay=new Date(d.getFullYear(),d.getMonth()+1,0).getDate();
+  d.setDate(Math.min(day,lastDay));
+  return d.toISOString().slice(0,10);
+}
+
 function commitDraft(){
   const amount=parseAmount(document.getElementById("amountInput").value);
   const desc=document.getElementById("descInput").value.trim();
@@ -496,15 +628,35 @@ function commitDraft(){
   const repeat=document.getElementById("repeatInput").checked;
   const cardSel=document.getElementById("cardSelect");
   if(cardSel) draft.cardId=cardSel.value;
+  const parcelasEl=document.getElementById("parcelasInput");
+  const parcelas=parcelasEl && !parcelasEl.disabled ? Math.max(1,Math.min(48,parseInt(parcelasEl.value)||1)) : 1;
   if(amount<=0){ toast("Informe um valor válido"); return; }
   if(!desc){ toast("Dê uma descrição curta"); return; }
   lastCat[draft.type]=draft.cat;
 
-  const id=uid();
-  const recurId = repeat ? "r_"+id : null;
-  data.tx.push({id, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, date, recurId});
-  if(repeat){
-    data.recur.push({id:recurId, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, day:new Date(date+"T00:00:00").getDate()});
+  if(draft.id){
+    const t=data.tx.find(x=>x.id===draft.id);
+    if(t) Object.assign(t, {type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, date});
+    save(); closeModal(); toast("Atualizado ✓"); render();
+    return;
+  }
+
+  const recurId = repeat ? "r_"+uid() : null;
+  if(method==="cartao" && parcelas>1){
+    const groupId="p_"+uid();
+    const base=Math.floor((amount/parcelas)*100)/100;
+    let allocated=0;
+    for(let i=0;i<parcelas;i++){
+      const value = (i===parcelas-1) ? Math.round((amount-allocated)*100)/100 : base;
+      allocated+=value;
+      data.tx.push({id:uid(), type:draft.type, amount:value, desc, cat:draft.cat, method, cardId:draft.cardId, date:addMonths(date,i), recurId:null, parcel:{groupId, idx:i+1, total:parcelas}});
+    }
+  }else{
+    const id=uid();
+    data.tx.push({id, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, date, recurId, parcel:null});
+    if(repeat){
+      data.recur.push({id:recurId, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, day:new Date(date+"T00:00:00").getDate()});
+    }
   }
   save(); closeModal(); toast("Lançado ✓"); render();
 }
@@ -590,9 +742,22 @@ function doImport(mode){
 
 /* ============ wiring ============ */
 function wireDynamic(){
-  document.getElementById("main").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+  document.getElementById("main").querySelectorAll("[data-del]").forEach(b=>b.onclick=(e)=>{
+    e.stopPropagation();
     data.tx=data.tx.filter(t=>t.id!==b.dataset.del); save(); render();
   });
+  document.getElementById("main").querySelectorAll("[data-edit]").forEach(tr=>tr.onclick=(e)=>{
+    if(e.target.closest("[data-del]")) return;
+    openEdit(tr.dataset.edit);
+  });
+  const searchEl=document.getElementById("listaSearch");
+  if(searchEl){
+    searchEl.oninput=()=>{ listaSearch=searchEl.value; render(); setTimeout(()=>{const el=document.getElementById("listaSearch"); if(el){el.focus(); el.selectionStart=el.selectionEnd=el.value.length;}},0); };
+  }
+  const catFilterEl=document.getElementById("listaCatFilter");
+  if(catFilterEl) catFilterEl.onchange=()=>{ listaCat=catFilterEl.value; render(); };
+  const toggleAllEl=document.getElementById("toggleAllMonths");
+  if(toggleAllEl) toggleAllEl.onclick=()=>{ listaAllMonths=!listaAllMonths; render(); };
   document.getElementById("main").querySelectorAll("[data-delrec]").forEach(b=>b.onclick=()=>{
     data.recur=data.recur.filter(r=>r.id!==b.dataset.delrec); save(); render();
   });

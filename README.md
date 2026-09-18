@@ -63,10 +63,13 @@ Controle financeiro pessoal focado em input rápido: abra, aperte "＋ Lançar a
 ### Funcionalidades
 
 - **Lançamento rápido**: valor, descrição, categoria (em chips de um clique), forma de pagamento (Pix, débito, dinheiro, cartão) e data — tudo num único modal, com atalho de teclado (`N`) e botão flutuante sempre visível.
+- **Editar e excluir** qualquer lançamento: clique numa linha (no painel ou na lista) para abrir o mesmo modal já preenchido.
 - **Entradas e saídas** com categorias personalizáveis (crie novas categorias na tela "Categorias").
 - **Cartões de crédito**: cadastre um ou mais cartões com dia de fechamento e vencimento; cada compra lançada no cartão entra automaticamente na fatura correta (mês seguinte se a compra for depois do fechamento).
+- **Parcelamentos**: ao lançar no cartão, informe o número de parcelas — o app divide o valor e cria uma compra por mês automaticamente. A tela "Parcelamentos" mostra tudo que ainda está em aberto, com valor e parcelas restantes.
 - **Recorrentes**: ao lançar algo, marque "repetir todo mês" para contas fixas e assinaturas — elas são lançadas sozinhas nos meses seguintes.
-- **Painel do mês**: saldo, total de entradas/saídas, fatura do cartão e saídas por categoria, com navegação entre meses.
+- **Lançamentos**: lista com busca por descrição, filtro por categoria e opção de ver todo o histórico (não só o mês atual).
+- **Painel do mês**: saldo, total de entradas/saídas, fatura do cartão, saídas por categoria e um indicador de **comprometimento de receita** (quanto da sua renda média já está preso em parcelas e contas fixas nos próximos meses).
 - **Exportar / Importar** os dados em JSON (somar ou substituir), igual ao `index.html`.
 
 ### Dados
