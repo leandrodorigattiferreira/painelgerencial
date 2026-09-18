@@ -70,6 +70,12 @@ Controle financeiro pessoal focado em input rápido: abra, aperte "＋ Lançar a
 - **Recorrentes**: ao lançar algo, marque "repetir todo mês" para contas fixas e assinaturas — elas são lançadas sozinhas nos meses seguintes.
 - **Lançamentos**: lista com busca por descrição, filtro por categoria e opção de ver todo o histórico (não só o mês atual).
 - **Painel do mês**: saldo, total de entradas/saídas, fatura do cartão, saídas por categoria e um indicador de **comprometimento de receita** (quanto da sua renda média já está preso em parcelas e contas fixas nos próximos meses).
+- **Contas**: cadastre contas (corrente, poupança, carteira...) com saldo inicial; cada lançamento (fora cartão) fica ligado a uma conta e o saldo é calculado automaticamente. Dá pra fazer **transferência** entre contas sem afetar entradas/saídas.
+- **Orçamento**: defina um teto mensal por categoria de saída e acompanhe o gasto até o limite, com aviso visual quando estoura.
+- **Metas**: reservas e objetivos (ex: reserva de emergência) com valor alvo, valor guardado e aportes rápidos.
+- **Projeção de fluxo de caixa**: próximos 6 meses de saldo projetado, somando recorrentes e parcelas já assumidas.
+- **Patrimônio**: investimentos, bens e dívidas cadastrados manualmente, com patrimônio líquido calculado (contas + investimentos/bens − dívidas).
+- **Relatórios**: comparativo de entradas × saídas dos últimos 6 meses, maior gasto do mês e categoria que mais pesou.
 - **Exportar / Importar** os dados em JSON (somar ou substituir), igual ao `index.html`.
 
 ### Dados

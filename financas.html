@@ -160,9 +160,18 @@
     <button class="navbtn" data-view="cartoes">💳 Cartões</button>
     <button class="navbtn" data-view="parcelamentos">🧾 Parcelamentos</button>
     <button class="navbtn" data-view="recorrentes">🔁 Recorrentes</button>
+
+    <div class="navlbl">Planejamento</div>
+    <button class="navbtn" data-view="contas">🏦 Contas</button>
+    <button class="navbtn" data-view="orcamento">🎯 Orçamento</button>
+    <button class="navbtn" data-view="metas">🏁 Metas</button>
+    <button class="navbtn" data-view="projecao">📈 Projeção</button>
+    <button class="navbtn" data-view="patrimonio">💎 Patrimônio</button>
+    <button class="navbtn" data-view="relatorios">🧮 Relatórios</button>
     <button class="navbtn" data-view="categorias">🏷️ Categorias</button>
 
     <button class="quickbtn" id="btnQuick">＋ Lançar agora</button>
+    <button class="quickbtn" id="btnTransfer" style="background:var(--surface-2);color:var(--ink-soft);box-shadow:none;border:1px solid var(--line-strong);margin-top:6px">⇄ Transferência</button>
 
     <div class="grow"></div>
     <div class="io">
@@ -186,12 +195,20 @@
 <script>
 /* ============ estado & storage ============ */
 const KEY="financas-leandro-v1";
-let data={ tx:[], cards:[], cats:null, recur:[], lastExport:0 };
+let data={ tx:[], cards:[], cats:null, recur:[], lastExport:0, accounts:[], budgets:{}, goals:[], assets:[] };
 const DEFAULT_CATS={
   saida:[["Moradia","#C2410C"],["Mercado","#B0496B"],["Transporte","#D08412"],["Saúde","#9A57A8"],["Lazer","#2F6FB2"],["Assinaturas","#5759D1"],["Educação","#1F9E8C"],["Outros","#838C9E"]],
   entrada:[["Salário","#0E8C7F"],["Freelance","#159069"],["Investimentos","#2F6FB2"],["Outros","#838C9E"]]
 };
 function ensureCats(){ if(!data.cats) data.cats=JSON.parse(JSON.stringify(DEFAULT_CATS)); }
+function ensureDefaults(){
+  ensureCats();
+  if(!data.accounts) data.accounts=[];
+  if(!data.budgets) data.budgets={};
+  if(!data.goals) data.goals=[];
+  if(!data.assets) data.assets=[];
+  if(data.accounts.length===0) data.accounts.push({id:"default", name:"Conta principal", initialBalance:0});
+}
 
 async function load(){
   try{
@@ -203,7 +220,7 @@ async function load(){
       if(v) data=JSON.parse(v);
     }
   }catch(e){}
-  ensureCats();
+  ensureDefaults();
 }
 async function save(){
   try{
@@ -241,7 +258,7 @@ function applyRecurrences(){
       const day=Math.min(r.day,28);
       const date=`${key}-${String(day).padStart(2,"0")}`;
       if(date<=`${key}-31` && new Date(date+"T00:00:00")<=now){
-        data.tx.push({id:uid(),type:r.type,desc:r.desc,amount:r.amount,cat:r.cat,method:r.method,cardId:r.cardId||null,date,recurId:r.id});
+        data.tx.push({id:uid(),type:r.type,desc:r.desc,amount:r.amount,cat:r.cat,method:r.method,cardId:r.cardId||null,accountId:r.accountId||null,date,recurId:r.id,parcel:null});
         changed=true;
       }
     }
@@ -301,6 +318,70 @@ function avgIncome(){
   return n? sum/n : monthTx(now.getFullYear(),now.getMonth()).filter(t=>t.type==="entrada").reduce((s,t)=>s+t.amount,0);
 }
 
+/* ============ contas ============ */
+function accountBalance(accId){
+  const acc=data.accounts.find(a=>a.id===accId);
+  if(!acc) return 0;
+  let bal=acc.initialBalance||0;
+  for(const t of data.tx){
+    if(t.accountId!==accId) continue;
+    if(t.type==="entrada") bal+=t.amount;
+    else if(t.type==="saida") bal-=t.amount;
+    else if(t.type==="transferencia") bal+=t.amount; // amount já vem com sinal na transferência
+  }
+  return bal;
+}
+function totalAccountsBalance(){ return data.accounts.reduce((s,a)=>s+accountBalance(a.id),0); }
+
+function doTransfer(fromId, toId, amount, desc, date){
+  const groupId="t_"+uid();
+  data.tx.push({id:uid(), type:"transferencia", amount:-amount, desc:desc||"Transferência", cat:"Transferência", method:"transferencia", cardId:null, accountId:fromId, date, transferId:groupId, parcel:null});
+  data.tx.push({id:uid(), type:"transferencia", amount:amount, desc:desc||"Transferência", cat:"Transferência", method:"transferencia", cardId:null, accountId:toId, date, transferId:groupId, parcel:null});
+  save();
+}
+
+/* ============ orçamento ============ */
+function budgetSpent(cat, y, m){
+  return monthTx(y,m).filter(t=>t.type==="saida" && t.cat===cat).reduce((s,t)=>s+t.amount,0);
+}
+
+/* ============ metas ============ */
+function goalProgress(g){ return g.target>0 ? Math.min(100, Math.round(g.saved/g.target*100)) : 0; }
+
+/* ============ projeção de fluxo de caixa ============ */
+function projectMonths(n){
+  const startBalance=totalAccountsBalance();
+  const now=new Date();
+  const recurIn=data.recur.filter(r=>r.type==="entrada").reduce((s,r)=>s+r.amount,0);
+  const recurOut=data.recur.filter(r=>r.type==="saida").reduce((s,r)=>s+r.amount,0);
+  const avgIn=avgIncome();
+  const baseIncome = recurIn>0?recurIn:avgIn;
+  let running=startBalance;
+  const months=[];
+  for(let i=0;i<n;i++){
+    const d=new Date(now.getFullYear(),now.getMonth()+i,1);
+    const y=d.getFullYear(), m=d.getMonth();
+    const key=monthKey(y,m);
+    const groups=activeParcelGroups("0000-00-00");
+    let parcelDue=0;
+    groups.forEach(g=>g.items.forEach(t=>{ if(txMonthKey(t)===key && t.date>=todayISO()) parcelDue+=t.amount; }));
+    const alreadyLogged = i===0 ? monthTx(y,m).filter(t=>t.type==="saida" && !t.parcel).reduce((s,t)=>s+t.amount,0) : 0;
+    const projOut = recurOut + parcelDue + (i===0?alreadyLogged:0);
+    const projIn = i===0 ? Math.max(baseIncome, monthTx(y,m).filter(t=>t.type==="entrada").reduce((s,t)=>s+t.amount,0)) : baseIncome;
+    running += (i===0? 0 : projIn-projOut);
+    months.push({y,m,projIn,projOut,saldoProjetado: i===0?startBalance:running});
+  }
+  return months;
+}
+
+/* ============ patrimônio ============ */
+function netWorth(){
+  const bal=totalAccountsBalance();
+  const invest=data.assets.filter(a=>a.type==="investimento"||a.type==="bem").reduce((s,a)=>s+a.value,0);
+  const debt=data.assets.filter(a=>a.type==="divida").reduce((s,a)=>s+a.value,0);
+  return {bal, invest, debt, total: bal+invest-debt};
+}
+
 /* ============ render shell ============ */
 function render(){
   document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
@@ -310,6 +391,12 @@ function render(){
   else if(view==="cartoes") main.innerHTML=renderCartoes();
   else if(view==="parcelamentos") main.innerHTML=renderParcelamentos();
   else if(view==="recorrentes") main.innerHTML=renderRecorrentes();
+  else if(view==="contas") main.innerHTML=renderContas();
+  else if(view==="orcamento") main.innerHTML=renderOrcamento();
+  else if(view==="metas") main.innerHTML=renderMetas();
+  else if(view==="projecao") main.innerHTML=renderProjecao();
+  else if(view==="patrimonio") main.innerHTML=renderPatrimonio();
+  else if(view==="relatorios") main.innerHTML=renderRelatorios();
   else if(view==="categorias") main.innerHTML=renderCategorias();
   wireDynamic();
 }
@@ -369,7 +456,7 @@ function renderDash(){
             <span class="val mono">${BRL(v)}</span>
           </div>`).join(""):`<div class="empty">Sem saídas registradas.</div>`}
       </div>
-      <div class="card">
+      <div class="card" style="margin-top:16px">
         <h3>Comprometimento de receita</h3>
         <div class="commit">
           <div class="row"><span>Renda média (3 últ. meses)</span><b class="mono">${BRL(income)}</b></div>
@@ -384,6 +471,7 @@ function renderDash(){
 }
 
 function rowTx(t){
+  if(t.type==="transferencia") return rowTransfer(t);
   const cardName=t.cardId?(data.cards.find(c=>c.id===t.cardId)?.name||""):"";
   const methodLbl=t.method==="cartao"?`💳 ${cardName}`:(t.method==="pix"?"Pix":(t.method==="debito"?"Débito":"Dinheiro"));
   const parcelBadge=t.parcel?`<span class="badge-parcel">${t.parcel.idx}/${t.parcel.total}</span>`:"";
@@ -392,6 +480,16 @@ function rowTx(t){
     <td>${esc(t.desc)}${parcelBadge}<div style="font-size:11px;color:var(--muted)">${methodLbl}</div></td>
     <td><span class="pill ${t.type==="entrada"?"in":"out"}">${esc(t.cat)}</span></td>
     <td class="amt ${t.type==="entrada"?"pos":"neg"} mono">${t.type==="entrada"?"+":"−"} ${BRL(t.amount)}</td>
+    <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
+  </tr>`;
+}
+function rowTransfer(t){
+  const accName=t.accountId?(data.accounts.find(a=>a.id===t.accountId)?.name||""):"";
+  return `<tr>
+    <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}</td>
+    <td>${esc(t.desc)}<div style="font-size:11px;color:var(--muted)">🏦 ${esc(accName)}</div></td>
+    <td><span class="pill card">Transferência</span></td>
+    <td class="amt mono" style="color:${t.amount>=0?"var(--in)":"var(--out)"}">${t.amount>=0?"+":"−"} ${BRL(Math.abs(t.amount))}</td>
     <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
   </tr>`;
 }
@@ -417,7 +515,7 @@ function renderLista(){
   if(listaCat) txs=txs.filter(t=>t.cat===listaCat);
   txs.sort((a,b)=>b.date.localeCompare(a.date));
   const allCats=[...new Set(data.tx.map(t=>t.cat))].sort();
-  const total=txs.reduce((s,t)=>s+(t.type==="entrada"?t.amount:-t.amount),0);
+  const total=txs.reduce((s,t)=>t.type==="transferencia"?s:s+(t.type==="entrada"?t.amount:-t.amount),0);
 
   return `
   <div class="head"><div><h2>Lançamentos</h2><p>${listaAllMonths?"Todo o histórico":"Somente o mês selecionado"} · ${txs.length} itens · saldo ${BRL(total)}</p></div>${listaAllMonths?"":monthNav()}</div>
@@ -429,6 +527,17 @@ function renderLista(){
     </div>
     ${txs.length?`<table class="tx"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
       ${txs.map(t=>{
+        if(t.type==="transferencia"){
+          const accName=t.accountId?(data.accounts.find(a=>a.id===t.accountId)?.name||""):"";
+          return `<tr>
+            <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}${listaAllMonths?`<div style="font-size:10.5px;color:var(--faint)">${t.date.slice(0,4)}</div>`:""}</td>
+            <td>${esc(t.desc)}</td>
+            <td><span class="pill card">Transferência</span></td>
+            <td style="color:var(--muted);font-size:12.5px">🏦 ${esc(accName)}</td>
+            <td class="amt mono" style="color:${t.amount>=0?"var(--in)":"var(--out)"}">${t.amount>=0?"+":"−"} ${BRL(Math.abs(t.amount))}</td>
+            <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
+          </tr>`;
+        }
         const cardName=t.cardId?(data.cards.find(c=>c.id===t.cardId)?.name||""):"";
         const methodLbl=t.method==="cartao"?`💳 ${cardName}`:(t.method==="pix"?"Pix":(t.method==="debito"?"Débito":"Dinheiro"));
         const parcelBadge=t.parcel?`<span class="badge-parcel">${t.parcel.idx}/${t.parcel.total}</span>`:"";
@@ -520,6 +629,157 @@ function renderCategorias(){
   </div>`;
 }
 
+function renderContas(){
+  return `
+  <div class="head"><div><h2>Contas</h2><p>Saldo por conta · total ${BRL(totalAccountsBalance())}</p></div></div>
+  <div class="cardsgrid">
+    ${data.accounts.map(a=>{
+      const bal=accountBalance(a.id);
+      return `<div class="ccard" style="background:linear-gradient(135deg,var(--in-bg),var(--surface))">
+        <div class="nm">🏦 ${esc(a.name)}</div>
+        <div class="fat mono" style="color:${bal>=0?"var(--in)":"var(--out)"}">${BRL(bal)}</div>
+        <div class="due">Saldo inicial: ${BRL(a.initialBalance||0)}</div>
+        <div class="miniactions">
+          <button data-del-conta="${a.id}" ${data.accounts.length<=1?"disabled":""}>Excluir</button>
+        </div>
+      </div>`;
+    }).join("")}
+    <div class="ccard" style="display:flex;align-items:center;justify-content:center;background:var(--surface-2);border-style:dashed;cursor:pointer" id="addAccountBtn">
+      <div style="text-align:center;color:var(--muted);font-weight:700">＋ Nova conta</div>
+    </div>
+  </div>`;
+}
+
+function renderOrcamento(){
+  const y=viewYear,m=viewMonth;
+  return `
+  <div class="head"><div><h2>Orçamento</h2><p>Defina um teto mensal por categoria de saída</p></div>${monthNav()}</div>
+  <div class="card">
+    ${data.cats.saida.map(([c,color])=>{
+      const limit=data.budgets[c]||0;
+      const spent=budgetSpent(c,y,m);
+      const pct=limit>0?Math.min(100,Math.round(spent/limit*100)):0;
+      const over=limit>0 && spent>limit;
+      return `<div class="catrow" style="align-items:center;flex-wrap:wrap">
+        <span class="dot" style="background:${color}"></span>
+        <span class="nm">${esc(c)}</span>
+        <span class="bar" style="flex:1;max-width:160px"><i style="width:${pct}%;background:${over?"var(--out)":color}"></i></span>
+        <span class="val mono" style="color:${over?"var(--out)":"var(--ink-soft)"}">${BRL(spent)}</span>
+        <span style="color:var(--muted);font-size:12px">de</span>
+        <input data-budget="${esc(c)}" type="text" inputmode="decimal" value="${limit?limit.toFixed(2).replace(".",","):""}" placeholder="sem teto" style="width:90px;border:1px solid var(--line-strong);border-radius:8px;padding:5px 8px;font-family:'JetBrains Mono',monospace;text-align:right">
+      </div>`;
+    }).join("")}
+  </div>`;
+}
+
+function renderMetas(){
+  return `
+  <div class="head"><div><h2>Metas</h2><p>Reservas e objetivos de longo prazo</p></div></div>
+  <div class="cardsgrid">
+    ${data.goals.map(g=>{
+      const pct=goalProgress(g);
+      return `<div class="ccard" style="background:linear-gradient(135deg,var(--card-bg),var(--surface))">
+        <div class="nm">🏁 ${esc(g.name)}</div>
+        <div class="fat mono" style="font-size:17px">${BRL(g.saved)} <span style="font-size:12px;color:var(--muted);font-weight:600">/ ${BRL(g.target)}</span></div>
+        <div class="pbar" style="margin:8px 0"><i style="width:${pct}%;background:var(--card)"></i></div>
+        <div class="due">${pct}% da meta</div>
+        <div class="miniactions">
+          <button data-goal-add="${g.id}">＋ Aporte</button>
+          <button data-del-goal="${g.id}">Excluir</button>
+        </div>
+      </div>`;
+    }).join("")}
+    <div class="ccard" style="display:flex;align-items:center;justify-content:center;background:var(--surface-2);border-style:dashed;cursor:pointer" id="addGoalBtn">
+      <div style="text-align:center;color:var(--muted);font-weight:700">＋ Nova meta</div>
+    </div>
+  </div>`;
+}
+
+function renderProjecao(){
+  const months=projectMonths(6);
+  const maxAbs=Math.max(1,...months.map(x=>Math.max(Math.abs(x.saldoProjetado),x.projIn,x.projOut)));
+  return `
+  <div class="head"><div><h2>Projeção de fluxo de caixa</h2><p>Saldo projetado somando recorrentes e parcelas já assumidas, próximos 6 meses</p></div></div>
+  <div class="card">
+    <table class="tx"><thead><tr><th>Mês</th><th style="text-align:right">Entradas previstas</th><th style="text-align:right">Saídas previstas</th><th style="text-align:right">Saldo projetado</th></tr></thead><tbody>
+      ${months.map(x=>`<tr>
+        <td style="text-transform:capitalize">${MESES[x.m]} ${x.y}</td>
+        <td class="amt pos mono">${BRL(x.projIn)}</td>
+        <td class="amt neg mono">${BRL(x.projOut)}</td>
+        <td class="amt mono" style="color:${x.saldoProjetado>=0?"var(--in)":"var(--out)"}">${BRL(x.saldoProjetado)}</td>
+      </tr>`).join("")}
+    </tbody></table>
+  </div>
+  <p style="color:var(--muted);font-size:12.5px;margin-top:10px">Projeção simples: parte do saldo atual das contas, soma a renda média (ou recorrentes de entrada) e subtrai recorrentes fixas + parcelas já lançadas. Não inclui gastos futuros ainda não cadastrados.</p>`;
+}
+
+function renderPatrimonio(){
+  const nw=netWorth();
+  return `
+  <div class="head"><div><h2>Patrimônio</h2><p>Contas + investimentos e bens − dívidas</p></div></div>
+  <div class="kpis" style="grid-template-columns:repeat(3,1fr)">
+    <div class="kpi in"><div class="t">Saldo em contas</div><div class="v mono">${BRL(nw.bal)}</div></div>
+    <div class="kpi out"><div class="t">Dívidas</div><div class="v mono">${BRL(nw.debt)}</div></div>
+    <div class="kpi card"><div class="t">Patrimônio líquido</div><div class="v mono" style="color:${nw.total>=0?"var(--in)":"var(--out)"}">${BRL(nw.total)}</div></div>
+  </div>
+  <div class="card">
+    <h3>Investimentos, bens e dívidas <span class="n">valor atualizado manualmente</span></h3>
+    ${data.assets.length?`<table class="tx"><thead><tr><th>Nome</th><th>Tipo</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
+      ${data.assets.map(a=>`<tr>
+        <td>${esc(a.name)}</td>
+        <td><span class="pill ${a.type==="divida"?"out":"in"}">${a.type==="investimento"?"Investimento":a.type==="bem"?"Bem":"Dívida"}</span></td>
+        <td class="amt mono ${a.type==="divida"?"neg":"pos"}">${BRL(a.value)}</td>
+        <td><button class="rowbtn" data-del-asset="${a.id}">✕</button></td>
+      </tr>`).join("")}
+    </tbody></table>`:`<div class="empty">Nada cadastrado ainda.</div>`}
+    <div style="padding:12px 0"><button class="btn primary" style="width:auto;padding:9px 16px" id="addAssetBtn">＋ Adicionar item</button></div>
+  </div>`;
+}
+
+function renderRelatorios(){
+  const now=new Date();
+  const months=[];
+  for(let i=5;i>=0;i--){
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const txs=monthTx(d.getFullYear(),d.getMonth());
+    months.push({y:d.getFullYear(), m:d.getMonth(),
+      in:txs.filter(t=>t.type==="entrada").reduce((s,t)=>s+t.amount,0),
+      out:txs.filter(t=>t.type==="saida").reduce((s,t)=>s+t.amount,0)});
+  }
+  const maxV=Math.max(1,...months.map(x=>Math.max(x.in,x.out)));
+  const y=viewYear,m=viewMonth;
+  const txsMonth=monthTx(y,m).filter(t=>t.type==="saida");
+  const biggest=[...txsMonth].sort((a,b)=>b.amount-a.amount)[0];
+  const byCat={};
+  txsMonth.forEach(t=>byCat[t.cat]=(byCat[t.cat]||0)+t.amount);
+  const topCat=Object.entries(byCat).sort((a,b)=>b[1]-a[1])[0];
+
+  return `
+  <div class="head"><div><h2>Relatórios</h2><p>Comparativo dos últimos 6 meses</p></div>${monthNav()}</div>
+  <div class="card">
+    <h3>Entradas × Saídas por mês</h3>
+    ${months.map(x=>`
+      <div class="catrow" style="gap:12px">
+        <span class="nm" style="text-transform:capitalize;flex:0 0 90px">${MESES[x.m].slice(0,3)}/${String(x.y).slice(2)}</span>
+        <span class="bar" style="flex:1;max-width:none;height:9px"><i style="width:${Math.round(x.in/maxV*100)}%;background:var(--in)"></i></span>
+        <span class="val mono" style="color:var(--in);flex:0 0 90px;text-align:right">${BRL(x.in)}</span>
+      </div>
+      <div class="catrow" style="gap:12px;border-bottom:1px solid var(--line)">
+        <span class="nm" style="flex:0 0 90px"></span>
+        <span class="bar" style="flex:1;max-width:none;height:9px"><i style="width:${Math.round(x.out/maxV*100)}%;background:var(--out)"></i></span>
+        <span class="val mono" style="color:var(--out);flex:0 0 90px;text-align:right">${BRL(x.out)}</span>
+      </div>`).join("")}
+  </div>
+  <div class="grid2" style="margin-top:16px">
+    <div class="card"><h3>Maior gasto do mês (${MESES[m]})</h3>
+      ${biggest?`<div class="catrow"><span class="nm">${esc(biggest.desc)}</span><span class="val mono" style="color:var(--out)">${BRL(biggest.amount)}</span></div>`:`<div class="empty">Sem saídas no mês.</div>`}
+    </div>
+    <div class="card"><h3>Categoria que mais pesou</h3>
+      ${topCat?`<div class="catrow"><span class="nm">${esc(topCat[0])}</span><span class="val mono" style="color:var(--out)">${BRL(topCat[1])}</span></div>`:`<div class="empty">Sem saídas no mês.</div>`}
+    </div>
+  </div>`;
+}
+
 const PALETTE=["#0E8C7F","#C2410C","#5759D1","#B0496B","#D08412","#2F6FB2","#9A57A8","#1F9E8C","#838C9E"];
 
 /* ============ quick add modal ============ */
@@ -528,6 +788,7 @@ function openQuick(prefill){
   ensureCats();
   draft=Object.assign({
     id:null, type:"saida", amount:"", desc:"", cat:lastCat.saida, method:"pix", cardId:data.cards[0]?.id||null,
+    accountId:data.accounts[0]?.id||null,
     date:new Date().toISOString().slice(0,10), repeat:false, parcelas:1
   }, prefill||{});
   renderModal();
@@ -537,7 +798,7 @@ function openQuick(prefill){
 function openEdit(id){
   const t=data.tx.find(x=>x.id===id);
   if(!t) return;
-  openQuick({id:t.id, type:t.type, amount:String(t.amount).replace(".",","), desc:t.desc, cat:t.cat, method:t.method, cardId:t.cardId, date:t.date, repeat:!!t.recurId, parcelas:1});
+  openQuick({id:t.id, type:t.type, amount:String(t.amount).replace(".",","), desc:t.desc, cat:t.cat, method:t.method, cardId:t.cardId, accountId:t.accountId||data.accounts[0]?.id||null, date:t.date, repeat:!!t.recurId, parcelas:1});
 }
 function closeModal(){ document.getElementById("overlay").classList.add("hidden"); draft=null; }
 
@@ -570,7 +831,9 @@ function renderModal(){
         ${data.cards.map(c=>`<option value="${c.id}" ${draft.cardId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
       </select></div>
       <div class="f"><label>Parcelas</label><input id="parcelasInput" type="number" min="1" max="48" value="${draft.parcelas}" ${isParceled?"disabled title=\"Edite a parcela individualmente\"":""}></div>
-    </div>`:""}
+    </div>`:`<div class="f"><label>Conta</label><select id="accountSelect">
+      ${data.accounts.map(a=>`<option value="${a.id}" ${draft.accountId===a.id?"selected":""}>${esc(a.name)}</option>`).join("")}
+    </select></div>`}
     <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-weight:600;margin-top:4px">
       <input type="checkbox" id="repeatInput" ${draft.repeat?"checked":""}> Repetir todo mês (recorrente)
     </label>
@@ -592,6 +855,8 @@ function wireModal(){
   if(methodSel) methodSel.onchange=()=>{ draft.method=methodSel.value; renderModal(); };
   const cardSel=document.getElementById("cardSelect");
   if(cardSel) cardSel.onchange=()=>{ draft.cardId=cardSel.value; };
+  const accSel=document.getElementById("accountSelect");
+  if(accSel) accSel.onchange=()=>{ draft.accountId=accSel.value; };
   document.getElementById("cancelBtn").onclick=closeModal;
   document.getElementById("saveBtn").onclick=commitDraft;
   const delBtn=document.getElementById("deleteBtn");
@@ -628,15 +893,18 @@ function commitDraft(){
   const repeat=document.getElementById("repeatInput").checked;
   const cardSel=document.getElementById("cardSelect");
   if(cardSel) draft.cardId=cardSel.value;
+  const accSel=document.getElementById("accountSelect");
+  if(accSel) draft.accountId=accSel.value;
   const parcelasEl=document.getElementById("parcelasInput");
   const parcelas=parcelasEl && !parcelasEl.disabled ? Math.max(1,Math.min(48,parseInt(parcelasEl.value)||1)) : 1;
   if(amount<=0){ toast("Informe um valor válido"); return; }
   if(!desc){ toast("Dê uma descrição curta"); return; }
   lastCat[draft.type]=draft.cat;
+  const accountId = method==="cartao" ? null : draft.accountId;
 
   if(draft.id){
     const t=data.tx.find(x=>x.id===draft.id);
-    if(t) Object.assign(t, {type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, date});
+    if(t) Object.assign(t, {type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, accountId, date});
     save(); closeModal(); toast("Atualizado ✓"); render();
     return;
   }
@@ -649,13 +917,13 @@ function commitDraft(){
     for(let i=0;i<parcelas;i++){
       const value = (i===parcelas-1) ? Math.round((amount-allocated)*100)/100 : base;
       allocated+=value;
-      data.tx.push({id:uid(), type:draft.type, amount:value, desc, cat:draft.cat, method, cardId:draft.cardId, date:addMonths(date,i), recurId:null, parcel:{groupId, idx:i+1, total:parcelas}});
+      data.tx.push({id:uid(), type:draft.type, amount:value, desc, cat:draft.cat, method, cardId:draft.cardId, accountId:null, date:addMonths(date,i), recurId:null, parcel:{groupId, idx:i+1, total:parcelas}});
     }
   }else{
     const id=uid();
-    data.tx.push({id, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, date, recurId, parcel:null});
+    data.tx.push({id, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, accountId, date, recurId, parcel:null});
     if(repeat){
-      data.recur.push({id:recurId, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, day:new Date(date+"T00:00:00").getDate()});
+      data.recur.push({id:recurId, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, accountId, day:new Date(date+"T00:00:00").getDate()});
     }
   }
   save(); closeModal(); toast("Lançado ✓"); render();
@@ -690,6 +958,123 @@ function openCardModal(){
     save(); closeModal(); render();
   };
   document.getElementById("overlay").classList.remove("hidden");
+}
+
+/* ============ conta / meta / ativo / transferência ============ */
+function openAccountModal(){
+  document.getElementById("modal").innerHTML=`
+    <h3>Nova conta</h3>
+    <div class="f"><label>Nome</label><input id="accName" placeholder="Ex: Poupança, Carteira..."></div>
+    <div class="f"><label>Saldo inicial</label><input id="accInitial" class="amtinput" inputmode="decimal" placeholder="R$ 0,00" value="0"></div>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveAccBtn">Salvar</button>
+    </div>`;
+  document.getElementById("overlay").classList.remove("hidden");
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveAccBtn").onclick=()=>{
+    const name=document.getElementById("accName").value.trim();
+    const initialBalance=parseAmount(document.getElementById("accInitial").value);
+    if(!name){ toast("Dê um nome à conta"); return; }
+    data.accounts.push({id:uid(), name, initialBalance});
+    save(); closeModal(); render();
+  };
+}
+function openGoalModal(){
+  document.getElementById("modal").innerHTML=`
+    <h3>Nova meta</h3>
+    <div class="f"><label>Nome</label><input id="goalName" placeholder="Ex: Reserva de emergência"></div>
+    <div class="row2">
+      <div class="f"><label>Valor alvo</label><input id="goalTarget" class="amtinput" inputmode="decimal" placeholder="R$ 0,00"></div>
+      <div class="f"><label>Já guardado</label><input id="goalSaved" class="amtinput" inputmode="decimal" value="0"></div>
+    </div>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveGoalBtn">Salvar</button>
+    </div>`;
+  document.getElementById("overlay").classList.remove("hidden");
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveGoalBtn").onclick=()=>{
+    const name=document.getElementById("goalName").value.trim();
+    const target=parseAmount(document.getElementById("goalTarget").value);
+    const saved=parseAmount(document.getElementById("goalSaved").value);
+    if(!name||target<=0){ toast("Preencha nome e valor alvo"); return; }
+    data.goals.push({id:uid(), name, target, saved});
+    save(); closeModal(); render();
+  };
+}
+function openGoalAddModal(id){
+  const g=data.goals.find(x=>x.id===id);
+  if(!g) return;
+  document.getElementById("modal").innerHTML=`
+    <h3>Aporte em "${esc(g.name)}"</h3>
+    <div class="f"><label>Valor do aporte</label><input id="goalAddValue" class="amtinput" inputmode="decimal" placeholder="R$ 0,00"></div>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveGoalAddBtn">Adicionar</button>
+    </div>`;
+  document.getElementById("overlay").classList.remove("hidden");
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveGoalAddBtn").onclick=()=>{
+    const v=parseAmount(document.getElementById("goalAddValue").value);
+    if(v<=0){ toast("Informe um valor válido"); return; }
+    g.saved+=v; save(); closeModal(); render();
+  };
+}
+function openAssetModal(){
+  document.getElementById("modal").innerHTML=`
+    <h3>Novo item de patrimônio</h3>
+    <div class="f"><label>Nome</label><input id="assetName" placeholder="Ex: Tesouro Direto, Carro, Financiamento..."></div>
+    <div class="f"><label>Tipo</label><div class="seg">
+      <button type="button" data-atype="investimento" class="on">Investimento</button>
+      <button type="button" data-atype="bem">Bem</button>
+      <button type="button" data-atype="divida">Dívida</button>
+    </div></div>
+    <div class="f"><label>Valor</label><input id="assetValue" class="amtinput" inputmode="decimal" placeholder="R$ 0,00"></div>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveAssetBtn">Salvar</button>
+    </div>`;
+  document.getElementById("overlay").classList.remove("hidden");
+  let atype="investimento";
+  document.querySelectorAll("[data-atype]").forEach(b=>b.onclick=()=>{
+    atype=b.dataset.atype;
+    document.querySelectorAll("[data-atype]").forEach(x=>x.classList.toggle("on",x===b));
+  });
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveAssetBtn").onclick=()=>{
+    const name=document.getElementById("assetName").value.trim();
+    const value=parseAmount(document.getElementById("assetValue").value);
+    if(!name||value<=0){ toast("Preencha nome e valor"); return; }
+    data.assets.push({id:uid(), name, type:atype, value});
+    save(); closeModal(); render();
+  };
+}
+function openTransferModal(){
+  if(data.accounts.length<2){ toast("Crie pelo menos 2 contas para transferir"); return; }
+  document.getElementById("modal").innerHTML=`
+    <h3>Transferência entre contas</h3>
+    <div class="row2">
+      <div class="f"><label>De</label><select id="tFrom">${data.accounts.map(a=>`<option value="${a.id}">${esc(a.name)}</option>`).join("")}</select></div>
+      <div class="f"><label>Para</label><select id="tTo">${data.accounts.map((a,i)=>`<option value="${a.id}" ${i===1?"selected":""}>${esc(a.name)}</option>`).join("")}</select></div>
+    </div>
+    <div class="f"><label>Valor</label><input id="tAmount" class="amtinput" inputmode="decimal" placeholder="R$ 0,00"></div>
+    <div class="f"><label>Data</label><input id="tDate" type="date" value="${todayISO()}"></div>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveTransferBtn">Transferir</button>
+    </div>`;
+  document.getElementById("overlay").classList.remove("hidden");
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveTransferBtn").onclick=()=>{
+    const from=document.getElementById("tFrom").value, to=document.getElementById("tTo").value;
+    const amount=parseAmount(document.getElementById("tAmount").value);
+    const date=document.getElementById("tDate").value||todayISO();
+    if(from===to){ toast("Escolha contas diferentes"); return; }
+    if(amount<=0){ toast("Informe um valor válido"); return; }
+    doTransfer(from,to,amount,"Transferência",date);
+    closeModal(); toast("Transferido ✓"); render();
+  };
 }
 
 /* ============ export / import ============ */
@@ -735,8 +1120,15 @@ function doImport(mode){
     (pendingImport.cards||[]).forEach(c=>{ if(!existingCardIds.has(c.id)) data.cards.push(c); });
     const existingRecIds=new Set(data.recur.map(r=>r.id));
     (pendingImport.recur||[]).forEach(r=>{ if(!existingRecIds.has(r.id)) data.recur.push(r); });
+    const existingAccIds=new Set(data.accounts.map(a=>a.id));
+    (pendingImport.accounts||[]).forEach(a=>{ if(!existingAccIds.has(a.id)) data.accounts.push(a); });
+    const existingGoalIds=new Set(data.goals.map(g=>g.id));
+    (pendingImport.goals||[]).forEach(g=>{ if(!existingGoalIds.has(g.id)) data.goals.push(g); });
+    const existingAssetIds=new Set(data.assets.map(a=>a.id));
+    (pendingImport.assets||[]).forEach(a=>{ if(!existingAssetIds.has(a.id)) data.assets.push(a); });
+    data.budgets=Object.assign({}, data.budgets, pendingImport.budgets||{});
   }
-  ensureCats();
+  ensureDefaults();
   pendingImport=null; save(); closeModal(); render(); toast("Importado ✓");
 }
 
@@ -775,6 +1167,30 @@ function wireDynamic(){
   document.getElementById("main").querySelectorAll("[data-lanc-cartao]").forEach(b=>b.onclick=()=>{
     openQuick({method:"cartao", cardId:b.dataset.lancCartao, type:"saida"});
   });
+  const addAccountBtn=document.getElementById("addAccountBtn");
+  if(addAccountBtn) addAccountBtn.onclick=openAccountModal;
+  document.getElementById("main").querySelectorAll("[data-del-conta]").forEach(b=>b.onclick=()=>{
+    if(data.accounts.length<=1) return;
+    if(data.tx.some(t=>t.accountId===b.dataset.delConta)){ if(!confirm("Esta conta tem lançamentos. Excluir mesmo assim (eles ficam sem conta)?")) return; }
+    data.tx.forEach(t=>{ if(t.accountId===b.dataset.delConta) t.accountId=null; });
+    data.accounts=data.accounts.filter(a=>a.id!==b.dataset.delConta); save(); render();
+  });
+  const addGoalBtn=document.getElementById("addGoalBtn");
+  if(addGoalBtn) addGoalBtn.onclick=openGoalModal;
+  document.getElementById("main").querySelectorAll("[data-goal-add]").forEach(b=>b.onclick=()=>openGoalAddModal(b.dataset.goalAdd));
+  document.getElementById("main").querySelectorAll("[data-del-goal]").forEach(b=>b.onclick=()=>{
+    data.goals=data.goals.filter(g=>g.id!==b.dataset.delGoal); save(); render();
+  });
+  const addAssetBtn=document.getElementById("addAssetBtn");
+  if(addAssetBtn) addAssetBtn.onclick=openAssetModal;
+  document.getElementById("main").querySelectorAll("[data-del-asset]").forEach(b=>b.onclick=()=>{
+    data.assets=data.assets.filter(a=>a.id!==b.dataset.delAsset); save(); render();
+  });
+  document.getElementById("main").querySelectorAll("[data-budget]").forEach(inp=>inp.onchange=()=>{
+    const v=parseAmount(inp.value);
+    if(v>0) data.budgets[inp.dataset.budget]=v; else delete data.budgets[inp.dataset.budget];
+    save(); render();
+  });
   const newCatOut=document.getElementById("newCatOut");
   if(newCatOut) newCatOut.onkeydown=(e)=>{ if(e.key==="Enter" && newCatOut.value.trim()){
     data.cats.saida.push([newCatOut.value.trim(), PALETTE[data.cats.saida.length%PALETTE.length]]); save(); render();
@@ -788,6 +1204,7 @@ function wireDynamic(){
 document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>{ view=b.dataset.view; render(); }));
 document.getElementById("btnQuick").addEventListener("click",()=>openQuick());
 document.getElementById("fabQuick").addEventListener("click",()=>openQuick());
+document.getElementById("btnTransfer").addEventListener("click",()=>openTransferModal());
 document.getElementById("overlay").addEventListener("click",(e)=>{ if(e.target.id==="overlay") closeModal(); });
 document.addEventListener("keydown",(e)=>{
   if(e.key==="Escape") closeModal();
