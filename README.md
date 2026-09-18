@@ -1,5 +1,13 @@
 # Painel do Leandro
 
+Este repositório tem duas ferramentas independentes, cada uma em um único arquivo HTML:
+
+- **`index.html`** — produtividade (tarefas, calendário, agenda).
+- **`financas.html`** — controle financeiro pessoal (entradas, saídas, cartão de crédito). Veja detalhes abaixo.
+
+---
+
+
 Ferramenta de produtividade para gestores de marketing. Organiza tarefas em três lentes — **Minhas** (operacional), **Time** (acompanhamento, dividido por praça: CAM, RIB, SCA, CE) e **Gestão** (1:1s, pessoas) — com status e progresso por tarefa, calendário, agenda de compromissos/reuniões/viagens e backup dos dados.
 
 É um único arquivo `index.html`, sem dependências de build. Abre em qualquer navegador.
@@ -45,3 +53,22 @@ Pronto — é só salvar esse link nos favoritos e usar no dia a dia.
 Tudo roda no seu navegador. O app não envia seus dados para nenhum servidor próprio. Mesmo publicado no GitHub Pages, o que outras pessoas eventualmente acessarem pelo link é a **ferramenta vazia** — os dados ficam no localStorage de cada navegador, não no código do repositório.
 
 > Não versione backups com dados reais (arquivos `.json` exportados) no repositório se não quiser que fiquem públicos.
+
+---
+
+## Finanças (`financas.html`)
+
+Controle financeiro pessoal focado em input rápido: abra, aperte "＋ Lançar agora" (ou tecle **N**), digite o valor e pronto.
+
+### Funcionalidades
+
+- **Lançamento rápido**: valor, descrição, categoria (em chips de um clique), forma de pagamento (Pix, débito, dinheiro, cartão) e data — tudo num único modal, com atalho de teclado (`N`) e botão flutuante sempre visível.
+- **Entradas e saídas** com categorias personalizáveis (crie novas categorias na tela "Categorias").
+- **Cartões de crédito**: cadastre um ou mais cartões com dia de fechamento e vencimento; cada compra lançada no cartão entra automaticamente na fatura correta (mês seguinte se a compra for depois do fechamento).
+- **Recorrentes**: ao lançar algo, marque "repetir todo mês" para contas fixas e assinaturas — elas são lançadas sozinhas nos meses seguintes.
+- **Painel do mês**: saldo, total de entradas/saídas, fatura do cartão e saídas por categoria, com navegação entre meses.
+- **Exportar / Importar** os dados em JSON (somar ou substituir), igual ao `index.html`.
+
+### Dados
+
+Segue o mesmo esquema de armazenamento do `index.html`: salva sozinho no ambiente do Claude (artefato publicado) ou no `localStorage` do navegador quando hospedado/local. Os dois arquivos usam chaves de armazenamento diferentes, então não se misturam.

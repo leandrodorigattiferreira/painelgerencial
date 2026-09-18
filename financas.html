@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Finanças do Leandro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Hanken+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EEF1F6; --surface:#FFFFFF; --surface-2:#F8F9FC;
+    --ink:#171C28; --ink-soft:#414A5E; --muted:#838C9E; --faint:#AEB5C2;
+    --line:#E7EAF0; --line-strong:#D6DAE3;
+    --in:#0E8C7F; --in-bg:#E4F2EF;
+    --out:#C2410C; --out-bg:#FBEDE4;
+    --card:#5759D1; --card-bg:#ECEDFB;
+    --warn:#D08412; --warn-bg:#FBF1DE;
+    --r:16px; --r-sm:11px; --r-xs:8px;
+    --sh:0 1px 2px rgba(23,28,40,.04), 0 4px 16px rgba(23,28,40,.05);
+    --sh-pop:0 16px 50px rgba(23,28,40,.18);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;height:100%}
+  body{
+    background:
+      radial-gradient(1100px 520px at 15% -8%, #F3F6FB 0%, rgba(243,246,251,0) 60%),
+      radial-gradient(900px 480px at 100% 0%, #F0EDF6 0%, rgba(240,237,246,0) 55%),
+      var(--bg);
+    color:var(--ink); font-family:"Hanken Grotesk",system-ui,sans-serif;
+    font-size:15px; line-height:1.45; -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:"JetBrains Mono",monospace;font-feature-settings:"tnum"}
+  button{font-family:inherit;cursor:pointer;color:inherit}
+  input,select,textarea{font-family:inherit;font-size:14px}
+  ::-webkit-scrollbar{width:10px;height:10px}
+  ::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+
+  .app{display:grid;grid-template-columns:248px 1fr;min-height:100vh}
+  .side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:6px;padding:20px 16px;background:rgba(255,255,255,.72);backdrop-filter:blur(8px);border-right:1px solid var(--line)}
+  .logo{display:flex;align-items:center;gap:11px;padding:4px 6px 18px}
+  .logo .mark{width:34px;height:34px;flex:0 0 auto;border-radius:10px;background:linear-gradient(135deg,var(--in),var(--card));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-family:"Bricolage Grotesque"}
+  .logo h1{font-family:"Bricolage Grotesque";font-weight:800;font-size:18px;letter-spacing:-.02em;margin:0;line-height:1.05}
+  .logo p{margin:1px 0 0;font-size:11px;color:var(--muted);font-weight:600;letter-spacing:.02em}
+  .navlbl{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--faint);margin:14px 8px 6px}
+  .navbtn{display:flex;align-items:center;gap:11px;width:100%;border:0;background:transparent;border-radius:11px;padding:9px 11px;font-weight:600;font-size:14.5px;color:var(--ink-soft);text-align:left;transition:.13s}
+  .navbtn:hover{background:var(--surface-2)}
+  .navbtn.on{background:var(--ink);color:#fff}
+  .navbtn .badge{margin-left:auto;font-size:11px;font-weight:700;background:var(--accent-bg,#EBEDF2);color:var(--ink-soft);border-radius:99px;padding:1px 8px}
+  .navbtn.on .badge{background:rgba(255,255,255,.22);color:#fff}
+  .side .grow{flex:1}
+  .quickbtn{margin-top:10px;width:100%;border:0;border-radius:12px;padding:12px;background:var(--ink);color:#fff;font-weight:700;font-size:14px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:var(--sh)}
+  .quickbtn:hover{opacity:.92}
+  .io{display:flex;gap:7px;margin-top:8px}
+  .io .iobtn{flex:1;border:1px solid var(--line-strong);background:var(--surface);border-radius:10px;padding:8px 6px;font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  .io .iobtn:hover{background:var(--surface-2);color:var(--ink)}
+  .savestat{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;padding:4px 6px}
+  .dotok{width:7px;height:7px;border-radius:50%;background:var(--in);display:inline-block}
+  .dotwarn{width:7px;height:7px;border-radius:50%;background:var(--warn);display:inline-block}
+
+  .main{padding:26px 30px 60px;max-width:1180px}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:20px;gap:14px;flex-wrap:wrap}
+  .head h2{font-family:"Bricolage Grotesque";font-size:24px;font-weight:800;margin:0;letter-spacing:-.01em}
+  .head p{margin:2px 0 0;color:var(--muted);font-size:13px}
+  .monthnav{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:6px 8px;box-shadow:var(--sh)}
+  .monthnav button{border:0;background:transparent;width:28px;height:28px;border-radius:8px;font-size:16px;color:var(--ink-soft)}
+  .monthnav button:hover{background:var(--surface-2)}
+  .monthnav .lbl{font-weight:700;font-size:14px;min-width:130px;text-align:center;text-transform:capitalize}
+
+  .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+  .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px 18px;box-shadow:var(--sh)}
+  .kpi .t{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+  .kpi .v{font-family:"Bricolage Grotesque";font-size:24px;font-weight:800;margin-top:6px}
+  .kpi.in .v{color:var(--in)} .kpi.out .v{color:var(--out)} .kpi.card .v{color:var(--card)}
+  .kpi .sub{font-size:12px;color:var(--muted);margin-top:3px}
+
+  .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px;align-items:start}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--sh);padding:18px 18px 8px}
+  .card h3{font-family:"Bricolage Grotesque";font-size:15px;margin:0 0 12px;font-weight:800}
+  .card h3 .n{color:var(--muted);font-weight:600;font-size:12px}
+
+  .catrow{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}
+  .catrow:last-child{border-bottom:0}
+  .catrow .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+  .catrow .nm{font-weight:600;font-size:13.5px;flex:1}
+  .catrow .val{font-weight:700;font-size:13.5px}
+  .catrow .bar{height:6px;border-radius:99px;background:var(--surface-2);flex:0 0 90px;overflow:hidden}
+  .catrow .bar>i{display:block;height:100%;border-radius:99px}
+
+  table.tx{width:100%;border-collapse:collapse;font-size:13.5px}
+  table.tx th{text-align:left;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);font-weight:700;padding:6px 8px;border-bottom:1px solid var(--line)}
+  table.tx td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+  table.tx tr:last-child td{border-bottom:0}
+  table.tx tr:hover td{background:var(--surface-2)}
+  .pill{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:99px}
+  .pill.in{background:var(--in-bg);color:var(--in)}
+  .pill.out{background:var(--out-bg);color:var(--out)}
+  .pill.card{background:var(--card-bg);color:var(--card)}
+  .amt{font-weight:700;text-align:right;white-space:nowrap}
+  .amt.pos{color:var(--in)} .amt.neg{color:var(--out)}
+  .rowbtn{border:0;background:transparent;color:var(--faint);font-size:15px;padding:2px 6px;border-radius:6px}
+  .rowbtn:hover{background:var(--surface-2);color:var(--out)}
+  .empty{padding:30px 10px;text-align:center;color:var(--muted);font-size:13.5px}
+
+  .fab{position:fixed;right:30px;bottom:30px;width:56px;height:56px;border-radius:50%;border:0;background:var(--ink);color:#fff;font-size:26px;box-shadow:var(--sh-pop);display:flex;align-items:center;justify-content:center;line-height:0}
+  .fab:hover{transform:translateY(-2px)}
+
+  .overlay{position:fixed;inset:0;background:rgba(23,28,40,.45);display:flex;align-items:flex-start;justify-content:center;padding:6vh 16px;z-index:50;backdrop-filter:blur(2px)}
+  .overlay.hidden{display:none}
+  .modal{background:var(--surface);border-radius:18px;box-shadow:var(--sh-pop);width:100%;max-width:480px;padding:22px}
+  .modal h3{font-family:"Bricolage Grotesque";font-size:17px;margin:0 0 14px}
+  .seg{display:flex;gap:6px;background:var(--surface-2);border-radius:11px;padding:4px;margin-bottom:14px}
+  .seg button{flex:1;border:0;background:transparent;border-radius:8px;padding:9px 4px;font-weight:700;font-size:13.5px;color:var(--ink-soft)}
+  .seg button.on{background:var(--surface);box-shadow:var(--sh)}
+  .seg button[data-t=entrada].on{color:var(--in)} .seg button[data-t=saida].on{color:var(--out)}
+  .f{margin-bottom:12px}
+  .f label{display:block;font-size:11.5px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.04em}
+  .f input,.f select,.f textarea{width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:9px 11px;background:var(--surface-2)}
+  .f input:focus,.f select:focus,.f textarea:focus{outline:2px solid var(--ink);outline-offset:-1px;background:var(--surface)}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .chipset{display:flex;gap:6px;flex-wrap:wrap}
+  .chip{border:1px solid var(--line-strong);background:var(--surface);border-radius:99px;padding:6px 12px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .modalactions{display:flex;gap:8px;margin-top:16px}
+  .btn{flex:1;border:0;border-radius:11px;padding:11px;font-weight:700;font-size:14px}
+  .btn.primary{background:var(--ink);color:#fff}
+  .btn.ghost{background:var(--surface-2);color:var(--ink-soft)}
+  .amtinput{font-family:"JetBrains Mono",monospace;font-size:20px;font-weight:700;text-align:right}
+
+  .cardsgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+  .ccard{border:1px solid var(--line);border-radius:14px;padding:14px;background:linear-gradient(135deg,var(--card-bg),var(--surface))}
+  .ccard .nm{font-weight:800;font-size:14px;font-family:"Bricolage Grotesque"}
+  .ccard .fat{font-size:20px;font-weight:800;margin-top:8px;font-family:"Bricolage Grotesque"}
+  .ccard .due{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .miniactions{display:flex;gap:6px;margin-top:10px}
+  .miniactions button{flex:1;border:0;background:var(--surface);border:1px solid var(--line-strong);border-radius:8px;padding:5px;font-size:11.5px;font-weight:700;color:var(--ink-soft)}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:600;box-shadow:var(--sh-pop);z-index:80;opacity:0;pointer-events:none;transition:.2s}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  @media(max-width:900px){.app{grid-template-columns:1fr}.side{position:relative;height:auto}.kpis{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="side">
+    <div class="logo"><div class="mark">R$</div><div><h1>Finanças</h1><p>do Leandro</p></div></div>
+
+    <div class="navlbl">Visão</div>
+    <button class="navbtn on" data-view="dash">📊 Painel do mês</button>
+    <button class="navbtn" data-view="lista">📋 Lançamentos</button>
+    <button class="navbtn" data-view="cartoes">💳 Cartões</button>
+    <button class="navbtn" data-view="recorrentes">🔁 Recorrentes</button>
+    <button class="navbtn" data-view="categorias">🏷️ Categorias</button>
+
+    <button class="quickbtn" id="btnQuick">＋ Lançar agora</button>
+
+    <div class="grow"></div>
+    <div class="io">
+      <button class="iobtn" data-act="export" title="Baixar um backup com todos os seus dados">⬇ Exportar</button>
+      <button class="iobtn" data-act="import" title="Restaurar a partir de um backup">⬆ Importar</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+    </div>
+    <div class="savestat" id="saveStat"><span class="dotok"></span>Salvando…</div>
+  </aside>
+
+  <main class="main" id="main"></main>
+</div>
+
+<button class="fab" id="fabQuick" title="Lançar agora">＋</button>
+
+<div class="overlay hidden" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============ estado & storage ============ */
+const KEY="financas-leandro-v1";
+let data={ tx:[], cards:[], cats:null, recur:[], lastExport:0 };
+const DEFAULT_CATS={
+  saida:[["Moradia","#C2410C"],["Mercado","#B0496B"],["Transporte","#D08412"],["Saúde","#9A57A8"],["Lazer","#2F6FB2"],["Assinaturas","#5759D1"],["Educação","#1F9E8C"],["Outros","#838C9E"]],
+  entrada:[["Salário","#0E8C7F"],["Freelance","#159069"],["Investimentos","#2F6FB2"],["Outros","#838C9E"]]
+};
+function ensureCats(){ if(!data.cats) data.cats=JSON.parse(JSON.stringify(DEFAULT_CATS)); }
+
+async function load(){
+  try{
+    if(window.storage){
+      const v=await window.storage.get(KEY);
+      if(v) data=JSON.parse(v);
+    }else if(window.localStorage){
+      const v=localStorage.getItem(KEY);
+      if(v) data=JSON.parse(v);
+    }
+  }catch(e){}
+  ensureCats();
+}
+async function save(){
+  try{
+    if(window.storage){ await window.storage.set(KEY,JSON.stringify(data)); setSaveStat("ok"); }
+    else if(window.localStorage){ localStorage.setItem(KEY,JSON.stringify(data)); setSaveStat("local"); }
+    else setSaveStat("none");
+  }catch(e){ setSaveStat("fail"); }
+}
+function setSaveStat(s){
+  const el=document.getElementById("saveStat");
+  if(s==="ok")el.innerHTML=`<span class="dotok"></span>Salvo na sua conta`;
+  else if(s==="local")el.innerHTML=`<span class="dotok"></span>Salvo neste navegador`;
+  else if(s==="none")el.innerHTML=`<span class="dotwarn"></span>Sem salvamento — exporte`;
+  else el.innerHTML=`<span class="dotwarn"></span>Falha ao salvar — exporte`;
+}
+
+/* ============ helpers ============ */
+const uid=()=>Math.random().toString(36).slice(2,10);
+const BRL=n=>(n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});
+const MESES=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+let viewMonth=new Date().getMonth(), viewYear=new Date().getFullYear();
+let view="dash";
+let lastCat={entrada:"Salário",saida:"Mercado"};
+
+function monthKey(y,m){return `${y}-${String(m+1).padStart(2,"0")}`;}
+function txMonthKey(t){ const d=new Date(t.date+"T00:00:00"); return monthKey(d.getFullYear(),d.getMonth()); }
+
+function applyRecurrences(){
+  // gera lançamentos do mês corrente para recorrentes que ainda não têm entrada nesse mês
+  const now=new Date(); const key=monthKey(now.getFullYear(),now.getMonth());
+  let changed=false;
+  for(const r of data.recur){
+    const exists=data.tx.some(t=>t.recurId===r.id && txMonthKey(t)===key);
+    if(!exists){
+      const day=Math.min(r.day,28);
+      const date=`${key}-${String(day).padStart(2,"0")}`;
+      if(date<=`${key}-31` && new Date(date+"T00:00:00")<=now){
+        data.tx.push({id:uid(),type:r.type,desc:r.desc,amount:r.amount,cat:r.cat,method:r.method,cardId:r.cardId||null,date,recurId:r.id});
+        changed=true;
+      }
+    }
+  }
+  if(changed) save();
+}
+
+/* ============ cartões: fatura do mês ============ */
+function cardInvoice(card, y, m){
+  // compra em cartão entra na fatura do mês de vencimento com base no dia de fechamento
+  let total=0;
+  const items=[];
+  for(const t of data.tx){
+    if(t.method!=="cartao" || t.cardId!==card.id) continue;
+    const d=new Date(t.date+"T00:00:00");
+    let fy=d.getFullYear(), fm=d.getMonth();
+    if(d.getDate()>card.closeDay){ fm++; if(fm>11){fm=0;fy++;} }
+    if(fy===y && fm===m){ total+=t.amount; items.push(t); }
+  }
+  return {total, items};
+}
+
+/* ============ render shell ============ */
+function render(){
+  document.querySelectorAll(".navbtn").forEach(b=>b.classList.toggle("on", b.dataset.view===view));
+  const main=document.getElementById("main");
+  if(view==="dash") main.innerHTML=renderDash();
+  else if(view==="lista") main.innerHTML=renderLista();
+  else if(view==="cartoes") main.innerHTML=renderCartoes();
+  else if(view==="recorrentes") main.innerHTML=renderRecorrentes();
+  else if(view==="categorias") main.innerHTML=renderCategorias();
+  wireDynamic();
+}
+
+function monthTx(y,m){ return data.tx.filter(t=>{const d=new Date(t.date+"T00:00:00");return d.getFullYear()===y&&d.getMonth()===m;}); }
+
+function renderDash(){
+  const y=viewYear,m=viewMonth;
+  const txs=monthTx(y,m);
+  const totalIn=txs.filter(t=>t.type==="entrada").reduce((s,t)=>s+t.amount,0);
+  const totalOut=txs.filter(t=>t.type==="saida").reduce((s,t)=>s+t.amount,0);
+  const saldo=totalIn-totalOut;
+  const cardTotal=data.cards.reduce((s,c)=>s+cardInvoice(c,y,m).total,0);
+
+  // por categoria (saídas)
+  const byCat={};
+  txs.filter(t=>t.type==="saida").forEach(t=>{ byCat[t.cat]=(byCat[t.cat]||0)+t.amount; });
+  const catList=Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  const maxCat=catList.length?catList[0][1]:1;
+  const catColor=Object.fromEntries(data.cats.saida.map(c=>c));
+
+  const recent=[...txs].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+
+  return `
+  <div class="head">
+    <div><h2>Painel do mês</h2><p>Resumo de entradas, saídas e cartão</p></div>
+    ${monthNav()}
+  </div>
+  <div class="kpis">
+    <div class="kpi in"><div class="t">Entradas</div><div class="v mono">${BRL(totalIn)}</div></div>
+    <div class="kpi out"><div class="t">Saídas</div><div class="v mono">${BRL(totalOut)}</div></div>
+    <div class="kpi"><div class="t">Saldo do mês</div><div class="v mono" style="color:${saldo>=0?"var(--in)":"var(--out)"}">${BRL(saldo)}</div></div>
+    <div class="kpi card"><div class="t">Fatura cartão (${MESES[m]})</div><div class="v mono">${BRL(cardTotal)}</div></div>
+  </div>
+  <div class="grid2">
+    <div class="card">
+      <h3>Últimos lançamentos <span class="n">${txs.length} no mês</span></h3>
+      ${recent.length?`<table class="tx"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
+        ${recent.map(rowTx).join("")}
+      </tbody></table>`:`<div class="empty">Nada lançado ainda neste mês. Use "＋ Lançar agora".</div>`}
+    </div>
+    <div class="card">
+      <h3>Por categoria (saídas)</h3>
+      ${catList.length?catList.map(([c,v])=>`
+        <div class="catrow">
+          <span class="dot" style="background:${catColor[c]||"#838C9E"}"></span>
+          <span class="nm">${c}</span>
+          <span class="bar"><i style="width:${Math.round(v/maxCat*100)}%;background:${catColor[c]||"#838C9E"}"></i></span>
+          <span class="val mono">${BRL(v)}</span>
+        </div>`).join(""):`<div class="empty">Sem saídas registradas.</div>`}
+    </div>
+  </div>`;
+}
+
+function rowTx(t){
+  const cardName=t.cardId?(data.cards.find(c=>c.id===t.cardId)?.name||""):"";
+  const methodLbl=t.method==="cartao"?`💳 ${cardName}`:(t.method==="pix"?"Pix":(t.method==="debito"?"Débito":"Dinheiro"));
+  return `<tr>
+    <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}</td>
+    <td>${esc(t.desc)}<div style="font-size:11px;color:var(--muted)">${methodLbl}</div></td>
+    <td><span class="pill ${t.type==="entrada"?"in":"out"}">${esc(t.cat)}</span></td>
+    <td class="amt ${t.type==="entrada"?"pos":"neg"} mono">${t.type==="entrada"?"+":"−"} ${BRL(t.amount)}</td>
+    <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
+  </tr>`;
+}
+function fmtDate(s){ const d=new Date(s+"T00:00:00"); return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit"}); }
+function esc(s){ return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+
+function monthNav(){
+  return `<div class="monthnav">
+    <button data-mv="-1">‹</button>
+    <span class="lbl">${MESES[viewMonth]} ${viewYear}</span>
+    <button data-mv="1">›</button>
+  </div>`;
+}
+
+function renderLista(){
+  const y=viewYear,m=viewMonth;
+  const txs=[...monthTx(y,m)].sort((a,b)=>b.date.localeCompare(a.date));
+  return `
+  <div class="head"><div><h2>Lançamentos</h2><p>Todas as entradas e saídas do mês</p></div>${monthNav()}</div>
+  <div class="card">
+    ${txs.length?`<table class="tx"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Forma</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
+      ${txs.map(t=>{
+        const cardName=t.cardId?(data.cards.find(c=>c.id===t.cardId)?.name||""):"";
+        const methodLbl=t.method==="cartao"?`💳 ${cardName}`:(t.method==="pix"?"Pix":(t.method==="debito"?"Débito":"Dinheiro"));
+        return `<tr>
+          <td class="mono" style="color:var(--muted)">${fmtDate(t.date)}</td>
+          <td>${esc(t.desc)}</td>
+          <td><span class="pill ${t.type==="entrada"?"in":"out"}">${esc(t.cat)}</span></td>
+          <td style="color:var(--muted);font-size:12.5px">${methodLbl}</td>
+          <td class="amt ${t.type==="entrada"?"pos":"neg"} mono">${t.type==="entrada"?"+":"−"} ${BRL(t.amount)}</td>
+          <td><button class="rowbtn" data-del="${t.id}" title="Excluir">✕</button></td>
+        </tr>`;
+      }).join("")}
+    </tbody></table>`:`<div class="empty">Nenhum lançamento neste mês.</div>`}
+  </div>`;
+}
+
+function renderCartoes(){
+  const y=viewYear,m=viewMonth;
+  return `
+  <div class="head"><div><h2>Cartões de crédito</h2><p>Faturas do mês selecionado</p></div>${monthNav()}</div>
+  <div class="cardsgrid">
+    ${data.cards.map(c=>{
+      const inv=cardInvoice(c,y,m);
+      return `<div class="ccard">
+        <div class="nm">💳 ${esc(c.name)}</div>
+        <div class="fat mono">${BRL(inv.total)}</div>
+        <div class="due">Fecha dia ${c.closeDay} · vence dia ${c.dueDay} · ${inv.items.length} compras</div>
+        <div class="miniactions">
+          <button data-lanc-cartao="${c.id}">＋ Lançar</button>
+          <button data-del-cartao="${c.id}">Excluir cartão</button>
+        </div>
+      </div>`;
+    }).join("")}
+    <div class="ccard" style="display:flex;align-items:center;justify-content:center;background:var(--surface-2);border-style:dashed;cursor:pointer" id="addCardBtn">
+      <div style="text-align:center;color:var(--muted);font-weight:700">＋ Novo cartão</div>
+    </div>
+  </div>`;
+}
+
+function renderRecorrentes(){
+  return `
+  <div class="head"><div><h2>Recorrentes</h2><p>Assinaturas e contas fixas lançadas automaticamente todo mês</p></div></div>
+  <div class="card">
+    ${data.recur.length?`<table class="tx"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Dia</th><th style="text-align:right">Valor</th><th></th></tr></thead><tbody>
+      ${data.recur.map(r=>`<tr>
+        <td>${esc(r.desc)}</td>
+        <td><span class="pill ${r.type==="entrada"?"in":"out"}">${r.type==="entrada"?"Entrada":"Saída"}</span></td>
+        <td>${esc(r.cat)}</td>
+        <td class="mono">${r.day}</td>
+        <td class="amt ${r.type==="entrada"?"pos":"neg"} mono">${BRL(r.amount)}</td>
+        <td><button class="rowbtn" data-delrec="${r.id}">✕</button></td>
+      </tr>`).join("")}
+    </tbody></table>`:`<div class="empty">Nenhuma recorrência cadastrada. Ao lançar algo, marque "repetir todo mês".</div>`}
+  </div>`;
+}
+
+function renderCategorias(){
+  return `
+  <div class="head"><div><h2>Categorias</h2><p>Usadas para organizar entradas e saídas</p></div></div>
+  <div class="grid2">
+    <div class="card"><h3>Saídas</h3>${data.cats.saida.map(([n,c])=>`<div class="catrow"><span class="dot" style="background:${c}"></span><span class="nm">${esc(n)}</span></div>`).join("")}
+      <div style="padding:10px 0"><input id="newCatOut" placeholder="Nova categoria de saída" style="width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:8px 11px"></div>
+    </div>
+    <div class="card"><h3>Entradas</h3>${data.cats.entrada.map(([n,c])=>`<div class="catrow"><span class="dot" style="background:${c}"></span><span class="nm">${esc(n)}</span></div>`).join("")}
+      <div style="padding:10px 0"><input id="newCatIn" placeholder="Nova categoria de entrada" style="width:100%;border:1px solid var(--line-strong);border-radius:10px;padding:8px 11px"></div>
+    </div>
+  </div>`;
+}
+
+const PALETTE=["#0E8C7F","#C2410C","#5759D1","#B0496B","#D08412","#2F6FB2","#9A57A8","#1F9E8C","#838C9E"];
+
+/* ============ quick add modal ============ */
+let draft=null;
+function openQuick(prefill){
+  ensureCats();
+  draft=Object.assign({
+    type:"saida", amount:"", desc:"", cat:lastCat.saida, method:"pix", cardId:data.cards[0]?.id||null,
+    date:new Date().toISOString().slice(0,10), repeat:false
+  }, prefill||{});
+  renderModal();
+  document.getElementById("overlay").classList.remove("hidden");
+  setTimeout(()=>document.getElementById("amountInput")?.focus(),30);
+}
+function closeModal(){ document.getElementById("overlay").classList.add("hidden"); draft=null; }
+
+function renderModal(){
+  const cats=data.cats[draft.type];
+  document.getElementById("modal").innerHTML=`
+    <h3>Lançar</h3>
+    <div class="seg">
+      <button type="button" data-t="entrada" class="${draft.type==="entrada"?"on":""}">↓ Entrada</button>
+      <button type="button" data-t="saida" class="${draft.type==="saida"?"on":""}">↑ Saída</button>
+    </div>
+    <div class="f"><label>Valor</label><input id="amountInput" class="amtinput" inputmode="decimal" placeholder="R$ 0,00" value="${draft.amount}"></div>
+    <div class="f"><label>Descrição</label><input id="descInput" placeholder="Ex: mercado, uber, salário..." value="${esc(draft.desc)}"></div>
+    <div class="f"><label>Categoria</label><div class="chipset" id="catChips">
+      ${cats.map(([n])=>`<button type="button" class="chip ${draft.cat===n?"on":""}" data-cat="${esc(n)}">${esc(n)}</button>`).join("")}
+    </div></div>
+    <div class="row2">
+      <div class="f"><label>Data</label><input id="dateInput" type="date" value="${draft.date}"></div>
+      <div class="f"><label>Forma</label><select id="methodInput">
+        <option value="pix" ${draft.method==="pix"?"selected":""}>Pix</option>
+        <option value="debito" ${draft.method==="debito"?"selected":""}>Débito</option>
+        <option value="dinheiro" ${draft.method==="dinheiro"?"selected":""}>Dinheiro</option>
+        <option value="cartao" ${draft.method==="cartao"?"selected":""} ${data.cards.length?"":"disabled"}>Cartão de crédito</option>
+      </select></div>
+    </div>
+    ${draft.method==="cartao"?`<div class="f"><label>Cartão</label><select id="cardSelect">
+      ${data.cards.map(c=>`<option value="${c.id}" ${draft.cardId===c.id?"selected":""}>${esc(c.name)}</option>`).join("")}
+    </select></div>`:""}
+    <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink-soft);font-weight:600;margin-top:4px">
+      <input type="checkbox" id="repeatInput" ${draft.repeat?"checked":""}> Repetir todo mês (recorrente)
+    </label>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveBtn">Salvar</button>
+    </div>`;
+  wireModal();
+}
+
+function wireModal(){
+  const m=document.getElementById("modal");
+  m.querySelectorAll("[data-t]").forEach(b=>b.onclick=()=>{
+    draft.type=b.dataset.t; draft.cat=lastCat[draft.type]||data.cats[draft.type][0][0]; renderModal();
+  });
+  m.querySelectorAll("[data-cat]").forEach(b=>b.onclick=()=>{ draft.cat=b.dataset.cat; renderModal(); });
+  const methodSel=document.getElementById("methodInput");
+  if(methodSel) methodSel.onchange=()=>{ draft.method=methodSel.value; renderModal(); };
+  const cardSel=document.getElementById("cardSelect");
+  if(cardSel) cardSel.onchange=()=>{ draft.cardId=cardSel.value; };
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveBtn").onclick=commitDraft;
+  const amtEl=document.getElementById("amountInput");
+  amtEl.onkeydown=(e)=>{ if(e.key==="Enter") commitDraft(); };
+}
+
+function parseAmount(s){
+  s=String(s).trim().replace(/[^\d,.-]/g,"");
+  if(s.includes(",")&&s.includes(".")) s=s.replace(/\./g,"").replace(",",".");
+  else if(s.includes(",")) s=s.replace(",",".");
+  const n=parseFloat(s);
+  return isNaN(n)?0:n;
+}
+
+function commitDraft(){
+  const amount=parseAmount(document.getElementById("amountInput").value);
+  const desc=document.getElementById("descInput").value.trim();
+  const date=document.getElementById("dateInput").value || new Date().toISOString().slice(0,10);
+  const method=document.getElementById("methodInput")?.value || draft.method;
+  const repeat=document.getElementById("repeatInput").checked;
+  const cardSel=document.getElementById("cardSelect");
+  if(cardSel) draft.cardId=cardSel.value;
+  if(amount<=0){ toast("Informe um valor válido"); return; }
+  if(!desc){ toast("Dê uma descrição curta"); return; }
+  lastCat[draft.type]=draft.cat;
+
+  const id=uid();
+  const recurId = repeat ? "r_"+id : null;
+  data.tx.push({id, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, date, recurId});
+  if(repeat){
+    data.recur.push({id:recurId, type:draft.type, amount, desc, cat:draft.cat, method, cardId:method==="cartao"?draft.cardId:null, day:new Date(date+"T00:00:00").getDate()});
+  }
+  save(); closeModal(); toast("Lançado ✓"); render();
+}
+
+function toast(msg){
+  const t=document.getElementById("toast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toast._h); toast._h=setTimeout(()=>t.classList.remove("show"),1800);
+}
+
+/* ============ cartão: novo / excluir ============ */
+function openCardModal(){
+  document.getElementById("modal").innerHTML=`
+    <h3>Novo cartão</h3>
+    <div class="f"><label>Nome</label><input id="cardName" placeholder="Ex: Nubank"></div>
+    <div class="row2">
+      <div class="f"><label>Dia de fechamento</label><input id="cardClose" type="number" min="1" max="31" value="25"></div>
+      <div class="f"><label>Dia de vencimento</label><input id="cardDue" type="number" min="1" max="31" value="5"></div>
+    </div>
+    <div class="modalactions">
+      <button class="btn ghost" id="cancelBtn">Cancelar</button>
+      <button class="btn primary" id="saveCardBtn">Salvar</button>
+    </div>`;
+  document.getElementById("cancelBtn").onclick=closeModal;
+  document.getElementById("saveCardBtn").onclick=()=>{
+    const name=document.getElementById("cardName").value.trim();
+    const closeDay=parseInt(document.getElementById("cardClose").value)||25;
+    const dueDay=parseInt(document.getElementById("cardDue").value)||5;
+    if(!name){ toast("Dê um nome ao cartão"); return; }
+    data.cards.push({id:uid(), name, closeDay, dueDay});
+    save(); closeModal(); render();
+  };
+  document.getElementById("overlay").classList.remove("hidden");
+}
+
+/* ============ export / import ============ */
+function exportData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=`financas-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+  data.lastExport=Date.now(); save();
+}
+let pendingImport=null;
+function importData(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      pendingImport=JSON.parse(reader.result);
+      document.getElementById("modal").innerHTML=`
+        <h3>Importar backup</h3>
+        <p style="color:var(--muted);font-size:13.5px">Encontramos ${pendingImport.tx?.length||0} lançamentos no arquivo. Como deseja importar?</p>
+        <div class="modalactions" style="flex-direction:column">
+          <button class="btn primary" data-act="do-import-merge">Somar ao que já existe</button>
+          <button class="btn" style="background:var(--out);color:#fff" data-act="do-import-replace">Substituir tudo</button>
+          <button class="btn ghost" id="cancelBtn">Cancelar</button>
+        </div>`;
+      document.getElementById("overlay").classList.remove("hidden");
+      document.getElementById("cancelBtn").onclick=closeModal;
+      document.querySelector('[data-act="do-import-merge"]').onclick=()=>doImport("merge");
+      document.querySelector('[data-act="do-import-replace"]').onclick=()=>doImport("replace");
+    }catch(e){ toast("Arquivo inválido"); }
+  };
+  reader.readAsText(file);
+}
+function doImport(mode){
+  if(!pendingImport) return;
+  if(mode==="replace"){
+    data=pendingImport;
+  }else{
+    const existingIds=new Set(data.tx.map(t=>t.id));
+    (pendingImport.tx||[]).forEach(t=>{ if(!existingIds.has(t.id)) data.tx.push(t); });
+    const existingCardIds=new Set(data.cards.map(c=>c.id));
+    (pendingImport.cards||[]).forEach(c=>{ if(!existingCardIds.has(c.id)) data.cards.push(c); });
+    const existingRecIds=new Set(data.recur.map(r=>r.id));
+    (pendingImport.recur||[]).forEach(r=>{ if(!existingRecIds.has(r.id)) data.recur.push(r); });
+  }
+  ensureCats();
+  pendingImport=null; save(); closeModal(); render(); toast("Importado ✓");
+}
+
+/* ============ wiring ============ */
+function wireDynamic(){
+  document.getElementById("main").querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{
+    data.tx=data.tx.filter(t=>t.id!==b.dataset.del); save(); render();
+  });
+  document.getElementById("main").querySelectorAll("[data-delrec]").forEach(b=>b.onclick=()=>{
+    data.recur=data.recur.filter(r=>r.id!==b.dataset.delrec); save(); render();
+  });
+  document.getElementById("main").querySelectorAll("[data-mv]").forEach(b=>b.onclick=()=>{
+    viewMonth+=parseInt(b.dataset.mv); if(viewMonth<0){viewMonth=11;viewYear--;} if(viewMonth>11){viewMonth=0;viewYear++;}
+    render();
+  });
+  const addCardBtn=document.getElementById("addCardBtn");
+  if(addCardBtn) addCardBtn.onclick=openCardModal;
+  document.getElementById("main").querySelectorAll("[data-del-cartao]").forEach(b=>b.onclick=()=>{
+    if(data.tx.some(t=>t.cardId===b.dataset.delCartao)){ if(!confirm("Este cartão tem lançamentos. Excluir mesmo assim (os lançamentos ficam sem cartão)?")) return; }
+    data.tx.forEach(t=>{ if(t.cardId===b.dataset.delCartao) t.cardId=null; });
+    data.cards=data.cards.filter(c=>c.id!==b.dataset.delCartao); save(); render();
+  });
+  document.getElementById("main").querySelectorAll("[data-lanc-cartao]").forEach(b=>b.onclick=()=>{
+    openQuick({method:"cartao", cardId:b.dataset.lancCartao, type:"saida"});
+  });
+  const newCatOut=document.getElementById("newCatOut");
+  if(newCatOut) newCatOut.onkeydown=(e)=>{ if(e.key==="Enter" && newCatOut.value.trim()){
+    data.cats.saida.push([newCatOut.value.trim(), PALETTE[data.cats.saida.length%PALETTE.length]]); save(); render();
+  }};
+  const newCatIn=document.getElementById("newCatIn");
+  if(newCatIn) newCatIn.onkeydown=(e)=>{ if(e.key==="Enter" && newCatIn.value.trim()){
+    data.cats.entrada.push([newCatIn.value.trim(), PALETTE[data.cats.entrada.length%PALETTE.length]]); save(); render();
+  }};
+}
+
+document.querySelectorAll(".navbtn").forEach(b=>b.addEventListener("click",()=>{ view=b.dataset.view; render(); }));
+document.getElementById("btnQuick").addEventListener("click",()=>openQuick());
+document.getElementById("fabQuick").addEventListener("click",()=>openQuick());
+document.getElementById("overlay").addEventListener("click",(e)=>{ if(e.target.id==="overlay") closeModal(); });
+document.addEventListener("keydown",(e)=>{
+  if(e.key==="Escape") closeModal();
+  if(e.key.toLowerCase()==="n" && document.getElementById("overlay").classList.contains("hidden") && !["INPUT","TEXTAREA","SELECT"].includes(document.activeElement.tagName)) openQuick();
+});
+document.addEventListener("click",(e)=>{
+  const act=e.target.closest("[data-act]")?.dataset.act;
+  if(act==="export") exportData();
+  else if(act==="import") document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change",(e)=>{
+  if(e.target.files&&e.target.files[0]){ importData(e.target.files[0]); e.target.value=""; }
+});
+
+(async function(){
+  await load();
+  applyRecurrences();
+  render();
+  setSaveStat(window.storage?"ok":(window.localStorage?"local":"none"));
+})();
+</script>
+</body>
+</html>
