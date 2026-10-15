@@ -1,0 +1,2666 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Plano de Mídia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{
+  --bg:#EEF0F4; --surface:#FFFFFF; --surface-2:#F6F7FA; --ink:#1B1D26; --ink-soft:#424457; --muted:#7A7D93; --faint:#AEB0C2;
+  --grid:#DCDEE7; --grid-strong:#C7C9DA;
+  --brand:#3F6BF0; --brand-bg:#E8EEFE; --brand-soft:#EDF2FE;
+  --off:#B96A22; --off-bg:#FBF0E6;
+  --dig:#0E8C7F; --dig-bg:#E4F2EF;
+  --topo:#5759D1; --meio:#0E8C7F; --fundo:#B0496B; --ret:#B9820C;
+  --danger:#D33B3B; --danger-bg:#FCEBEB;
+  --head-bg:#F3F4F8;
+  --sh:0 1px 2px rgba(20,22,35,.04), 0 4px 14px rgba(20,22,35,.05);
+  --sh-pop:0 16px 50px rgba(20,22,35,.22);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#15161E; --surface:#1C1D28; --surface-2:#22232F; --ink:#ECEDF4; --ink-soft:#C3C5D6; --muted:#8B8DA3; --faint:#5A5C74;
+    --grid:#33344A; --grid-strong:#42435C;
+    --brand:#7C9AFF; --brand-bg:#232A4A; --brand-soft:#1E2440;
+    --off:#E0995C; --off-bg:#382B1B; --dig:#4FC2AE; --dig-bg:#1A332F;
+    --danger:#F0666B; --danger-bg:#3A2029;
+    --head-bg:#20212D;
+    --sh:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
+    --sh-pop:0 16px 50px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#15161E; --surface:#1C1D28; --surface-2:#22232F; --ink:#ECEDF4; --ink-soft:#C3C5D6; --muted:#8B8DA3; --faint:#5A5C74;
+  --grid:#33344A; --grid-strong:#42435C;
+  --brand:#7C9AFF; --brand-bg:#232A4A; --brand-soft:#1E2440;
+  --off:#E0995C; --off-bg:#382B1B; --dig:#4FC2AE; --dig-bg:#1A332F;
+  --danger:#F0666B; --danger-bg:#3A2029;
+  --head-bg:#20212D;
+  --sh:0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.4);
+  --sh-pop:0 16px 50px rgba(0,0,0,.6);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--bg);color:var(--ink);font-family:"Inter",system-ui,sans-serif;font-size:13.5px;line-height:1.4;-webkit-font-smoothing:antialiased}
+.disp{font-family:"Manrope",system-ui,sans-serif}
+.mono,.num,input[type=number],input[type=date]{font-family:"JetBrains Mono",monospace;font-feature-settings:"tnum";font-variant-numeric:tabular-nums}
+button{font-family:inherit;cursor:pointer;color:inherit}
+input,select,textarea{font-family:inherit}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:var(--grid-strong);border-radius:99px;border:3px solid transparent;background-clip:content-box}
+:focus-visible{outline:2px solid var(--brand);outline-offset:1px}
+
+/* ===== shell ===== */
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:14px;padding:9px 16px;background:var(--surface);border-bottom:1px solid var(--grid);flex:0 0 auto;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:8px;flex:0 0 auto}
+.brand .mark{width:22px;height:22px;flex:0 0 auto}
+.brand b{font-family:"Manrope";font-weight:800;font-size:14.5px;letter-spacing:-.01em;white-space:nowrap}
+.planname{font-family:"Manrope";font-weight:700;font-size:14.5px;border:1px solid transparent;border-radius:7px;padding:4px 8px;background:transparent;min-width:80px;max-width:280px}
+.planname:hover{border-color:var(--grid-strong)}
+.planname:focus{border-color:var(--brand);background:var(--surface-2)}
+.savestat{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.savestat .dot{width:6px;height:6px;border-radius:50%;background:var(--dig)}
+.spacer{flex:1}
+.tbtn{border:1px solid var(--grid-strong);background:var(--surface);border-radius:8px;padding:6px 11px;font-weight:600;font-size:12.5px;color:var(--ink-soft);display:flex;align-items:center;gap:6px;white-space:nowrap}
+.tbtn:hover{background:var(--surface-2)}
+.tbtn.pri{background:var(--brand);color:#fff;border-color:var(--brand)}
+.tbtn.pri:hover{filter:brightness(1.08)}
+.tbtn.danger{color:var(--danger);border-color:var(--danger-bg)}
+.tbtn.danger:hover{background:var(--danger-bg)}
+.tbtn svg{width:13px;height:13px}
+.toolgrp{display:flex;gap:6px;align-items:center}
+
+/* ===== step tabs (Critérios / Alocação / Coerência) ===== */
+.stepbar{display:flex;gap:0;background:var(--surface);border-bottom:1px solid var(--grid);flex:0 0 auto;padding:0 12px}
+.step{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:11px 16px;font-weight:700;font-size:13px;color:var(--muted);border-bottom:2px solid transparent}
+.step.on{color:var(--ink);border-bottom-color:var(--brand)}
+.step:hover{color:var(--ink)}
+.step .n{width:18px;height:18px;border-radius:50%;background:var(--surface-2);color:var(--muted);font-size:10.5px;display:grid;place-items:center;flex:0 0 auto}
+.step.on .n{background:var(--brand);color:#fff}
+.step .warncount{background:var(--danger);color:#fff;font-size:10px;font-weight:800;border-radius:99px;padding:1px 6px}
+.step .okcheck{color:var(--dig);font-size:13px}
+
+/* ===== visão de critérios / coerência ===== */
+.stepview{flex:1;overflow:auto;background:var(--surface);padding:22px 26px 60px;display:none}
+.stepview.show{display:block}
+.stepview .wrap{max-width:760px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+.critcard{border:1px solid var(--grid);border-radius:12px;padding:16px 18px;background:var(--surface-2)}
+.critcard h3{margin:0 0 4px;font-family:"Manrope";font-size:14.5px;font-weight:800}
+.critcard .f{margin-top:12px}
+.critcard .f:first-child{margin-top:0}
+.critcard .f label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:5px}
+.critcard .f input[type=text],.critcard .f input:not([type]){width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:9px 11px;font-size:13.5px;background:var(--surface);color:var(--ink)}
+.ib{border:1px solid var(--grid-strong);background:var(--surface);color:var(--muted);width:32px;height:32px;border-radius:8px;font-size:15px;line-height:1;flex:0 0 auto}
+.ib:hover{background:var(--danger-bg);color:var(--danger);border-color:var(--danger-bg)}
+.critcard .desc{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.5}
+.funilrow{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.funilfield{background:var(--surface);border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px}
+.funilfield label{display:block;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:4px}
+.funilfield input{width:100%;border:0;background:transparent;font-size:16px;font-weight:800;color:var(--ink);font-family:"JetBrains Mono",monospace}
+.funilsum{margin-top:9px;font-size:12px;font-weight:700}
+.funilsum.ok{color:var(--dig)} .funilsum.bad{color:var(--danger)}
+.chiprow{display:flex;flex-wrap:wrap;gap:7px}
+.chip{border:1.5px solid var(--grid-strong);background:var(--surface);border-radius:99px;padding:6px 13px;font-size:12px;font-weight:600;color:var(--ink-soft)}
+.chip.on{border-color:var(--brand);background:var(--brand-bg);color:var(--brand)}
+.radiorow{display:flex;flex-direction:column;gap:8px}
+.radiocard{display:flex;gap:10px;align-items:flex-start;border:1.5px solid var(--grid-strong);background:var(--surface);border-radius:10px;padding:10px 12px;cursor:pointer}
+.radiocard.on{border-color:var(--brand);background:var(--brand-bg)}
+.radiocard input{margin-top:3px}
+.radiocard .rt{font-weight:700;font-size:13px}
+.radiocard .rd{font-size:11.5px;color:var(--muted);margin-top:2px}
+.critrow2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.critselect{width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:9px 11px;font-size:13.5px;background:var(--surface);color:var(--ink)}
+.critdate{width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13px;background:var(--surface);color:var(--ink);font-family:"JetBrains Mono",monospace}
+
+.checkcard{border:1px solid var(--grid);border-radius:12px;overflow:hidden}
+.checkhead{display:flex;gap:10px;align-items:flex-start;padding:14px 16px;background:var(--surface-2)}
+.checkicon{width:24px;height:24px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;font-size:13px;font-weight:800;color:#fff}
+.checkicon.ok{background:var(--dig)} .checkicon.warn{background:var(--danger)} .checkicon.na{background:var(--faint)}
+.checkbody h4{margin:0 0 3px;font-family:"Manrope";font-size:14px;font-weight:800}
+.checkbody p{margin:0;font-size:12.5px;color:var(--ink-soft);line-height:1.5}
+.justif{padding:0 16px 14px}
+.justif label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin:10px 0 6px}
+.justif textarea{width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:9px 11px;font-size:13px;background:var(--surface);color:var(--ink);min-height:56px;resize:vertical}
+.incomplete{text-align:center;color:var(--muted);padding:60px 20px}
+.incomplete b{display:block;font-family:"Manrope";color:var(--ink);font-size:15px;margin-bottom:6px}
+
+/* ===== info strip (briefing como cabeçalho de planilha) ===== */
+.infostrip{display:grid;grid-template-columns:1.1fr 1fr 1fr .8fr .8fr 1.4fr 1.4fr;border-bottom:1px solid var(--grid);background:var(--head-bg);flex:0 0 auto}
+.icell{border-right:1px solid var(--grid);padding:6px 10px;min-width:0}
+.icell:last-child{border-right:0}
+.icell label{display:block;font-size:9.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:3px}
+.icell input,.icell textarea{width:100%;border:0;background:transparent;padding:1px 0;font-size:13px;color:var(--ink);font-weight:600;resize:none}
+.icell textarea{font-weight:500;font-size:12.5px;height:34px;line-height:1.35;font-family:inherit}
+.icell input:focus,.icell textarea:focus{outline:0;background:var(--surface)}
+.icell.money input{font-family:"JetBrains Mono",monospace}
+
+/* ===== grid principal ===== */
+.gridwrap{flex:1;overflow:auto;background:var(--surface);padding:0 0 24px}
+.sheetsummary{padding:12px 16px;font-size:12.5px;color:var(--muted);border-bottom:1px solid var(--grid)}
+.sheetsummary b{color:var(--ink);font-family:"JetBrains Mono",monospace}
+.sheetgroup{margin-top:18px}
+.sheetgroup:first-of-type{margin-top:8px}
+.sheetgrouphead{display:flex;align-items:center;gap:10px;padding:8px 16px;font-size:12px;color:var(--muted);font-weight:600}
+.sheetgrouphead .sp{flex:1}
+.sheetgrouphead b{font-family:"JetBrains Mono",monospace;color:var(--ink);font-size:13px}
+.addcatrow{display:flex;align-items:center;gap:9px;padding:16px;flex-wrap:wrap}
+.addcatrow label{font-size:12px;color:var(--muted);font-weight:600}
+.addcatrow select{border:1px solid var(--grid-strong);border-radius:8px;padding:7px 10px;font-size:13px;background:var(--surface);color:var(--ink)}
+table.sheet{border-collapse:collapse;width:100%;min-width:1180px}
+table.sheet thead th{position:sticky;top:0;background:var(--head-bg);z-index:2;border-bottom:1px solid var(--grid-strong);border-right:1px solid var(--grid);padding:7px 9px;text-align:left;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+table.sheet thead th.num{text-align:right}
+table.sheet thead th.rownum{width:34px;text-align:center;background:var(--head-bg)}
+table.sheet tbody td{border-bottom:1px solid var(--grid);border-right:1px solid var(--grid);padding:0;vertical-align:middle;height:34px}
+table.sheet tbody tr:hover td{background:var(--surface-2)}
+table.sheet tbody tr.late td{background:var(--danger-bg)}
+td.rownum{text-align:center;color:var(--faint);font-size:11px;background:var(--head-bg);user-select:none}
+.cellsel{width:100%;height:100%;border:0;background:transparent;padding:0 8px;font-size:13px;color:var(--ink);cursor:pointer;appearance:none;font-weight:500}
+.cellsel:focus{outline:2px solid var(--brand);outline-offset:-2px;background:var(--surface)}
+.cellinput{width:100%;height:100%;border:0;background:transparent;padding:0 8px;font-size:13px;color:var(--ink);text-align:right}
+.cellinput.left{text-align:left}
+.cellinput:focus{outline:2px solid var(--brand);outline-offset:-2px;background:var(--surface)}
+td.result{padding:0 9px;text-align:right;font-size:12.5px;color:var(--ink-soft);white-space:nowrap}
+td.catcell{padding:0 8px}
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:99px;white-space:nowrap}
+.badge .d{width:5px;height:5px;border-radius:50%}
+.badge.topo{background:var(--brand-bg);color:var(--topo)} .badge.topo .d{background:var(--topo)}
+.badge.meio{background:var(--dig-bg);color:var(--meio)} .badge.meio .d{background:var(--meio)}
+.badge.fundo{background:#FAEAEF;color:var(--fundo)} .badge.fundo .d{background:var(--fundo)}
+.badge.retencao{background:#FBF1E2;color:var(--ret)} .badge.retencao .d{background:var(--ret)}
+.badge.off{background:var(--off-bg);color:var(--off)}
+.badge.dig{background:var(--dig-bg);color:var(--dig)}
+td.benchcell{padding:0 8px}
+.benchbtn{border:1px dashed var(--grid-strong);background:transparent;border-radius:7px;padding:3px 8px;font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;white-space:nowrap}
+.benchbtn:hover{border-color:var(--brand);color:var(--brand);background:var(--brand-soft)}
+td.delcell{width:64px;text-align:center;white-space:nowrap}
+.rmbtn:disabled{opacity:.3;cursor:not-allowed}
+.rmbtn{border:0;background:transparent;color:var(--faint);width:26px;height:26px;border-radius:6px;font-size:15px;line-height:1;visibility:hidden}
+tr:hover .rmbtn{visibility:visible}
+.rmbtn:hover{background:var(--danger-bg);color:var(--danger)}
+tr.addrow td{border-right:0;padding:0}
+.addrowbtn{width:100%;text-align:left;border:0;background:transparent;padding:9px 12px;font-size:12.5px;font-weight:600;color:var(--brand)}
+.addrowbtn:hover{background:var(--brand-soft)}
+tfoot td{position:sticky;bottom:0;background:var(--head-bg);border-top:1px solid var(--grid-strong);border-right:1px solid var(--grid);padding:8px 9px;font-size:11.5px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+tfoot td.num{text-align:right}
+
+/* ===== barra de status (rodapé estilo planilha) ===== */
+.statusbar{flex:0 0 auto;display:flex;align-items:center;gap:0;background:var(--surface);border-top:1px solid var(--grid);overflow-x:auto}
+.legalnotice{flex:0 0 auto;padding:6px 16px;font-size:10px;line-height:1.4;color:var(--faint);background:var(--surface-2);border-top:1px solid var(--grid);text-align:center}
+.stat{padding:8px 16px;border-right:1px solid var(--grid);font-size:11.5px;color:var(--muted);white-space:nowrap;display:flex;gap:6px;align-items:baseline}
+.stat b{font-family:"JetBrains Mono",monospace;color:var(--ink);font-size:12.5px;font-weight:700}
+
+/* ===== abas de planos (sheet tabs) ===== */
+.tabs{flex:0 0 auto;display:flex;align-items:stretch;background:var(--head-bg);border-top:1px solid var(--grid);overflow-x:auto}
+.tab{display:flex;align-items:center;gap:7px;padding:8px 10px 8px 14px;border-right:1px solid var(--grid);font-size:12.5px;font-weight:600;color:var(--muted);white-space:nowrap;background:transparent;position:relative}
+.tab.on{background:var(--surface);color:var(--ink);box-shadow:inset 0 2px 0 var(--brand)}
+.tab:hover{background:var(--surface)}
+.tab input{border:0;background:transparent;font:inherit;font-weight:700;color:inherit;width:auto;min-width:20px}
+.tab input:focus{outline:0}
+.tabx{border:0;background:transparent;color:var(--faint);width:18px;height:18px;border-radius:5px;font-size:13px;line-height:1;flex:0 0 auto}
+.tabx:hover{background:var(--danger-bg);color:var(--danger)}
+.addtab{border:0;background:transparent;color:var(--brand);font-weight:800;font-size:16px;padding:8px 14px;flex:0 0 auto}
+.addtab:hover{background:var(--brand-soft)}
+
+/* ===== painel de análise (slide-over) ===== */
+.panelback{position:fixed;inset:0;background:rgba(20,22,35,.4);display:none;z-index:70}
+.panelback.open{display:block}
+.panel{position:fixed;top:0;right:0;bottom:0;width:420px;max-width:92vw;background:var(--surface);box-shadow:var(--sh-pop);z-index:71;transform:translateX(100%);transition:.22s ease;display:flex;flex-direction:column}
+.panel.open{transform:none}
+.panel header{padding:16px 18px;border-bottom:1px solid var(--grid);display:flex;justify-content:space-between;align-items:center;flex:0 0 auto}
+.panel header h3{margin:0;font-family:"Manrope";font-size:16px;font-weight:800}
+.panel .x{border:0;background:transparent;color:var(--muted);width:30px;height:30px;border-radius:8px;font-size:19px}
+.panel .x:hover{background:var(--surface-2)}
+.panelbody{padding:16px 18px;overflow:auto;flex:1}
+.panelbody h4{font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);margin:18px 0 9px}
+.panelbody h4:first-child{margin-top:0}
+.barlist{display:flex;flex-direction:column;gap:9px}
+.barrow .bl{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px}
+.bl b{font-weight:700}
+.bl span{color:var(--muted)}
+.bartrack{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.bartrack > i{display:block;height:100%;border-radius:99px}
+.stack{height:20px;border-radius:99px;overflow:hidden;display:flex;background:var(--surface-2)}
+.stack span{height:100%}
+.legend{display:flex;gap:12px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--ink-soft)}
+.legend i{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.tlrow{display:grid;grid-template-columns:110px 1fr;align-items:center;gap:8px;padding:5px 0}
+.tlname{font-size:11.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tltrack{position:relative;height:16px;background:var(--surface-2);border-radius:99px}
+.tlbar{position:absolute;top:2px;bottom:2px;border-radius:99px}
+.hint{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ===== modal glossário ===== */
+.backdrop{position:fixed;inset:0;background:rgba(20,22,35,.45);display:none;align-items:flex-start;justify-content:center;padding:36px 16px;z-index:80;overflow:auto}
+.backdrop.open{display:flex}
+.modal{background:var(--surface);border-radius:16px;width:100%;max-width:640px;box-shadow:var(--sh-pop)}
+.modal header{padding:16px 20px 2px;display:flex;justify-content:space-between;align-items:center}
+.modal header h3{margin:0;font-family:"Manrope";font-size:17px;font-weight:800}
+.modal .x{border:0;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:8px;font-size:20px;line-height:1}
+.modal .x:hover{background:var(--surface-2)}
+.gsearch{padding:12px 20px 0}
+.gsearch input{width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:9px 12px;font-size:13.5px;background:var(--surface-2);color:var(--ink)}
+.glossary{max-height:60vh;overflow:auto;padding:4px 20px 20px}
+.gitem{padding:10px 0;border-bottom:1px solid var(--grid)}
+.gitem:last-child{border-bottom:0}
+.gitem b{font-family:"Manrope";font-size:13.5px}
+.gitem p{margin:4px 0 0;font-size:12.5px;color:var(--ink-soft);line-height:1.5}
+
+.toast{position:fixed;left:50%;bottom:70px;transform:translate(-50%,12px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-weight:600;font-size:13px;box-shadow:var(--sh-pop);z-index:90;opacity:0;transition:.25s;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+.empty{margin:40px auto;max-width:420px;text-align:center;color:var(--muted)}
+.empty .em{font-family:"Manrope";color:var(--ink);font-weight:800;font-size:18px;margin-bottom:6px}
+.empty button{margin-top:14px;border:0;background:var(--brand);color:#fff;border-radius:10px;padding:9px 16px;font-weight:700;font-size:13.5px}
+
+#printReport{display:none}
+@media print{
+  .app,.backdrop,.panelback,.panel{display:none!important}
+  #printReport{display:block}
+  body{background:#fff;color:#111}
+}
+.pr-page{max-width:800px;margin:0 auto;font-family:"Inter",sans-serif;color:#111;padding:0 8px}
+.pr-cover{padding:60px 0 30px;border-bottom:3px solid #191A2B;margin-bottom:22px}
+.pr-cover .pr-eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7A7D93}
+.pr-cover h1{font-family:"Manrope",sans-serif;font-size:30px;font-weight:800;margin:6px 0 10px}
+.pr-cover .pr-meta{font-size:13px;color:#454764;display:flex;gap:18px;flex-wrap:wrap}
+.pr-section{margin-bottom:26px;break-inside:avoid}
+.pr-section h2{font-family:"Manrope",sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #D6D4EC;padding-bottom:6px;margin-bottom:12px}
+.pr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.pr-kv b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#7A7D93;margin-bottom:2px}
+.pr-kv span{font-size:13.5px;color:#191A2B}
+.pr-cat{margin-bottom:16px;break-inside:avoid}
+.pr-cat h3{font-family:"Manrope",sans-serif;font-size:12.5px;font-weight:800;margin:0 0 6px;color:#3F6BF0}
+table.pr-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:6px}
+table.pr-table th{text-align:left;background:#F3F4F8;padding:5px 7px;font-weight:700;border-bottom:1px solid #D6D4EC}
+table.pr-table td{padding:5px 7px;border-bottom:1px solid #E7E6F5}
+table.pr-table td.num,table.pr-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+.pr-totalrow{font-weight:800;background:#F7F6FD}
+.pr-persona{display:flex;gap:12px;border:1px solid #D6D4EC;border-radius:10px;padding:12px;margin-bottom:10px;break-inside:avoid}
+.pr-persona .pr-av{font-size:32px}
+.pr-footer{font-size:10px;color:#AEB0C2;text-align:center;margin-top:30px;padding-top:10px;border-top:1px solid #E7E6F5}
+@media (max-width:860px){
+  .infostrip{grid-template-columns:1fr 1fr;grid-auto-rows:auto}
+  .icell{border-bottom:1px solid var(--grid)}
+  .panel{width:100%}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="brand">
+      <svg class="mark" viewBox="0 0 40 40" fill="none">
+        <rect x="4" y="20" width="7" height="16" rx="2" fill="#3F6BF0"/>
+        <rect x="16.5" y="10" width="7" height="26" rx="2" fill="#0E8C7F"/>
+        <rect x="29" y="4" width="7" height="32" rx="2" fill="#B0496B"/>
+      </svg>
+      <b>Plano de Mídia</b>
+    </div>
+    <input class="planname" id="planNameInput" placeholder="Nome do plano">
+    <div class="savestat" id="saveStat"><span class="dot"></span>salvo</div>
+    <div class="spacer"></div>
+    <div class="toolgrp">
+      <button class="tbtn" data-act="glossary">📘 Glossário</button>
+      <button class="tbtn" data-act="midiakits">🔗 Mídia Kits</button>
+      <button class="tbtn" data-act="analytics">📊 Análises</button>
+      <button class="tbtn" data-act="print">🖨 Gerar PDF</button>
+      <button class="tbtn" data-act="export-excel">📊 Excel</button>
+      <button class="tbtn" data-act="export">⬇ Backup (JSON)</button>
+      <button class="tbtn" data-act="import">⬆ Importar</button>
+      <input type="file" id="importFile" accept="application/json,.json" style="display:none">
+      <button class="tbtn danger" data-act="reset-plan" title="Apaga os dados deste plano e começa do zero">🔄 Recomeçar</button>
+      <button class="tbtn pri" data-act="add-line">+ Linha</button>
+    </div>
+  </div>
+
+  <div class="stepbar" id="stepbar"></div>
+
+  <div class="infostrip" id="infostrip"></div>
+
+  <div class="gridwrap" id="gridwrap"></div>
+  <div class="stepview" id="stepview"></div>
+
+  <div class="statusbar" id="statusbar"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="legalnotice">Simulador educacional desenvolvido com apoio de inteligência artificial por Leandro Dorigatti, para uso exclusivo na disciplina de Mídia II na ESAMC. Dados, valores e estimativas são fictícios, com finalidade estritamente didática — não têm valor legal, comercial ou de mercado e não devem ser usados como referência real. Uso restrito aos alunos da disciplina; reprodução ou distribuição fora desse contexto não é autorizada.</div>
+</div>
+
+<div class="panelback" id="panelback"></div>
+<div class="panel" id="panel"></div>
+<div class="backdrop" id="backdrop"><div class="modal" id="modal"></div></div>
+<div id="printReport"></div>
+
+<script>
+"use strict";
+
+/* ===================== catálogo de veículos ===================== */
+const FUNIL = {topo:"Topo", meio:"Meio", fundo:"Fundo", retencao:"Retenção"};
+const FUNILFULL = {topo:"Topo (Awareness)", meio:"Meio (Consideração)", fundo:"Fundo (Conversão)", retencao:"Retenção/Fidelização"};
+const MODELO = {CPM:"CPM", CPC:"CPC", CPV:"CPV", CPA:"CPA", CPL:"CPL", CPI:"CPI", CPP:"CPP/GRP", FIXO:"Fixo"};
+// papel clássico do veículo no mix — independente da etapa do funil, é a função tática que ele cumpre
+const PAPEL = {alcance:"Alcance / Cobertura", frequencia:"Frequência / Lembrança", conversao:"Conversão / Resposta direta", recorrencia:"Recorrência / Retenção"};
+const PAPEL_POR_FUNIL = {topo:"alcance", meio:"frequencia", fundo:"conversao", retencao:"recorrencia"};
+const RESLABEL = {CPM:"impressões", CPC:"cliques", CPV:"views", CPA:"conversões", CPL:"leads", CPI:"instalações", CPP:"GRPs", FIXO:"pacote fechado"};
+
+const REGIOES = {nacional:"Nacional", norte:"Norte", nordeste:"Nordeste", centrooeste:"Centro-Oeste", sudeste:"Sudeste", sul:"Sul"};
+const ESTADOS = {SP:"São Paulo",MG:"Minas Gerais",RJ:"Rio de Janeiro",BA:"Bahia",PR:"Paraná",RS:"Rio Grande do Sul",PE:"Pernambuco",CE:"Ceará",PA:"Pará",SC:"Santa Catarina",MA:"Maranhão",GO:"Goiás",AM:"Amazonas",PB:"Paraíba",ES:"Espírito Santo",RN:"Rio Grande do Norte",MT:"Mato Grosso",AL:"Alagoas",PI:"Piauí",DF:"Distrito Federal",MS:"Mato Grosso do Sul",SE:"Sergipe",RO:"Rondônia",TO:"Tocantins",AC:"Acre",AP:"Amapá",RR:"Roraima"};
+// emissoras/redes nacionais disponíveis nas praças (simplificação didática: assume que toda praça tem
+// afiliada das principais redes — o nome local da afiliada varia, mas a rede é a unidade de planejamento).
+// praças de broadcast (TV/rádio) no padrão do mercado publicitário — mais granular que estado
+// (ex.: São Paulo Capital e Interior separados, Campinas e Santos à parte), com população aproximada
+// de cada uma para os cálculos de audiência/GRP/TRP.
+const MERCADOS_TV = {
+  SP1:{label:"São Paulo Capital",pop:12300000}, SPI:{label:"São Paulo Interior",pop:20000000},
+  CAM:{label:"Campinas",pop:1220000}, SAN:{label:"Santos/Baixada Santista",pop:1900000},
+  RJ1:{label:"Rio de Janeiro",pop:6700000}, BHZ:{label:"Belo Horizonte",pop:2500000},
+  POA:{label:"Porto Alegre",pop:1500000}, REC:{label:"Recife",pop:1650000},
+  SSA:{label:"Salvador",pop:2900000}, DF1:{label:"Brasília",pop:3050000},
+  CTB:{label:"Curitiba",pop:1950000}, FOR:{label:"Fortaleza",pop:2700000},
+  BEL:{label:"Belém",pop:1500000}, MAN:{label:"Manaus",pop:2200000}, GYN:{label:"Goiânia",pop:1550000},
+};
+const MERCADOS_TV_OPTS = Object.entries(MERCADOS_TV).reduce((o,[k,v])=>{o[k]=v.label;return o;},{});
+const REDES_TV = ["Globo","SBT","Record","Band","RedeTV!"];
+const REDES_RADIO = ["Jovem Pan","CBN","Band FM","Antena 1","Transamérica","Mix FM"];
+
+// campos táticos específicos de cada tipo de veículo — o nível de detalhe que uma planilha real de mídia tem
+// (veículo específico, praça, programa/horário, formato, nº de inserções etc.), além do título da peça/ação.
+// campos padronizados que alimentam o media math automático quando presentes em qualquer categoria:
+// "praca" (mercado nomeado), "audienciaTarget" (pessoas no target atingidas por inserção/exibição — para CPM real)
+// e "insercoes" (nº de inserções — para o botão de preencher verba = custo unitário × inserções).
+const TACTICAL_FIELDS = {
+  tv: [
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
+    {k:"emissora",label:"Rede",type:"select",opts:REDES_TV.reduce((o,r)=>{o[r]=r;return o;},{}),ph:"Selecione a rede..."},
+    {k:"programa",label:"Programa",ph:"Ex.: Jornal Nacional",list:"tv"},
+    {k:"horario",label:"Faixa horária",ph:"Ex.: 20h30"},
+    {k:"audienciaPct",label:"Audiência (rating %)",ph:"Ex.: 12.8",type:"number",step:"0.1"},
+    {k:"audienciaTarget",label:"Audiência no target",ph:"Ex.: 704060",type:"number"},
+    {k:"insercoes",label:"Nº inserções",ph:"Ex.: 12",type:"number"},
+  ],
+  radio: [
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
+    {k:"emissora",label:"Rede",type:"select",opts:REDES_RADIO.reduce((o,r)=>{o[r]=r;return o;},{}),ph:"Selecione a rede..."},
+    {k:"programa",label:"Programa/Horário",ph:"Ex.: Manhã",list:"radio"},
+    {k:"audienciaPct",label:"Audiência (rating %)",ph:"Ex.: 3.5",type:"number",step:"0.1"},
+    {k:"audienciaTarget",label:"Audiência no target",ph:"Ex.: 402277",type:"number"},
+    {k:"insercoes",label:"Nº inserções",ph:"Ex.: 20",type:"number"},
+  ],
+  ooh: [
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
+    {k:"formatoOOH",label:"Formato/Ponto",ph:"Ex.: Outdoor, Busdoor...",list:"ooh"},
+    {k:"localizacao",label:"Localização/Rota",ph:"Ex.: Marginal Pinheiros"},
+    {k:"audienciaTarget",label:"Fluxo estimado no target/mês",ph:"Ex.: 500000",type:"number"},
+    {k:"insercoes",label:"Nº de pontos/painéis",ph:"Ex.: 5",type:"number"},
+  ],
+  cinema: [
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
+    {k:"rede",label:"Rede/Complexo",ph:"Ex.: Cinemark, Cinépolis...",list:"cinema"},
+    {k:"audienciaTarget",label:"Público no target",ph:"Ex.: 45000",type:"number"},
+    {k:"insercoes",label:"Nº de sessões",ph:"Ex.: 30",type:"number"},
+  ],
+  impresso: [
+    {k:"praca",label:"Praça/Mercado",type:"select",opts:MERCADOS_TV_OPTS,ph:"Selecione a praça..."},
+    {k:"publicacao",label:"Publicação",ph:"Ex.: Veja, Folha de S.Paulo...",list:"impresso"},
+    {k:"formatoImp",label:"Formato/Colocação",ph:"Ex.: 1 pág. 4 cores, rodapé, 1/2 pág."},
+    {k:"audienciaTarget",label:"Leitores no target",ph:"Ex.: 157699",type:"number"},
+    {k:"insercoes",label:"Nº inserções",ph:"Ex.: 3",type:"number"},
+  ],
+  audio: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"plataforma",label:"Plataforma/Programa",ph:"Ex.: Spotify, podcast X"},{k:"formatoAudio",label:"Formato",ph:"Ex.: host-read, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 40000",type:"number"},{k:"insercoes",label:"Nº inserções",ph:"Ex.: 8",type:"number"}],
+  busca: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: Pesquisa, Shopping, PMax"},{k:"palavrasChave",label:"Grupo de palavras-chave",ph:"Ex.: marca, genéricas"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 50000 buscas/mês",type:"number"}],
+  social: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato do anúncio",ph:"Ex.: Reels, Stories, Feed"},{k:"segmentacao",label:"Segmentação",ph:"Ex.: interesses, lookalike 1%"},{k:"audienciaTarget",label:"Tamanho do público segmentado",ph:"Ex.: 350000",type:"number"}],
+  display: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato/Posicionamento",ph:"Ex.: banner 300x250, native"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 200000",type:"number"}],
+  video: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato",ph:"Ex.: skippable, bumper, mid-roll"},{k:"audienciaTarget",label:"Alcance estimado no target",ph:"Ex.: 180000",type:"number"}],
+  retail: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"formatoAd",label:"Formato",ph:"Ex.: sponsored product, display on-site"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 90000",type:"number"}],
+  influ: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"perfil",label:"Perfil/Criador",ph:"Ex.: @nomeperfil"},{k:"formatoConteudo",label:"Formato de conteúdo",ph:"Ex.: Reels + Stories"},{k:"audienciaTarget",label:"Seguidores no target",ph:"Ex.: 60000",type:"number"}],
+  afiliados: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"rede",label:"Rede de afiliados",ph:"Ex.: Lomadee, Awin"},{k:"audienciaTarget",label:"Base de afiliados no target",ph:"Ex.: 20000",type:"number"}],
+  crm: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"base",label:"Base/Segmento",ph:"Ex.: clientes ativos 90 dias"},{k:"audienciaTarget",label:"Tamanho da base no target",ph:"Ex.: 15000",type:"number"}],
+  app: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"campanhaTipo",label:"Tipo de campanha",ph:"Ex.: UAC, ASA"},{k:"audienciaTarget",label:"Inventário estimado no target",ph:"Ex.: 120000",type:"number"}],
+  gaming: [{k:"praca",label:"Praça/Mercado",type:"select",opts:REGIOES,ph:"Selecione a praça..."},{k:"plataforma",label:"Plataforma/Jogo",ph:"Ex.: Twitch, Free Fire"},{k:"audienciaTarget",label:"Audiência estimada no target",ph:"Ex.: 80000",type:"number"}],
+};
+function tacticalFieldsFor(catKey){ return TACTICAL_FIELDS[catKey]||[]; }
+// resolve o label de uma praça seja ela um mercado de broadcast (MERCADOS_TV) ou uma região macro (REGIOES)
+function pracaLabelAny(key){ if(!key) return ""; if(MERCADOS_TV[key]) return MERCADOS_TV[key].label; if(REGIOES[key]) return REGIOES[key]; return key; }
+
+const CATS = [
+  {key:"tv", label:"TV", cls:"off"}, {key:"radio", label:"Rádio", cls:"off"},
+  {key:"ooh", label:"OOH / DOOH", cls:"off"}, {key:"cinema", label:"Cinema", cls:"off"},
+  {key:"impresso", label:"Impresso", cls:"off"}, {key:"audio", label:"Áudio / Podcast", cls:"dig"},
+  {key:"busca", label:"Busca Paga", cls:"dig"}, {key:"social", label:"Social Ads", cls:"dig"},
+  {key:"display", label:"Display / Programática", cls:"dig"}, {key:"video", label:"Vídeo Online / CTV", cls:"dig"},
+  {key:"retail", label:"Retail Media", cls:"dig"}, {key:"influ", label:"Influenciadores / Creators", cls:"dig"},
+  {key:"afiliados", label:"Afiliados", cls:"dig"}, {key:"crm", label:"CRM / Retenção", cls:"dig"},
+  {key:"app", label:"App / UA", cls:"dig"}, {key:"gaming", label:"Gaming / In-game", cls:"dig"},
+];
+
+const VEHICLES = [
+  {k:"tv_aberta", cat:"tv", label:"TV Aberta", funil:"topo", modelo:"CPP", bench:"CPP R$ 800 – 4.000 (praça/horário)"},
+  {k:"tv_paga", cat:"tv", label:"TV por Assinatura", funil:"topo", modelo:"CPM", bench:"CPM R$ 15 – 45"},
+  {k:"ctv_avod", cat:"video", label:"CTV / Streaming AVOD (Globoplay, Prime, Max, Pluto)", funil:"topo", modelo:"CPM", bench:"CPM R$ 35 – 90"},
+  {k:"radio_am_fm", cat:"radio", label:"Rádio AM/FM", funil:"topo", modelo:"CPP", bench:"Inserção R$ 150 – 1.500"},
+  {k:"ooh_tradicional", cat:"ooh", label:"OOH Tradicional (outdoor, busdoor, painel)", funil:"topo", modelo:"FIXO", bench:"Pacote/praça R$ 3.000 – 30.000/mês"},
+  {k:"dooh_prog", cat:"ooh", label:"DOOH Programático", funil:"topo", modelo:"CPM", bench:"CPM R$ 20 – 60"},
+  {k:"mobiliario_urbano", cat:"ooh", label:"Mobiliário Urbano / Metrô", funil:"topo", modelo:"FIXO", bench:"Pacote R$ 2.000 – 20.000"},
+  {k:"cinema_sala", cat:"cinema", label:"Cinema (pré-filme)", funil:"topo", modelo:"CPM", bench:"CPM R$ 25 – 70"},
+  {k:"revista", cat:"impresso", label:"Revista", funil:"topo", modelo:"FIXO", bench:"Página R$ 5.000 – 40.000"},
+  {k:"jornal", cat:"impresso", label:"Jornal", funil:"topo", modelo:"FIXO", bench:"Módulo R$ 1.500 – 15.000"},
+  {k:"podcast_hostread", cat:"audio", label:"Podcast (host-read / patrocínio)", funil:"meio", modelo:"FIXO", bench:"Episódio R$ 500 – 15.000"},
+  {k:"podcast_prog", cat:"audio", label:"Podcast Ads Programático", funil:"meio", modelo:"CPM", bench:"CPM R$ 25 – 60"},
+  {k:"audio_streaming", cat:"audio", label:"Áudio Streaming (Spotify, Deezer)", funil:"topo", modelo:"CPM", bench:"CPM R$ 18 – 45"},
+  {k:"google_search", cat:"busca", label:"Google Ads – Rede de Pesquisa", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,80 – 8,00"},
+  {k:"google_shopping", cat:"busca", label:"Google Shopping / PMax", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,50 – 5,00"},
+  {k:"bing_ads", cat:"busca", label:"Microsoft (Bing) Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,50 – 4,00"},
+  {k:"meta_ads", cat:"social", label:"Meta Ads (Facebook/Instagram)", funil:"meio", modelo:"CPM", bench:"CPM R$ 12 – 35"},
+  {k:"tiktok_ads", cat:"social", label:"TikTok Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 10 – 30"},
+  {k:"linkedin_ads", cat:"social", label:"LinkedIn Ads (B2B)", funil:"meio", modelo:"CPC", bench:"CPC R$ 8 – 25"},
+  {k:"pinterest_ads", cat:"social", label:"Pinterest Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 8 – 22"},
+  {k:"x_ads", cat:"social", label:"X Ads (Twitter)", funil:"topo", modelo:"CPM", bench:"CPM R$ 10 – 28"},
+  {k:"snapchat_ads", cat:"social", label:"Snapchat Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 8 – 20"},
+  {k:"kwai_ads", cat:"social", label:"Kwai Ads", funil:"topo", modelo:"CPM", bench:"CPM R$ 6 – 18"},
+  {k:"display_prog", cat:"display", label:"Display Programático (RTB)", funil:"meio", modelo:"CPM", bench:"CPM R$ 4 – 18"},
+  {k:"native_ads", cat:"display", label:"Native Ads (Taboola, Outbrain)", funil:"meio", modelo:"CPC", bench:"CPC R$ 0,20 – 1,50"},
+  {k:"pg_guaranteed", cat:"display", label:"Programmatic Guaranteed / Direto com veículo", funil:"meio", modelo:"CPM", bench:"CPM R$ 15 – 50"},
+  {k:"youtube_ads", cat:"video", label:"YouTube Ads (TrueView, Bumper)", funil:"topo", modelo:"CPV", bench:"CPV R$ 0,05 – 0,35"},
+  {k:"video_prog", cat:"video", label:"Vídeo Programático (in-stream/out-stream)", funil:"meio", modelo:"CPM", bench:"CPM R$ 20 – 55"},
+  {k:"retail_meli", cat:"retail", label:"Mercado Livre Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,30 – 3,00"},
+  {k:"retail_amazon", cat:"retail", label:"Amazon Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,40 – 3,50"},
+  {k:"retail_magalu", cat:"retail", label:"Magalu Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,30 – 2,80"},
+  {k:"retail_shopee", cat:"retail", label:"Shopee Ads", funil:"fundo", modelo:"CPC", bench:"CPC R$ 0,20 – 2,00"},
+  {k:"influ_micro", cat:"influ", label:"Micro-influenciadores (10k–100k)", funil:"meio", modelo:"FIXO", bench:"Post R$ 300 – 3.000"},
+  {k:"influ_macro", cat:"influ", label:"Macro-influenciadores / Celebridades", funil:"topo", modelo:"FIXO", bench:"Post/campanha R$ 5.000 – 150.000+"},
+  {k:"influ_ugc", cat:"influ", label:"UGC / Creators para Ads (whitelisting)", funil:"meio", modelo:"FIXO", bench:"Conteúdo R$ 500 – 5.000"},
+  {k:"afiliados_rede", cat:"afiliados", label:"Marketing de Afiliados", funil:"fundo", modelo:"CPA", bench:"Comissão 5% – 30% da venda"},
+  {k:"email_mkt", cat:"crm", label:"E-mail Marketing / CRM", funil:"retencao", modelo:"FIXO", bench:"Ferramenta/disparo R$ 300 – 5.000/mês"},
+  {k:"sms_whats", cat:"crm", label:"SMS / WhatsApp Marketing", funil:"retencao", modelo:"CPM", bench:"CPM R$ 30 – 90 (por envio)"},
+  {k:"push_app", cat:"crm", label:"Push Notification / App Retenção", funil:"retencao", modelo:"FIXO", bench:"Ferramenta R$ 200 – 3.000/mês"},
+  {k:"app_ua", cat:"app", label:"User Acquisition (Google/Apple/Meta Installs)", funil:"fundo", modelo:"CPI", bench:"CPI R$ 2 – 15"},
+  {k:"aso", cat:"app", label:"ASO (App Store Optimization)", funil:"fundo", modelo:"FIXO", bench:"Serviço R$ 1.500 – 8.000/mês"},
+  {k:"gaming_ads", cat:"gaming", label:"In-game Ads / Advergaming", funil:"topo", modelo:"CPM", bench:"CPM R$ 10 – 30"},
+  {k:"gaming_stream", cat:"gaming", label:"Patrocínio de Streamers (Twitch/YouTube Gaming)", funil:"topo", modelo:"FIXO", bench:"Live/mês R$ 1.000 – 30.000"},
+];
+
+// faixa numérica de referência [min,max] no modelo de compra do próprio veículo — usada no botão "usar média de mercado"
+const BENCHNUM = {
+  tv_aberta:[800,4000], tv_paga:[15,45], ctv_avod:[35,90], radio_am_fm:[150,1500],
+  ooh_tradicional:[3000,30000], dooh_prog:[20,60], mobiliario_urbano:[2000,20000],
+  cinema_sala:[25,70], revista:[5000,40000], jornal:[1500,15000],
+  podcast_hostread:[500,15000], podcast_prog:[25,60], audio_streaming:[18,45],
+  google_search:[0.8,8], google_shopping:[0.5,5], bing_ads:[0.5,4],
+  meta_ads:[12,35], tiktok_ads:[10,30], linkedin_ads:[8,25], pinterest_ads:[8,22],
+  x_ads:[10,28], snapchat_ads:[8,20], kwai_ads:[6,18],
+  display_prog:[4,18], native_ads:[0.2,1.5], pg_guaranteed:[15,50],
+  youtube_ads:[0.05,0.35], video_prog:[20,55],
+  retail_meli:[0.3,3], retail_amazon:[0.4,3.5], retail_magalu:[0.3,2.8], retail_shopee:[0.2,2],
+  influ_micro:[300,3000], influ_macro:[5000,150000], influ_ugc:[500,5000],
+  email_mkt:[300,5000], sms_whats:[30,90], push_app:[200,3000],
+  app_ua:[2,15], aso:[1500,8000], gaming_ads:[10,30], gaming_stream:[1000,30000],
+};
+
+// famílias de KPI de sucesso e os modelos de compra coerentes com cada uma
+const KPI_OPTS = {
+  alcance:{label:"Alcance / Awareness", modelos:["CPM","CPP"]},
+  ctr:{label:"CTR / Cliques", modelos:["CPC"]},
+  cpa:{label:"CPA / Conversão direta", modelos:["CPA","CPL","CPI"]},
+  roas:{label:"ROAS / Receita", modelos:["CPC","CPA","CPI"]},
+  leads:{label:"Geração de Leads", modelos:["CPL","CPA"]},
+  engajamento:{label:"Engajamento / Interação", modelos:["CPM","CPV"]},
+  brandlift:{label:"Brand Lift / Lembrança", modelos:["CPM","CPP"]},
+};
+
+// alvos de mídia padrão (nomenclatura clássica de mercado) e faixa etária associada, usada para
+// estimar tamanho do público (item abaixo) e aderência de veículo (AFFINITY). % é uma estimativa
+// didática de penetração sobre a população total — não é dado de pesquisa real.
+const TARGET_PROFILES = {
+  as_abc_15: {label:"AS ABC 15+ (todos, classe ABC, 15+)", pct:0.55, faixa:"geral"},
+  as_ab_25: {label:"AS AB 25+ (todos, classe AB, 25+)", pct:0.16, faixa:"adulto"},
+  as_cde_18: {label:"AS CDE 18+ (todos, classe CDE, 18+)", pct:0.34, faixa:"adulto"},
+  mm_18_35_abc: {label:"MM 18-35 ABC (mulheres, 18-35, ABC)", pct:0.09, faixa:"jovem"},
+  mm_ab_25mais: {label:"MM AB 25+ (mulheres, 25+, AB)", pct:0.09, faixa:"adulto"},
+  hh_18_45_abc: {label:"HH 18-45 ABC (homens, 18-45, ABC)", pct:0.13, faixa:"adulto"},
+  as_15_24: {label:"AS 15-24 (jovens, todas as classes)", pct:0.15, faixa:"jovem"},
+  as_60mais: {label:"AS 60+ (todas as classes)", pct:0.14, faixa:"senior"},
+  as_ab_infantil: {label:"Crianças AB (responsável, 4-11 anos)", pct:0.04, faixa:"infantil"},
+};
+
+// população total aproximada (estimativa didática, base IBGE) — nacional e por UF, usada para calcular
+// o tamanho do público-alvo automaticamente a partir do target e recorte (nacional/estadual) escolhidos.
+const POPULACAO_BR = {
+  nacional: 203000000,
+  estados: {
+    SP:46300000, MG:21400000, RJ:17200000, BA:14900000, PR:11600000, RS:11100000, PE:9700000,
+    CE:9200000, PA:8700000, SC:7800000, MA:7100000, GO:7200000, AM:4300000, PB:4100000, ES:4100000,
+    RN:3400000, MT:3600000, AL:3400000, PI:3300000, DF:3100000, MS:2900000, SE:2300000, RO:1700000,
+    TO:1600000, AC:900000, AP:870000, RR:660000,
+  },
+  regioes: { sudeste:89000000, nordeste:57000000, sul:30500000, norte:18800000, centrooeste:16800000 },
+};
+
+// soma a população das praças declaradas no briefing (nacional, regiões e/ou estados específicos).
+// Selecionar "Nacional" junto de outras praças é redundante (o nacional já as inclui) — o aluno decide.
+function populacaoDasPracas(c){
+  if(!c.pracas||!c.pracas.length) return 0;
+  let total=0;
+  c.pracas.forEach(pr=>{
+    const [tipo,key]=pr.split(":");
+    if(tipo==="nacional") total+=POPULACAO_BR.nacional;
+    else if(tipo==="regiao") total+=POPULACAO_BR.regioes[key]||0;
+    else if(tipo==="estado") total+=POPULACAO_BR.estados[key]||0;
+  });
+  return total;
+}
+// combina a penetração de múltiplos targets (primário/secundário/...) por independência estatística
+// (mesma lógica do modelo de alcance/frequência) — soma sem duplicar além de 100%.
+function combinedTargetPct(c){
+  if(!c.targets||!c.targets.length) return 0;
+  const complement=c.targets.reduce((prod,t)=>{ const tp=TARGET_PROFILES[t.key]; return prod*(1-(tp?tp.pct:0)); },1);
+  return 1-complement;
+}
+function publicoEstimado(c){
+  const pop=populacaoDasPracas(c); const pct=combinedTargetPct(c);
+  if(!pop||!pct) return 0;
+  return Math.round(pop*pct);
+}
+
+// aderência qualitativa (estimativa didática, não pesquisa real) de cada categoria de veículo por faixa
+// do target, para ajudar o aluno a priorizar canais — "alta" / "media" / "baixa".
+const AFFINITY = {
+  tv:        {geral:"alta",  adulto:"alta",  jovem:"media", senior:"alta",  infantil:"alta"},
+  radio:     {geral:"media", adulto:"alta",  jovem:"baixa", senior:"alta",  infantil:"baixa"},
+  ooh:       {geral:"alta",  adulto:"alta",  jovem:"alta",  senior:"media", infantil:"baixa"},
+  cinema:    {geral:"media", adulto:"media", jovem:"alta",  senior:"baixa", infantil:"media"},
+  impresso:  {geral:"baixa", adulto:"media", jovem:"baixa", senior:"alta",  infantil:"baixa"},
+  audio:     {geral:"media", adulto:"media", jovem:"alta",  senior:"baixa", infantil:"baixa"},
+  busca:     {geral:"alta",  adulto:"alta",  jovem:"media", senior:"media", infantil:"baixa"},
+  social:    {geral:"alta",  adulto:"media", jovem:"alta",  senior:"baixa", infantil:"baixa"},
+  display:   {geral:"media", adulto:"media", jovem:"media", senior:"baixa", infantil:"baixa"},
+  video:     {geral:"alta",  adulto:"media", jovem:"alta",  senior:"media", infantil:"alta"},
+  retail:    {geral:"media", adulto:"alta",  jovem:"media", senior:"baixa", infantil:"baixa"},
+  influ:     {geral:"media", adulto:"baixa", jovem:"alta",  senior:"baixa", infantil:"media"},
+  afiliados: {geral:"baixa", adulto:"media", jovem:"media", senior:"baixa", infantil:"baixa"},
+  crm:       {geral:"media", adulto:"alta",  jovem:"baixa", senior:"media", infantil:"baixa"},
+  app:       {geral:"media", adulto:"media", jovem:"alta",  senior:"baixa", infantil:"media"},
+  gaming:    {geral:"baixa", adulto:"baixa", jovem:"alta",  senior:"baixa", infantil:"alta"},
+};
+function affinityFor(catKey, targetKey){
+  const target=TARGET_PROFILES[targetKey]; if(!target) return null;
+  return (AFFINITY[catKey]||{})[target.faixa]||null;
+}
+
+// grade de programação levantada por pesquisa das grades reais vigentes em set/2026 (nomes e faixas
+// horárias reais das emissoras) — os RATINGS são estimativas didáticas (não é medição real de
+// Ibope/Kantar), calibradas pela posição/gênero do horário. Grades de TV mudam com frequência; confira
+// a grade vigente na própria emissora ao usar isso profissionalmente.
+// "mult" é o multiplicador de preço por rede (Globo cobra mais caro que as demais para o mesmo rating).
+const REDE_MULT_TV = {Globo:1600, SBT:1000, Record:950, Band:700, "RedeTV!":550};
+const REDE_MULT_RADIO = {CBN:1400, "Jovem Pan":1200, "Band FM":700, "Antena 1":650, "Transamérica":700, "Mix FM":600};
+const PROGRAMAS_REF = {
+  tv: {
+    // GLOBO
+    "Bom Dia Praça":{rede:"Globo",horario:"06h00",rating:3.0},
+    "Bom Dia Brasil":{rede:"Globo",horario:"08h00",rating:4.5},
+    "Encontro com Patrícia Poeta":{rede:"Globo",horario:"09h40",rating:4.8},
+    "Mais Você":{rede:"Globo",horario:"10h40",rating:5.5},
+    "SPTV 1ª Edição":{rede:"Globo",horario:"12h15",rating:6.8},
+    "Globo Esporte":{rede:"Globo",horario:"12h50",rating:5.0},
+    "Jornal Hoje":{rede:"Globo",horario:"13h15",rating:9.5},
+    "Sessão da Tarde":{rede:"Globo",horario:"15h30",rating:8.0},
+    "Novela das 18h":{rede:"Globo",horario:"18h00",rating:14.5},
+    "Novela das 19h":{rede:"Globo",horario:"19h20",rating:18.0},
+    "Jornal Nacional":{rede:"Globo",horario:"20h40",rating:24.5},
+    "Novela das 21h (Quem Ama, Cuida!)":{rede:"Globo",horario:"21h30",rating:22.0},
+    "Estrela da Casa":{rede:"Globo",horario:"22h45",rating:16.0},
+    "Globo Repórter":{rede:"Globo",horario:"23h30",rating:8.0},
+    "Jornal da Globo":{rede:"Globo",horario:"00h20",rating:4.5},
+    "Conversa com Bial":{rede:"Globo",horario:"01h10",rating:3.0},
+    "Fantástico":{rede:"Globo",horario:"19h30 (domingo)",rating:16.5},
+    "Domingão com Huck":{rede:"Globo",horario:"14h25 (domingo)",rating:12.0},
+    // SBT
+    "Se Liga, Brasil":{rede:"SBT",horario:"06h00",rating:2.0},
+    "Primeiro Impacto":{rede:"SBT",horario:"08h30",rating:2.8},
+    "Casos de Família":{rede:"SBT",horario:"11h30",rating:3.8},
+    "Fofocalizando":{rede:"SBT",horario:"15h30",rating:4.0},
+    "A Praça é Nossa":{rede:"SBT",horario:"16h30",rating:4.2},
+    "SBT Cidades":{rede:"SBT",horario:"18h15",rating:3.5},
+    "SBT Brasil":{rede:"SBT",horario:"19h15",rating:6.5},
+    "Bake Off Brasil: Mão na Massa":{rede:"SBT",horario:"21h15",rating:6.5},
+    "Programa do Ratinho":{rede:"SBT",horario:"22h30",rating:7.0},
+    "The Noite com Danilo Gentili":{rede:"SBT",horario:"23h45",rating:2.5},
+    // RECORD
+    "Fala Brasil":{rede:"Record",horario:"06h00",rating:3.2},
+    "Hoje em Dia":{rede:"Record",horario:"08h00",rating:3.5},
+    "Balanço Geral":{rede:"Record",horario:"12h30",rating:5.5},
+    "Cidade Alerta":{rede:"Record",horario:"16h00",rating:6.8},
+    "Jornal da Record":{rede:"Record",horario:"19h30",rating:6.0},
+    "Novela das 21h (Reis)":{rede:"Record",horario:"21h00",rating:8.5},
+    "A Fazenda":{rede:"Record",horario:"22h45",rating:11.0},
+    "Domingo Espetacular":{rede:"Record",horario:"21h00 (domingo)",rating:6.0},
+    // BAND
+    "Bora Brasil":{rede:"Band",horario:"06h00",rating:1.8},
+    "Jogo Aberto Novibet":{rede:"Band",horario:"12h30",rating:2.5},
+    "Brasil Urgente":{rede:"Band",horario:"16h00",rating:3.8},
+    "Jornal da Band":{rede:"Band",horario:"19h45",rating:3.0},
+    "Novela das 21h (Guerra das Rosas)":{rede:"Band",horario:"21h00",rating:2.5},
+    "MasterChef Amadores":{rede:"Band",horario:"22h30",rating:5.5},
+    "Os Donos da Bola":{rede:"Band",horario:"23h30",rating:1.8},
+    // REDETV!
+    "RedeTV! Notícias (manhã)":{rede:"RedeTV!",horario:"09h45",rating:1.0},
+    "Bola na Rede":{rede:"RedeTV!",horario:"10h15",rating:0.9},
+    "A Tarde é Sua":{rede:"RedeTV!",horario:"11h40",rating:1.4},
+    "Brasil do Povo":{rede:"RedeTV!",horario:"18h50",rating:1.0},
+    "RedeTV! News (noite)":{rede:"RedeTV!",horario:"19h45",rating:1.1},
+    "TV Fama":{rede:"RedeTV!",horario:"22h00",rating:1.6},
+  },
+  radio: {
+    // CBN (jornalismo)
+    "CBN Primeiras Notícias":{rede:"CBN",horario:"05h00",rating:2.0},
+    "Jornal da CBN":{rede:"CBN",horario:"06h00",rating:5.5},
+    "CBN Madrugada":{rede:"CBN",horario:"00h00",rating:1.2},
+    // JOVEM PAN (jornalismo/talk)
+    "Jornal da Manhã (Jovem Pan)":{rede:"Jovem Pan",horario:"06h–09h",rating:4.5},
+    "Pânico":{rede:"Jovem Pan",horario:"12h–14h",rating:3.6},
+    "Os Pingos nos Is":{rede:"Jovem Pan",horario:"18h–20h",rating:3.2},
+    // BAND FM (musical/esporte)
+    "Bandnews Manhã":{rede:"Band FM",horario:"06h–09h",rating:2.4},
+    "Os Donos da Bola (rádio)":{rede:"Band FM",horario:"12h–14h",rating:2.0},
+    // ANTENA 1 (musical adulto contemporâneo)
+    "Antena 1 Manhã":{rede:"Antena 1",horario:"06h–10h",rating:1.8},
+    "Antena 1 Tarde":{rede:"Antena 1",horario:"14h–18h",rating:1.6},
+    // TRANSAMÉRICA (musical jovem/pop)
+    "Transamérica Manhã":{rede:"Transamérica",horario:"06h–10h",rating:2.2},
+    "Transamérica Hits":{rede:"Transamérica",horario:"14h–18h",rating:2.0},
+    // MIX FM (musical jovem)
+    "Mix Manhã":{rede:"Mix FM",horario:"06h–10h",rating:1.9},
+    "Mix Tarde":{rede:"Mix FM",horario:"14h–18h",rating:1.7},
+  },
+};
+function programaRef(catKey, nome){
+  const table=PROGRAMAS_REF[catKey]; if(!table||!nome) return null;
+  const key=Object.keys(table).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?table[key]:null;
+}
+// preenche horário, audiência, audiência no target e valor exato do programa a partir da rede+praça já
+// escolhidas na linha — chamado tanto pelo botão quanto automaticamente quando praça/programa mudam.
+function autoFillPrograma(line, catKey, criteria){
+  if(!line.extra||!line.extra.programa) return false;
+  const ref=programaRef(catKey, line.extra.programa); if(!ref) return false;
+  line.extra.audienciaPct=ref.rating;
+  if(!line.extra.horario) line.extra.horario=ref.horario;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct) line.extra.audienciaTarget=Math.round(pracaInfo.pop*targetPct*ref.rating/100);
+  const valorExato=valorProgramaNaPraca(catKey, ref, line.extra.praca);
+  if(valorExato!==null) line.custo=valorExato;
+  if(line.extra.insercoes) line.verba=Math.round(line.custo*parseFloat(line.extra.insercoes)*100)/100;
+  return true;
+}
+// valor exato do programa numa praça: escala o preço-base (calibrado pelo rating × multiplicador da rede,
+// numa referência de São Paulo Capital) pela população relativa da praça — mesma lógica de tabelas reais,
+// onde praças maiores custam proporcionalmente mais.
+function valorProgramaNaPraca(catKey, ref, pracaKey){
+  const mult = catKey==="tv" ? REDE_MULT_TV[ref.rede] : REDE_MULT_RADIO[ref.rede];
+  if(!mult) return null;
+  const valorBaseSP1 = ref.rating*mult;
+  return escalaPorPraca(valorBaseSP1, pracaKey);
+}
+// escala qualquer valor de referência (calibrado em São Paulo Capital) pela população relativa da praça —
+// a mesma lógica usada em tabelas reais de preço por mercado (praças maiores custam proporcionalmente mais).
+function escalaPorPraca(valorBaseSP1, pracaKey){
+  const praca=MERCADOS_TV[pracaKey]; const sp1=MERCADOS_TV.SP1;
+  if(!praca||!sp1) return valorBaseSP1;
+  return Math.round(valorBaseSP1*(praca.pop/sp1.pop)*100)/100;
+}
+
+// ===== impresso (revista/jornal): dados de leitores e valor de página levantados de mapas de mídia
+// reais de referência (planilhas de exercício de mídia impressa) — leitores e valor no Estado de SP,
+// escalados para outras praças pela mesma lógica de população relativa.
+const PUBLICACOES_REF = {
+  "Veja":{leitoresSP:3820811, valorPaginaSP:107000},
+  "Época":{leitoresSP:460442, valorPaginaSP:54200},
+  "Claudia":{leitoresSP:907748, valorPaginaSP:56100},
+  "Caras":{leitoresSP:598640, valorPaginaSP:43300},
+  "Capricho":{leitoresSP:315398, valorPaginaSP:27500},
+  "Boa Forma":{leitoresSP:298792, valorPaginaSP:26400},
+  "Exame":{leitoresSP:126470, valorPaginaSP:54300},
+  "Isto É":{leitoresSP:241441, valorPaginaSP:44100},
+  "Nova":{leitoresSP:166154, valorPaginaSP:37300},
+  "Playboy":{leitoresSP:478560, valorPaginaSP:49700},
+  "Vip":{leitoresSP:445725, valorPaginaSP:31400},
+  "Folha de S.Paulo":{leitoresSP:1498000, valorPaginaSP:241488},
+  "O Estado de S.Paulo":{leitoresSP:1142000, valorPaginaSP:226200},
+};
+function publicacaoRef(nome){
+  if(!nome) return null;
+  const key=Object.keys(PUBLICACOES_REF).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?PUBLICACOES_REF[key]:null;
+}
+function autoFillPublicacao(line, criteria){
+  if(!line.extra||!line.extra.publicacao) return false;
+  const ref=publicacaoRef(line.extra.publicacao); if(!ref) return false;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const leitores=escalaPorPraca(ref.leitoresSP, line.extra.praca);
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct) line.extra.audienciaTarget=Math.round(leitores*targetPct);
+  line.custo=escalaPorPraca(ref.valorPaginaSP, line.extra.praca);
+  if(line.extra.insercoes) line.verba=Math.round(line.custo*parseFloat(line.extra.insercoes)*100)/100;
+  return true;
+}
+
+// ===== cinema: público médio por sessão e valor por sessão (estimativa didática, referência São Paulo
+// Capital), escalados por praça — cada rede tem um padrão de preço/porte de complexo diferente.
+const CINEMA_REF = {
+  "Cinemark":{publicoSessaoSP:120, valorSessaoSP:4500},
+  "Cinépolis":{publicoSessaoSP:110, valorSessaoSP:4200},
+  "UCI":{publicoSessaoSP:100, valorSessaoSP:3800},
+  "Kinoplex":{publicoSessaoSP:90, valorSessaoSP:3200},
+  "Moviecom":{publicoSessaoSP:70, valorSessaoSP:2400},
+};
+function cinemaRef(nome){
+  if(!nome) return null;
+  const key=Object.keys(CINEMA_REF).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?CINEMA_REF[key]:null;
+}
+function autoFillCinema(line, criteria){
+  if(!line.extra||!line.extra.rede) return false;
+  const ref=cinemaRef(line.extra.rede); if(!ref) return false;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const publicoSessao=escalaPorPraca(ref.publicoSessaoSP, line.extra.praca);
+  line.custo=escalaPorPraca(ref.valorSessaoSP, line.extra.praca);
+  const insercoes=parseFloat(line.extra.insercoes)||0;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct && insercoes) line.extra.audienciaTarget=Math.round(publicoSessao*insercoes*targetPct);
+  if(insercoes) line.verba=Math.round(line.custo*insercoes*100)/100;
+  return true;
+}
+
+// ===== OOH: fluxo mensal médio e valor mensal por formato (estimativa didática, referência São Paulo
+// Capital), escalados por praça e multiplicados pelo nº de pontos/painéis contratados (inserções).
+const OOH_REF = {
+  "Outdoor":{fluxoMensalSP:800000, valorMensalSP:8000},
+  "Busdoor":{fluxoMensalSP:400000, valorMensalSP:3500},
+  "Painel LED Digital":{fluxoMensalSP:1200000, valorMensalSP:15000},
+  "Mobiliário Urbano":{fluxoMensalSP:600000, valorMensalSP:6000},
+  "Metrô/Estação":{fluxoMensalSP:900000, valorMensalSP:9500},
+};
+function oohRef(nome){
+  if(!nome) return null;
+  const key=Object.keys(OOH_REF).find(k=>k.toLowerCase()===String(nome).trim().toLowerCase());
+  return key?OOH_REF[key]:null;
+}
+function autoFillOOH(line, criteria){
+  if(!line.extra||!line.extra.formatoOOH) return false;
+  const ref=oohRef(line.extra.formatoOOH); if(!ref) return false;
+  const pracaInfo=MERCADOS_TV[line.extra.praca];
+  if(!pracaInfo) return true;
+  const fluxo=escalaPorPraca(ref.fluxoMensalSP, line.extra.praca);
+  const valorPorPonto=escalaPorPraca(ref.valorMensalSP, line.extra.praca);
+  line.custo=valorPorPonto;
+  const pontos=parseFloat(line.extra.insercoes)||0;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct && pontos) line.extra.audienciaTarget=Math.round(fluxo*pontos*targetPct);
+  if(pontos) line.verba=Math.round(line.custo*pontos*100)/100;
+  return true;
+}
+
+// ===== veículos digitais/programáticos: não têm "inventário nomeado" como TV/rádio — são comprados por
+// leilão contínuo (CPM/CPC/CPV) numa base de usuários. A penetração é a % estimada da população que é
+// alcançável naquele veículo (estimativa didática). Isso preenche a audiência no target e sugere o custo
+// (mesma faixa de referência do mercado já usada no botão "usar-bench"); a VERBA continua sendo decisão
+// do aluno — é o próprio exercício de alocação, então não fazemos essa parte por ele.
+const PENETRACAO_VEICULO = {
+  meta_ads:0.75, tiktok_ads:0.45, linkedin_ads:0.22, pinterest_ads:0.18, x_ads:0.20, snapchat_ads:0.12, kwai_ads:0.28,
+  google_search:0.90, google_shopping:0.55, bing_ads:0.15,
+  youtube_ads:0.85, video_prog:0.60, display_prog:0.65, native_ads:0.50, pg_guaranteed:0.55,
+  retail_meli:0.55, retail_amazon:0.30, retail_magalu:0.22, retail_shopee:0.42,
+  app_ua:0.80, gaming_ads:0.30,
+  audio_streaming:0.45, podcast_prog:0.20, podcast_hostread:0.10,
+  ctv_avod:0.40, dooh_prog:0.35, tv_paga:0.30, radio_am_fm:0.50,
+};
+// escolhe a rotina de preenchimento automático certa pra categoria da linha — cada meio com sua própria lógica.
+function autoFillRef(line, catKey, criteria){
+  if(catKey==="tv"||catKey==="radio") return autoFillPrograma(line, catKey, criteria);
+  if(catKey==="impresso") return autoFillPublicacao(line, criteria);
+  if(catKey==="cinema") return autoFillCinema(line, criteria);
+  if(catKey==="ooh") return autoFillOOH(line, criteria);
+  return autoFillDigital(line, criteria);
+}
+function autoFillDigital(line, criteria){
+  const veh=vehicle(line.veiculo); if(!veh) return false;
+  const pen=PENETRACAO_VEICULO[veh.k]; if(pen===undefined) return false;
+  if(!line.custo && BENCHNUM[veh.k]) line.custo=Math.round(((BENCHNUM[veh.k][0]+BENCHNUM[veh.k][1])/2)*100)/100;
+  const pracaKey=line.extra&&line.extra.praca; if(!pracaKey) return true;
+  const pop=REGIOES[pracaKey]!==undefined ? (pracaKey==="nacional"?POPULACAO_BR.nacional:POPULACAO_BR.regioes[pracaKey]) : null;
+  if(!pop) return true;
+  const targetPct=combinedTargetPct(criteria);
+  if(targetPct) line.extra.audienciaTarget=Math.round(pop*targetPct*pen);
+  return true;
+}
+
+const GLOSSARY = [
+  {t:"CPM (Custo por Mil)", d:"Valor pago a cada 1.000 impressões. Impressões = (verba / CPM) × 1000."},
+  {t:"CPC (Custo por Clique)", d:"Valor pago por clique no anúncio. Cliques = verba / CPC."},
+  {t:"CPV (Custo por Visualização)", d:"Valor pago por visualização de vídeo (ex.: YouTube TrueView). Views = verba / CPV."},
+  {t:"CPA (Custo por Aquisição)", d:"Valor pago por conversão/venda gerada. Conversões = verba / CPA."},
+  {t:"CPL (Custo por Lead)", d:"Valor pago por lead qualificado captado."},
+  {t:"CPI (Custo por Instalação)", d:"Valor pago por instalação de aplicativo (user acquisition mobile)."},
+  {t:"CPP / GRP (Custo por Ponto)", d:"Usado em TV/rádio. GRP mede o volume bruto de audiência atingida; TRP é o GRP no público-alvo específico."},
+  {t:"Alcance (Reach)", d:"Número de pessoas únicas expostas à campanha em um período."},
+  {t:"Frequência", d:"Número médio de vezes que cada pessoa alcançada viu o anúncio. Frequência = Impressões / Alcance."},
+  {t:"Share of Voice (SOV)", d:"Participação da marca no total de investimento/visibilidade da categoria em um canal ou mercado."},
+  {t:"CTR (Click-Through Rate)", d:"Taxa de cliques. CTR = Cliques / Impressões."},
+  {t:"VTR (View-Through Rate)", d:"Taxa de conclusão de visualização de vídeo (views completos / impressões de vídeo)."},
+  {t:"Viewability", d:"Percentual de impressões que efetivamente ficaram visíveis na tela (padrão MRC: 50% do anúncio por 1s+)."},
+  {t:"CPCV (Custo por Visualização Completa)", d:"Custo por visualização de vídeo até o final."},
+  {t:"ROAS (Return on Ad Spend)", d:"Retorno sobre o investimento em mídia. ROAS = Receita gerada / Verba investida."},
+  {t:"ROI (Return on Investment)", d:"Retorno sobre o investimento total, considerando custos além da mídia."},
+  {t:"Funil de Marketing", d:"Topo (awareness/descoberta), Meio (consideração/engajamento), Fundo (conversão/venda) e Retenção (fidelização/recompra)."},
+  {t:"Full-funnel Planning", d:"Estratégia que combina veículos e formatos cobrindo todas as etapas do funil, não só performance de fundo."},
+  {t:"Retail Media", d:"Publicidade dentro de marketplaces e e-commerces (Mercado Livre, Amazon, Magalu, Shopee), usando dados de intenção de compra."},
+  {t:"Programática", d:"Compra automatizada de mídia via leilão em tempo real (RTB) ou acordos diretos (Programmatic Guaranteed), via DSPs."},
+  {t:"DSP (Demand-Side Platform)", d:"Plataforma usada por anunciantes/agências para comprar inventário de mídia programática."},
+  {t:"Contextual Targeting", d:"Segmentação baseada no conteúdo da página/vídeo, alternativa relevante num cenário cookieless."},
+  {t:"Cookieless", d:"Cenário de publicidade digital sem cookies de terceiros, com dados first-party, contextual e IDs alternativos."},
+  {t:"Frequency Capping", d:"Limite de quantas vezes um mesmo usuário vê o anúncio em um período, para evitar saturação."},
+  {t:"Flighting / Cronograma", d:"Distribuição da veiculação ao longo do tempo: contínua, pulsada (com picos) ou intermitente (blocos com pausas)."},
+  {t:"Brand Lift", d:"Estudo que mede o impacto da campanha em métricas de marca (lembrança, favorabilidade, intenção de compra)."},
+  {t:"Incrementalidade / MMM", d:"Marketing Mix Modeling e testes de incrementalidade medem o efeito real de cada canal, isolando causalidade."},
+  {t:"Attention Metrics", d:"Métricas que medem atenção real do usuário (tempo de atenção ativa), além de viewability."},
+  {t:"CTV (Connected TV)", d:"TVs conectadas à internet que exibem anúncios em serviços de streaming (AVOD/FAST channels)."},
+  {t:"UGC (User-Generated Content)", d:"Conteúdo produzido por criadores/usuários, usado como anúncio (whitelisting/spark ads) por autenticidade percebida."},
+];
+
+/* ===================== estado & persistência ===================== */
+const KEY="plano-midia-v2";
+let data={plans:[]};
+let activePlanId=null;
+let viewMode="criterios"; // 'criterios' | 'alocacao' | 'coerencia'
+let blockedMsg=null; // mensagem exibida quando o aluno tenta pular etapa sem completar os critérios
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7);}
+function sampleLines(){
+  return [
+    {id:uid(),veiculo:"meta_ads",funil:"meio",papel:"frequencia",titulo:"Carrossel remarketing",modelo:"CPM",custo:22,verba:6000,inicio:"",fim:"",extra:{praca:"nacional",formatoAd:"Stories",segmentacao:"Lookalike 1% compradores"}},
+    {id:uid(),veiculo:"google_search",funil:"fundo",papel:"conversao",titulo:"Busca marca + genéricas",modelo:"CPC",custo:2.5,verba:4000,inicio:"",fim:"",extra:{praca:"nacional",campanhaTipo:"Pesquisa",palavrasChave:"marca, genéricas"}},
+    {id:uid(),veiculo:"youtube_ads",funil:"topo",papel:"alcance",titulo:"Filme 15s lançamento",modelo:"CPV",custo:0.12,verba:3000,inicio:"",fim:"",extra:{praca:"sudeste",formatoAd:"Skippable in-stream"}},
+    {id:uid(),veiculo:"tv_aberta",funil:"topo",papel:"alcance",titulo:"Filme 30s lançamento",modelo:"CPP",custo:0,verba:0,inicio:"",fim:"",extra:{praca:"SP1",emissora:"Globo",programa:"Novela das 21h (Quem Ama, Cuida!)",insercoes:8}},
+  ];
+}
+function defaultCriteria(){
+  return {
+    funil:{topo:25,meio:25,fundo:35,retencao:15},
+    publico:[],
+    pracas:[], targets:[],
+    publicoTamanho:"", coberturaAlvo:"", freqMin:"", freqMax:"",
+    timing:"continuo", picos:[],
+    kpi:{topo:[],meio:[],fundo:[],retencao:[]},
+    metaNumerica:{valor:"",unidade:"",etapa:"fundo"},
+    custoPostura:"",
+    sovAlvo:"", verbaConcorrencia:"",
+  };
+}
+function samplePlan(){
+  const criteria={
+    funil:{topo:40,meio:25,fundo:35,retencao:0},
+    publico:["social","busca","video","tv"],
+    pracas:["nacional:BR"],
+    targets:[{id:uid(),papel:"primario",key:"mm_18_35_abc"},{id:uid(),papel:"secundario",key:"as_15_24"}],
+    publicoTamanho:0, coberturaAlvo:55, freqMin:3, freqMax:8,
+    timing:"continuo", picos:[],
+    kpi:{topo:["alcance","brandlift"],meio:["engajamento"],fundo:["roas","cpa"],retencao:["leads"]},
+  };
+  criteria.publicoTamanho=publicoEstimado(criteria);
+  const lines=sampleLines();
+  const tvLine=lines.find(l=>l.veiculo==="tv_aberta");
+  if(tvLine) autoFillPrograma(tvLine, "tv", criteria); // garante que rating/audiência/valor batam com a grade de programação atual
+  return {id:uid(),nome:"Lançamento — Exemplo",cliente:"Marca Exemplo",objetivo:"Gerar awareness de lançamento e conversão em e-commerce",publico:"Mulheres 18-35, classe ABC, interesse em moda e bem-estar",inicio:"",fim:"",verba:115000,lines,criteria,justificativas:{},personas:[]};
+}
+function ensurePlanShape(p){
+  if(!p.criteria) p.criteria=defaultCriteria();
+  const dc=defaultCriteria();
+  Object.keys(dc).forEach(k=>{ if(p.criteria[k]===undefined) p.criteria[k]=dc[k]; });
+  if(typeof p.criteria.kpi==="string") p.criteria.kpi={topo:[],meio:[],fundo:[p.criteria.kpi],retencao:[]};
+  Object.keys(FUNIL).forEach(stage=>{
+    const v=p.criteria.kpi[stage];
+    if(typeof v==="string") p.criteria.kpi[stage]=v?[v]:[];
+    else if(!Array.isArray(v)) p.criteria.kpi[stage]=[];
+  });
+  if(!Array.isArray(p.criteria.picos)) p.criteria.picos=[];
+  if(!Array.isArray(p.personas)) p.personas=[];
+  if(!Array.isArray(p.criteria.targets)){
+    p.criteria.targets = p.criteria.targetPrincipal ? [{id:uid(),papel:"primario",key:p.criteria.targetPrincipal}] : [];
+  }
+  if(!Array.isArray(p.criteria.pracas)) p.criteria.pracas=[];
+  p.criteria.pracas = p.criteria.pracas.map(pr=>pr.includes(":")?pr:`regiao:${pr}`); // migra formato antigo (só chave de região)
+  delete p.criteria.postura; delete p.criteria.competitiva; delete p.criteria.picoInicio; delete p.criteria.picoFim;
+  delete p.criteria.targetPrincipal; delete p.criteria.recorte; delete p.criteria.estado;
+  if(!p.justificativas) p.justificativas={};
+  (p.lines||[]).forEach(l=>{
+    if(!l.papel) l.papel=PAPEL_POR_FUNIL[l.funil]||"alcance";
+    if(l.titulo===undefined) l.titulo="";
+    if(!l.extra) l.extra={};
+    if(!l.insercoesPorDia) l.insercoesPorDia={};
+    if(!Array.isArray(l.targetIds)) l.targetIds=[];
+    else l.targetIds=l.targetIds.filter(tid=>p.criteria.targets.some(t=>t.id===tid));
+  });
+  return p;
+}
+
+async function load(){
+  try{
+    if(window.storage){
+      const r=await window.storage.get(KEY).catch(()=>null);
+      if(r&&r.value) data=JSON.parse(r.value);
+    }else if(window.localStorage){
+      const v=localStorage.getItem(KEY);
+      if(v) data=JSON.parse(v);
+    }
+  }catch(e){}
+  data.plans=data.plans||[];
+  if(!data.plans.length) data.plans.push(samplePlan());
+  data.plans.forEach(ensurePlanShape);
+  activePlanId=data.plans[0].id;
+}
+async function save(){
+  try{
+    if(window.storage){ await window.storage.set(KEY,JSON.stringify(data)); setSaveStat("ok"); }
+    else if(window.localStorage){ localStorage.setItem(KEY,JSON.stringify(data)); setSaveStat("local"); }
+    else setSaveStat("none");
+  }catch(e){ setSaveStat("err"); }
+}
+function setSaveStat(s){
+  const el=document.getElementById("saveStat"); if(!el) return;
+  const h=new Date().toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"});
+  if(s==="ok")el.innerHTML=`<span class="dot"></span>salvo na sua conta · ${h}`;
+  else if(s==="local")el.innerHTML=`<span class="dot"></span>salvo neste navegador · ${h}`;
+  else if(s==="none")el.innerHTML=`<span class="dot" style="background:var(--ret)"></span>sem salvamento — exporte`;
+  else el.innerHTML=`<span class="dot" style="background:var(--danger)"></span>falha ao salvar`;
+}
+
+function newPlan(){
+  const p={id:uid(),nome:"Novo plano",cliente:"",objetivo:"",publico:"",inicio:"",fim:"",verba:0,lines:[],criteria:defaultCriteria(),justificativas:{},personas:[]};
+  data.plans.push(p); activePlanId=p.id; viewMode="criterios"; save(); render();
+}
+function delPlan(id){
+  if(data.plans.length<=1){ toast("Mantenha ao menos um plano."); return; }
+  data.plans=data.plans.filter(x=>x.id!==id);
+  if(activePlanId===id) activePlanId=data.plans[0].id;
+  save(); render();
+}
+// apaga tudo do plano atual e recomeça do zero — pra simular um cenário novo sem precisar abrir outra aba
+function resetPlan(id){
+  const p=data.plans.find(x=>x.id===id); if(!p) return;
+  Object.assign(p,{nome:"Novo plano",cliente:"",objetivo:"",publico:"",inicio:"",fim:"",verba:0,lines:[],criteria:defaultCriteria(),justificativas:{},personas:[]});
+  viewMode="criterios"; save(); render();
+  toast("Plano reiniciado — pode começar a simular de novo.");
+}
+function curPlan(){return data.plans.find(p=>p.id===activePlanId)||data.plans[0];}
+function vehicle(k){return VEHICLES.find(v=>v.k===k);}
+function catInfo(k){return CATS.find(c=>c.key===k);}
+function money(n){return (n||0).toLocaleString("pt-BR",{style:"currency",currency:"BRL"});}
+function num(n){return Math.round(n||0).toLocaleString("pt-BR");}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
+function fmtd(s){ if(!s) return ""; const d=new Date(s+"T00:00:00"); if(isNaN(d)) return s; return d.toLocaleDateString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit"}); }
+
+// GRP = audiência (rating % do universo da praça) × nº de inserções.
+// TRP = audiência no target (em % da praça, calculada a partir da audiência no target já preenchida) × inserções —
+// é o rating "de verdade" dentro do público-alvo, não uma normalização genérica.
+function grpTrp(l){
+  if(!(l.extra&&l.extra.audienciaPct&&l.extra.insercoes)) return null;
+  const grp=parseFloat(l.extra.audienciaPct)*parseFloat(l.extra.insercoes);
+  const pracaPop=(MERCADOS_TV[l.extra.praca]&&MERCADOS_TV[l.extra.praca].pop)||0;
+  let trp=null;
+  if(pracaPop && l.extra.audienciaTarget){
+    const ratingNoTarget=parseFloat(l.extra.audienciaTarget)/pracaPop*100;
+    trp=ratingNoTarget*parseFloat(l.extra.insercoes);
+  }
+  return {grp,trp};
+}
+function lineResult(l){
+  const custo=parseFloat(l.custo)||0, verba=parseFloat(l.verba)||0;
+  if(!custo || l.modelo==="FIXO") return {qty:null,label:RESLABEL[l.modelo]||""};
+  const qty = l.modelo==="CPM" ? verba/custo*1000 : verba/custo;
+  return {qty, label:RESLABEL[l.modelo]||""};
+}
+function planTotals(p){
+  const totalVerba=p.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+  const byCat={}, byFunil={}, byClass={off:0,dig:0}, byRegiao={};
+  let impressoes=0, cliques=0, views=0, conversoes=0;
+  p.lines.forEach(l=>{
+    const v=vehicle(l.veiculo); if(!v) return;
+    const c=catInfo(v.cat);
+    const verba=parseFloat(l.verba)||0;
+    byCat[v.cat]=(byCat[v.cat]||0)+verba;
+    byFunil[l.funil]=(byFunil[l.funil]||0)+verba;
+    byClass[c.cls]=(byClass[c.cls]||0)+verba;
+    if(l.extra&&l.extra.praca) byRegiao[l.extra.praca]=(byRegiao[l.extra.praca]||0)+verba;
+    const r=lineResult(l);
+    if(r.qty){
+      if(l.modelo==="CPM") impressoes+=r.qty;
+      else if(l.modelo==="CPC") cliques+=r.qty;
+      else if(l.modelo==="CPV") views+=r.qty;
+      else if(["CPA","CPL","CPI"].includes(l.modelo)) conversoes+=r.qty;
+    }
+  });
+  return {totalVerba,byCat,byFunil,byClass,byRegiao,impressoes,cliques,views,conversoes};
+}
+
+/* ===================== critérios: validação e checagens ===================== */
+// lista, em português, exatamente o que falta preencher nos critérios — usado tanto para travar a aba de
+// Coerência quanto para mostrar ao aluno o que falta (em vez de um "complete os critérios" genérico).
+function criteriaMissing(p){
+  const c=p.criteria||{};
+  const missing=[];
+  const sum=Object.values(c.funil||{}).reduce((s,v)=>s+(parseFloat(v)||0),0);
+  if(Math.abs(sum-100)>=0.5) missing.push(`a distribuição por funil precisa somar 100% (está em ${sum}%)`);
+  if(!c.publico||!c.publico.length) missing.push("marque ao menos uma categoria em \"onde o público consome mídia\"");
+  if(!c.pracas||!c.pracas.length) missing.push("adicione ao menos uma praça no briefing (etapa 0)");
+  if(!c.targets||!c.targets.length||!c.targets.some(t=>t.papel==="primario"&&t.key)) missing.push("adicione ao menos um target primário (etapa 2)");
+  else if(c.targets.some(t=>!t.key)) missing.push("selecione o target em todas as linhas de \"targets do plano\" que você adicionou");
+  if(!(parseFloat(c.publicoTamanho)>0)) missing.push("praças e target precisam gerar uma população estimada maior que zero");
+  if(!(parseFloat(c.coberturaAlvo)>0)) missing.push("informe a cobertura desejada (%)");
+  if(!(parseFloat(c.freqMin)>0)) missing.push("informe a frequência efetiva mínima");
+  if(!(parseFloat(c.freqMax)>0)) missing.push("informe a frequência efetiva máxima");
+  if(!c.metaNumerica||!(parseFloat(c.metaNumerica.valor)>0)||!c.metaNumerica.unidade) missing.push("defina a meta numérica ligada ao objetivo, com valor e unidade (etapa 0)");
+  if(!c.custoPostura) missing.push("declare a postura de custo do plano (etapa 0)");
+  if(!c.kpi||!Object.values(c.kpi).every(v=>Array.isArray(v)&&v.length)) missing.push("escolha ao menos um KPI de sucesso para cada uma das 4 etapas do funil");
+  if(c.timing!=="continuo"){
+    if(!c.picos||!c.picos.length) missing.push("adicione ao menos um período de pico (você escolheu timing pulsado/concentrado)");
+    else if(!c.picos.every(pc=>pc.inicio&&pc.fim)) missing.push("preencha início e fim de todos os períodos de pico adicionados");
+  }
+  return missing;
+}
+function criteriaComplete(p){ return criteriaMissing(p).length===0; }
+
+// modelo simplificado de alcance/frequência para fins didáticos: assume distribuição de exposição
+// tipo Poisson por linha (reach = 1 - e^-impressões/população) e combina canais por independência estatística.
+// Não substitui pesquisa de audiência real — é uma aproximação para discutir o conceito em sala.
+function reachFreq(p){
+  const pop=parseFloat(p.criteria.publicoTamanho)||0;
+  if(!pop) return null;
+  let complement=1, totalImpEquiv=0;
+  p.lines.forEach(l=>{
+    let impEquiv=0;
+    if(l.modelo==="CPM"){ const r=lineResult(l); if(r.qty) impEquiv=r.qty; }
+    else if(l.modelo==="CPP"){ const r=lineResult(l); if(r.qty) impEquiv=r.qty/100*pop; }
+    if(impEquiv>0){ totalImpEquiv+=impEquiv; complement*=(1-Math.min(1,1-Math.exp(-impEquiv/pop))); }
+  });
+  const reachPct=(1-complement)*100;
+  const reachPeople=pop*(1-complement);
+  const avgFreq=reachPeople>0? totalImpEquiv/reachPeople : 0;
+  return {reachPct,reachPeople,avgFreq,totalImpEquiv,pop};
+}
+function computeChecks(p){
+  const t=planTotals(p); const c=p.criteria||{};
+  const checks=[];
+
+  // 1) funil declarado x alocado
+  if(t.totalVerba<=0 || !c.funil) checks.push({id:"funil",status:"na",title:"Distribuição por funil",detail:"Aloque verba nas linhas para comparar com o funil declarado."});
+  else{
+    const offenders=[];
+    Object.keys(FUNIL).forEach(k=>{
+      const declarado=parseFloat(c.funil[k])||0;
+      const real=Math.round((t.byFunil[k]||0)/t.totalVerba*100);
+      if(Math.abs(declarado-real)>15) offenders.push(`${FUNIL[k]}: declarou ${declarado}%, alocou ${real}%`);
+    });
+    checks.push(offenders.length
+      ? {id:"funil",status:"warn",title:"Distribuição por funil",detail:"Divergência acima de 15 pontos percentuais entre o declarado e o alocado — "+offenders.join("; ")+"."}
+      : {id:"funil",status:"ok",title:"Distribuição por funil",detail:"A alocação por etapa do funil está coerente com o que você planejou."});
+  }
+
+  // 2) canais aderentes ao público
+  if(!c.publico||!c.publico.length || t.totalVerba<=0) checks.push({id:"publico",status:"na",title:"Aderência ao público",detail:"Selecione os canais de consumo do público e aloque verba para checar."});
+  else{
+    let foraVerba=0; const foraCats=new Set();
+    p.lines.forEach(l=>{ const v=vehicle(l.veiculo); if(!v) return; if(!c.publico.includes(v.cat)){ foraVerba+=parseFloat(l.verba)||0; foraCats.add(catInfo(v.cat).label); } });
+    const pctFora=Math.round(foraVerba/t.totalVerba*100);
+    checks.push(pctFora>30
+      ? {id:"publico",status:"warn",title:"Aderência ao público",detail:`${pctFora}% da verba está em categorias que você não marcou como consumidas pelo público (${[...foraCats].join(", ")}).`}
+      : {id:"publico",status:"ok",title:"Aderência ao público",detail:"A maior parte da verba está nos canais que você indicou como consumidos pelo público-alvo."});
+  }
+
+  // 3) timing / flighting — agora aceita múltiplos picos
+  if(c.timing==="continuo") checks.push({id:"timing",status:"ok",title:"Timing de veiculação",detail:"Veiculação contínua não exige concentração de verba em períodos específicos."});
+  else if(!c.picos||!c.picos.length||c.picos.some(pc=>!pc.inicio||!pc.fim)) checks.push({id:"timing",status:"warn",title:"Timing de veiculação",detail:"Você escolheu um cronograma pulsado/concentrado, mas não definiu todos os períodos de pico."});
+  else{
+    const matched=new Set();
+    p.lines.forEach(l=>{
+      if(!l.inicio||!l.fim) return;
+      const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
+      const emAlgumPico=c.picos.some(pc=>{ const pi=new Date(pc.inicio+"T00:00:00"), pf=new Date(pc.fim+"T00:00:00"); return li<=pf && lf>=pi; });
+      if(emAlgumPico) matched.add(l.id);
+    });
+    const dentro=p.lines.filter(l=>matched.has(l.id)).reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    const pct = t.totalVerba? Math.round(dentro/t.totalVerba*100):0;
+    const periodos=c.picos.map(pc=>`${fmtd(pc.inicio)}–${fmtd(pc.fim)}`).join(", ");
+    checks.push(pct<45
+      ? {id:"timing",status:"warn",title:"Timing de veiculação",detail:`Só ${pct}% da verba está concentrada nos ${c.picos.length} período(s) de pico definidos (${periodos}).`}
+      : {id:"timing",status:"ok",title:"Timing de veiculação",detail:`${pct}% da verba está concentrada nos período(s) de pico declarados (${periodos}).`});
+  }
+
+  // 4) kpi de sucesso por etapa do funil x modelo de compra dominante na etapa
+  if(!c.kpi || t.totalVerba<=0) checks.push({id:"kpi",status:"na",title:"KPI de sucesso por etapa",detail:"Defina o KPI de cada etapa do funil e aloque verba para checar."});
+  else{
+    const offenders=[];
+    Object.keys(FUNIL).forEach(stage=>{
+      const stageLines=p.lines.filter(l=>l.funil===stage);
+      const stageVerba=stageLines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+      const kpisStage=c.kpi[stage]||[];
+      if(stageVerba<=0 || !kpisStage.length) return;
+      const byModelo={};
+      stageLines.forEach(l=>{ byModelo[l.modelo]=(byModelo[l.modelo]||0)+(parseFloat(l.verba)||0); });
+      const dominante=Object.entries(byModelo).sort((a,b)=>b[1]-a[1])[0];
+      const esperado=[...new Set(kpisStage.flatMap(k=>KPI_OPTS[k].modelos))];
+      const labels=kpisStage.map(k=>KPI_OPTS[k].label).join(" + ");
+      if(dominante && !esperado.includes(dominante[0])) offenders.push(`${FUNIL[stage]}: KPIs "${labels}" mas modelo dominante é ${MODELO[dominante[0]]}`);
+    });
+    checks.push(offenders.length
+      ? {id:"kpi",status:"warn",title:"KPI de sucesso por etapa",detail:"Divergência entre KPI e modelo de compra: "+offenders.join("; ")+"."}
+      : {id:"kpi",status:"ok",title:"KPI de sucesso por etapa",detail:"O modelo de compra dominante de cada etapa é coerente com o KPI escolhido para ela."});
+  }
+
+  // 7) cobertura do target
+  const rf=reachFreq(p);
+  if(!rf || t.totalVerba<=0 || !c.coberturaAlvo) checks.push({id:"cobertura",status:"na",title:"Cobertura do target",detail:"Informe o tamanho do público-alvo e a cobertura desejada, e aloque verba em linhas de CPM/CPP para estimar."});
+  else{
+    const declarado=parseFloat(c.coberturaAlvo);
+    const diff=rf.reachPct-declarado;
+    checks.push(Math.abs(diff)>10
+      ? {id:"cobertura",status:"warn",title:"Cobertura do target",detail:`Cobertura estimada de ${rf.reachPct.toFixed(1)}% do público (${num(rf.reachPeople)} pessoas), contra os ${declarado}% desejados — estimativa simplificada por sobreposição estatística entre canais de CPM/CPP.`}
+      : {id:"cobertura",status:"ok",title:"Cobertura do target",detail:`Cobertura estimada de ${rf.reachPct.toFixed(1)}% do público, próxima da meta de ${declarado}%.`});
+  }
+
+  // 8) frequência média efetiva
+  if(!rf || t.totalVerba<=0 || !c.freqMin || !c.freqMax) checks.push({id:"frequencia",status:"na",title:"Frequência efetiva média",detail:"Informe a faixa de frequência desejada e aloque verba em linhas de CPM/CPP para estimar."});
+  else{
+    const min=parseFloat(c.freqMin), max=parseFloat(c.freqMax);
+    checks.push(rf.avgFreq<min*0.8 || rf.avgFreq>max*1.2
+      ? {id:"frequencia",status:"warn",title:"Frequência efetiva média",detail:`Frequência média estimada de ${rf.avgFreq.toFixed(1)}x, fora da faixa desejada de ${min}x–${max}x. Muito abaixo pode não gerar lembrança; muito acima costuma indicar saturação/desperdício de verba.`}
+      : {id:"frequencia",status:"ok",title:"Frequência efetiva média",detail:`Frequência média estimada de ${rf.avgFreq.toFixed(1)}x, dentro da faixa desejada de ${min}x–${max}x.`});
+  }
+
+  // 9b) orçamento: alocado x verba total do plano
+  if(!(parseFloat(p.verba)>0)) checks.push({id:"orcamento",status:"na",title:"Uso do orçamento",detail:"Informe a verba total do plano (infostrip) para checar quanto já foi alocado."});
+  else{
+    const pctAlocado=t.totalVerba/parseFloat(p.verba)*100;
+    if(pctAlocado<90) checks.push({id:"orcamento",status:"warn",title:"Uso do orçamento",detail:`Só ${pctAlocado.toFixed(0)}% da verba total foi alocada em linhas — ${money(parseFloat(p.verba)-t.totalVerba)} ainda sem destino.`});
+    else if(pctAlocado>102) checks.push({id:"orcamento",status:"warn",title:"Uso do orçamento",detail:`O plano estourou o orçamento: ${pctAlocado.toFixed(0)}% da verba total, ${money(t.totalVerba-parseFloat(p.verba))} acima do previsto.`});
+    else checks.push({id:"orcamento",status:"ok",title:"Uso do orçamento",detail:`${pctAlocado.toFixed(0)}% da verba total está alocada em linhas.`});
+  }
+
+  // 9c) postura de custo declarada x preço efetivamente pago frente ao benchmark de mercado
+  if(!c.custoPostura) checks.push({id:"custo",status:"na",title:"Postura de custo",detail:"Declare a postura de custo do plano (etapa 0 dos critérios) para checar."});
+  else{
+    let somaPos=0, somaVerba=0;
+    p.lines.forEach(l=>{
+      const v=vehicle(l.veiculo); if(!v||!BENCHNUM[v.k]) return;
+      const custo=parseFloat(l.custo), verba=parseFloat(l.verba)||0;
+      if(!(custo>0)||!verba) return;
+      const [min,max]=BENCHNUM[v.k]; if(max<=min) return;
+      const pos=Math.max(0,Math.min(1,(custo-min)/(max-min)));
+      somaPos+=pos*verba; somaVerba+=verba;
+    });
+    if(!somaVerba) checks.push({id:"custo",status:"na",title:"Postura de custo",detail:"Nenhuma linha com custo e faixa de benchmark de mercado preenchidos ainda."});
+    else{
+      const posMedia=somaPos/somaVerba;
+      const label={eficiencia:"Eficiência",premium:"Premium",misto:"Misto"}[c.custoPostura];
+      if(c.custoPostura==="eficiencia"&&posMedia>0.65) checks.push({id:"custo",status:"warn",title:"Postura de custo",detail:`Você declarou postura "${label}", mas o custo médio ponderado está no ${(posMedia*100).toFixed(0)}º percentil da faixa de mercado — pagando na faixa alta apesar de buscar eficiência.`});
+      else if(c.custoPostura==="premium"&&posMedia<0.35) checks.push({id:"custo",status:"warn",title:"Postura de custo",detail:`Você declarou postura "${label}", mas o custo médio ponderado está no ${(posMedia*100).toFixed(0)}º percentil da faixa de mercado — próximo do piso de preço, o que pode não sustentar um posicionamento premium.`});
+      else checks.push({id:"custo",status:"ok",title:"Postura de custo",detail:`Custo médio ponderado no ${(posMedia*100).toFixed(0)}º percentil da faixa de mercado, coerente com a postura "${label}" declarada.`});
+    }
+  }
+
+  // 9d) share of voice frente à concorrência (opcional — depende de dado que o aluno/professor precisa levantar)
+  if(!(parseFloat(c.sovAlvo)>0)||!(parseFloat(c.verbaConcorrencia)>0)) checks.push({id:"sov",status:"na",title:"Share of voice",detail:"Informe o SOV desejado e a verba estimada da concorrência (etapa 0) para checar — dado opcional, depende de pesquisa externa."});
+  else{
+    const sovReal=t.totalVerba/(t.totalVerba+parseFloat(c.verbaConcorrencia))*100;
+    const alvo=parseFloat(c.sovAlvo);
+    checks.push(Math.abs(sovReal-alvo)>10
+      ? {id:"sov",status:"warn",title:"Share of voice",detail:`SOV estimado de ${sovReal.toFixed(1)}% frente à concorrência, contra os ${alvo}% desejados.`}
+      : {id:"sov",status:"ok",title:"Share of voice",detail:`SOV estimado de ${sovReal.toFixed(1)}%, próximo da meta de ${alvo}%.`});
+  }
+
+  // 9e) meta numérica ligada ao objetivo — só valida automaticamente quando a unidade é conversão/lead direto
+  const meta=c.metaNumerica;
+  if(!meta||!(parseFloat(meta.valor)>0)||!meta.unidade) checks.push({id:"meta",status:"na",title:"Meta numérica do objetivo",detail:"Defina a meta numérica do objetivo (etapa 0 dos critérios) para acompanhar."});
+  else{
+    const unidadeLc=meta.unidade.toLowerCase();
+    const ehConversaoDireta=/venda|lead|convers/.test(unidadeLc);
+    const stageLines=p.lines.filter(l=>l.funil===meta.etapa&&(l.modelo==="CPA"||l.modelo==="CPL"));
+    if(!ehConversaoDireta||!stageLines.length){
+      checks.push({id:"meta",status:"na",title:"Meta numérica do objetivo",detail:`Meta declarada: ${num(meta.valor)} ${esc(meta.unidade)} em ${FUNIL[meta.etapa]}. Como a unidade não é uma conversão direta calculável pelo sistema (ou não há linhas de CPA/CPL nessa etapa), essa meta precisa ser avaliada qualitativamente por você e pelo professor — o sistema não estima isso sozinho.`});
+    }else{
+      const totalEstimado=stageLines.reduce((s,l)=>s+(lineResult(l).qty||0),0);
+      const metaValor=parseFloat(meta.valor);
+      checks.push(totalEstimado<metaValor*0.7
+        ? {id:"meta",status:"warn",title:"Meta numérica do objetivo",detail:`As linhas de conversão direta em ${FUNIL[meta.etapa]} estimam ${num(totalEstimado)} ${esc(meta.unidade)}, abaixo da meta de ${num(metaValor)}.`}
+        : totalEstimado>metaValor*1.5
+        ? {id:"meta",status:"warn",title:"Meta numérica do objetivo",detail:`As linhas de conversão direta em ${FUNIL[meta.etapa]} estimam ${num(totalEstimado)} ${esc(meta.unidade)}, bem acima da meta de ${num(metaValor)} — vale reconferir se a meta ou a estimativa fazem sentido.`}
+        : {id:"meta",status:"ok",title:"Meta numérica do objetivo",detail:`As linhas de conversão direta em ${FUNIL[meta.etapa]} estimam ${num(totalEstimado)} ${esc(meta.unidade)}, compatível com a meta de ${num(metaValor)}.`});
+    }
+  }
+
+  // 9) papel dos veículos x etapa do funil — gaps de jornada
+  if(t.totalVerba<=0) checks.push({id:"jornada",status:"na",title:"Jornada e papel dos veículos",detail:"Adicione linhas para checar se a jornada do público está coberta ponta a ponta."});
+  else{
+    const semConversao = (t.byFunil.fundo||0)>0 && !p.lines.some(l=>l.funil==="fundo" && l.papel==="conversao");
+    const semAlcance = (t.byFunil.topo||0)>0 && !p.lines.some(l=>l.funil==="topo" && l.papel==="alcance");
+    const gaps=[];
+    if(semConversao) gaps.push("há verba no fundo de funil mas nenhuma linha com papel de Conversão/Resposta direta");
+    if(semAlcance) gaps.push("há verba no topo de funil mas nenhuma linha com papel de Alcance/Cobertura");
+    checks.push(gaps.length
+      ? {id:"jornada",status:"warn",title:"Jornada e papel dos veículos",detail:"A jornada do público tem lacunas: "+gaps.join("; ")+"."}
+      : {id:"jornada",status:"ok",title:"Jornada e papel dos veículos",detail:"Cada etapa do funil com verba alocada tem ao menos um veículo cumprindo o papel tático esperado."});
+  }
+
+  return checks;
+}
+
+/* ===================== render ===================== */
+function render(){
+  const p=curPlan();
+  document.getElementById("planNameInput").value=p.nome;
+  renderStepbar(p);
+  document.getElementById("infostrip").style.display = viewMode==="alocacao" ? "grid" : "none";
+  document.getElementById("gridwrap").style.display = viewMode==="alocacao" ? "block" : "none";
+  document.getElementById("statusbar").style.display = viewMode==="alocacao" ? "flex" : "none";
+  const sv=document.getElementById("stepview");
+  if(viewMode==="alocacao"){
+    sv.classList.remove("show");
+    renderInfostrip(p); renderGrid(p); renderStatusbar(p);
+  }else{
+    sv.classList.add("show");
+    if(viewMode==="criterios") renderCriterios(p);
+    else if(viewMode==="persona") renderPersonas(p);
+    else if(viewMode==="jornada") renderJornada(p);
+    else renderCoerencia(p);
+  }
+  renderTabs();
+}
+
+function renderStepbar(p){
+  const complete=criteriaComplete(p);
+  const warnCount = complete ? computeChecks(p).filter(c=>c.status==="warn").length : null;
+  const steps=[
+    {k:"criterios",n:"1",label:"Critérios de planejamento",extra: complete?`<span class="okcheck">✓</span>`:""},
+    {k:"persona",n:"2",label:"Persona"},
+    {k:"alocacao",n:"3",label:"Alocação de verba"},
+    {k:"jornada",n:"4",label:"Jornada e multicanalidade"},
+    {k:"coerencia",n:"5",label:"Coerência do plano",extra: warnCount?`<span class="warncount">${warnCount}</span>`:(complete?`<span class="okcheck">✓</span>`:"")},
+  ];
+  document.getElementById("stepbar").innerHTML=steps.map(s=>`
+    <button class="step ${viewMode===s.k?"on":""}" data-act="set-view" data-view="${s.k}"><span class="n">${s.n}</span>${s.label}${s.extra||""}</button>
+  `).join("");
+}
+
+function renderInfostrip(p){
+  document.getElementById("infostrip").innerHTML=`
+    <div class="icell"><label>Cliente / Marca</label><input data-field="cliente" value="${esc(p.cliente)}" placeholder="—"></div>
+    <div class="icell"><label>Objetivo</label><input data-field="objetivo" value="${esc(p.objetivo)}" placeholder="—"></div>
+    <div class="icell"><label>Público-alvo</label><input data-field="publico" value="${esc(p.publico)}" placeholder="—"></div>
+    <div class="icell"><label>Início</label><input type="date" data-field="inicio" value="${p.inicio||""}"></div>
+    <div class="icell"><label>Fim</label><input type="date" data-field="fim" value="${p.fim||""}"></div>
+    <div class="icell money"><label>Verba total (R$)</label><input type="number" min="0" step="100" data-field="verba" value="${p.verba||0}"></div>
+    <div class="icell"><label>Cronograma</label><div id="tlmini" style="padding-top:2px"></div></div>
+  `;
+  document.querySelectorAll("[data-field]").forEach(el=>{
+    el.addEventListener("change",()=>{
+      let v=el.value; if(el.dataset.field==="verba") v=parseFloat(v)||0;
+      p[el.dataset.field]=v; save(); render();
+    });
+  });
+  renderMiniTimeline(p);
+}
+function renderMiniTimeline(p){
+  const el=document.getElementById("tlmini"); if(!el) return;
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length){ el.innerHTML=`<span style="font-size:11px;color:var(--faint)">sem datas nas linhas</span>`; return; }
+  el.innerHTML=`<button class="tbtn" style="padding:3px 9px;font-size:11px" data-act="analytics">Ver cronograma →</button>`;
+}
+
+function renderCriterios(p){
+  const c=p.criteria;
+  const sum=Object.values(c.funil).reduce((s,v)=>s+(parseFloat(v)||0),0);
+  const FUNCAO_FUNIL={topo:"Conhecimento de marca",meio:"Consideração / Engajamento",fundo:"Conversão / Venda",retencao:"Fidelização / Recompra"};
+  const el=document.getElementById("stepview");
+  el.innerHTML=`<div class="wrap">
+    ${blockedMsg?`<div class="critcard" style="border-color:var(--warn,#D98A2B);background:rgba(217,138,43,.08)"><b>⚠ ${esc(blockedMsg)}</b></div>`:""}
+    <div class="critcard">
+      <h3>0. Briefing da campanha</h3>
+      <div class="desc">As informações que vão nortear todo o plano — preencha antes de qualquer alocação.</div>
+      <div class="critrow2">
+        <div class="f"><label>Cliente / Marca</label><input data-field="cliente" value="${esc(p.cliente)}" placeholder="Ex.: Marca Exemplo"></div>
+        <div class="f"><label>Objetivo da campanha</label><input data-field="objetivo" value="${esc(p.objetivo)}" placeholder="Ex.: gerar awareness de lançamento e conversão em e-commerce"></div>
+      </div>
+      <div class="f"><label>Persona / observações do público</label><input data-field="publico" value="${esc(p.publico)}" placeholder="Ex.: mulheres 18-35, classe ABC, interesse em moda"></div>
+      <div class="f"><label>Praças da campanha</label>
+        <div class="desc" style="margin-top:0">Adicione quantas praças forem necessárias — regiões e/ou estados específicos. A população de todas as praças somadas alimenta a estimativa de público (etapa 2).</div>
+        <div class="chiprow" style="margin-bottom:9px">${c.pracas.map(pr=>{
+          const [tipo,key]=pr.split(":");
+          const label = tipo==="nacional"?"Nacional (Brasil todo)":tipo==="regiao"?REGIOES[key]:`${ESTADOS[key]} (${key})`;
+          return `<button class="chip on" data-act="del-praca" data-key="${pr}">${esc(label)} ×</button>`;
+        }).join("")||`<span class="hint">Nenhuma praça adicionada ainda.</span>`}</div>
+        <div style="display:flex;gap:8px">
+          <select class="critselect" id="pracaAddSelect">
+            <option value="nacional:BR">Nacional (Brasil todo)</option>
+            <optgroup label="Regiões">${Object.entries(REGIOES).filter(([k])=>k!=="nacional").map(([k,v])=>`<option value="regiao:${k}">${esc(v)}</option>`).join("")}</optgroup>
+            <optgroup label="Estados">${Object.entries(ESTADOS).map(([k,v])=>`<option value="estado:${k}">${esc(v)} (${k})</option>`).join("")}</optgroup>
+          </select>
+          <button class="tbtn pri" data-act="add-praca">+ Adicionar</button>
+        </div>
+      </div>
+      <div class="critrow2" style="margin-top:14px">
+        <div class="f"><label>Meta numérica ligada ao objetivo</label><input type="number" min="0" step="any" data-meta="valor" value="${esc(c.metaNumerica.valor)}" placeholder="Ex.: 5000"></div>
+        <div class="f"><label>Unidade da meta</label><input data-meta="unidade" value="${esc(c.metaNumerica.unidade)}" placeholder="Ex.: vendas, leads, % de lembrança de marca"></div>
+      </div>
+      <div class="f"><label>Essa meta pertence a qual etapa do funil?</label>
+        <select class="critselect" data-meta="etapa">${Object.entries(FUNIL).map(([k,label])=>`<option value="${k}" ${c.metaNumerica.etapa===k?"selected":""}>${label}</option>`).join("")}</select>
+      </div>
+      <div class="desc" style="margin-top:2px">Todo plano parte de um número concreto, não só de uma intenção. Se o objetivo é "gerar awareness", quantas pessoas devem lembrar da marca? Se é "vender", quantas vendas? Sem esse número, não dá pra saber depois se o plano funcionou.</div>
+      <div class="critrow2" style="margin-top:14px">
+        <div class="f"><label>Postura de custo do plano</label>
+          <select class="critselect" data-crit="custoPostura">
+            <option value="">Selecione...</option>
+            <option value="eficiencia" ${c.custoPostura==="eficiencia"?"selected":""}>Eficiência — priorizar o menor custo por resultado</option>
+            <option value="premium" ${c.custoPostura==="premium"?"selected":""}>Premium — aceitar pagar mais por contexto/qualidade</option>
+            <option value="misto" ${c.custoPostura==="misto"?"selected":""}>Misto — parte eficiência, parte premium</option>
+          </select>
+        </div>
+        <div></div>
+      </div>
+      <div class="critrow2">
+        <div class="f"><label>Share of voice desejado (%) — opcional</label><input type="number" min="0" max="100" class="critdate" data-crit="sovAlvo" value="${c.sovAlvo||""}" placeholder="ex.: 20"></div>
+        <div class="f"><label>Verba estimada da concorrência no período (R$) — opcional</label><input type="number" min="0" step="1000" class="critdate" data-crit="verbaConcorrencia" value="${c.verbaConcorrencia||""}" placeholder="ex.: 400000"></div>
+      </div>
+      <div class="desc" style="margin-top:2px">Se você tiver uma estimativa (pesquisada ou dada em sala) do investimento da concorrência, o sistema calcula seu share of voice real e compara com o desejado — mídia não existe no vácuo, existe frente a quem disputa a mesma atenção.</div>
+    </div>
+
+    <div class="critcard">
+      <h3>1. Distribuição por etapa do funil</h3>
+      <div class="desc">Antes de escolher qualquer veículo, decida quanto da verba faz sentido em cada etapa para o objetivo do plano. Os quatro campos devem somar 100%.</div>
+      <div class="funilrow">
+        ${Object.entries(FUNILFULL).map(([k,label])=>`
+          <div class="funilfield"><label>${label.split(" (")[0]} <small style="display:block;font-weight:500;text-transform:none;color:var(--faint)">${FUNCAO_FUNIL[k]}</small></label><input type="number" min="0" max="100" data-crit="funil.${k}" value="${c.funil[k]}"></div>
+        `).join("")}
+      </div>
+      <div class="funilsum ${Math.abs(sum-100)<0.5?"ok":"bad"}">Soma atual: ${sum}% ${Math.abs(sum-100)<0.5?"✓":"— precisa somar 100%"}</div>
+    </div>
+
+    <div class="critcard">
+      <h3>2. Target, cobertura e frequência</h3>
+      <div class="desc">Adicione um ou mais targets no formato clássico de mídia (ex.: AS AB 25+) — primário, secundário etc. O sistema soma a população das praças (etapa 0) e combina a penetração de todos os targets para estimar o público. Cobertura e frequência desejadas ficam por sua conta.</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
+        ${c.targets.map((t,i)=>`<div class="critrow2" style="align-items:end">
+          <div class="f"><label>Papel</label><select class="critselect" data-target="${i}.papel"><option value="primario" ${t.papel==="primario"?"selected":""}>Primário</option><option value="secundario" ${t.papel==="secundario"?"selected":""}>Secundário</option><option value="terciario" ${t.papel==="terciario"?"selected":""}>Terciário</option></select></div>
+          <div class="f" style="display:flex;gap:8px;align-items:end"><div style="flex:1"><label>Target</label><select class="critselect" data-target="${i}.key"><option value="">Selecione...</option>${Object.entries(TARGET_PROFILES).map(([k,v])=>`<option value="${k}" ${t.key===k?"selected":""}>${esc(v.label)}</option>`).join("")}</select></div><button class="ib" data-act="del-target" data-idx="${i}" title="Remover target" style="margin-bottom:1px">×</button></div>
+        </div>`).join("")}
+        <button class="tbtn" data-act="add-target" style="align-self:flex-start">+ Adicionar target</button>
+      </div>
+      <div class="hint" style="margin:8px 0">${publicoEstimado(c)>0 ? `População estimada no target: <b style="color:var(--ink)">${num(publicoEstimado(c))} pessoas</b> (${num(populacaoDasPracas(c))} pessoas nas praças declaradas × ${(combinedTargetPct(c)*100).toFixed(1)}% de penetração combinada — estimativa didática)` : "Declare praças (etapa 0) e ao menos um target para estimar o público."}</div>
+      <div class="critrow2">
+        <div class="f"><label>Cobertura desejada (%)</label><input type="number" min="0" max="100" class="critdate" data-crit="coberturaAlvo" value="${c.coberturaAlvo||""}" placeholder="ex.: 55"></div>
+        <div></div>
+      </div>
+      <div class="critrow2">
+        <div class="f"><label>Frequência efetiva mínima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMin" value="${c.freqMin||""}" placeholder="ex.: 3"></div>
+        <div class="f"><label>Frequência efetiva máxima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMax" value="${c.freqMax||""}" placeholder="ex.: 8"></div>
+      </div>
+    </div>
+
+    <div class="critcard">
+      <h3>3. Onde esse público realmente consome mídia</h3>
+      <div class="desc">Marque as categorias de veículo que fazem sentido para o target escolhido. A etiqueta mostra a aderência estimada de cada categoria ao target (estimativa didática, não pesquisa real).</div>
+      <div class="chiprow">${(()=>{
+        const primario=(c.targets.find(t=>t.papel==="primario")||{}).key;
+        return CATS.map(cat=>{
+        const aff=affinityFor(cat.key, primario);
+        const affLbl=aff?{alta:"● alta",media:"● média",baixa:"● baixa"}[aff]:"";
+        const affColor=aff?{alta:"var(--dig)",media:"var(--ret)",baixa:"var(--faint)"}[aff]:"";
+        return `<button class="chip ${c.publico.includes(cat.key)?"on":""}" data-act="toggle-cat" data-key="${cat.key}">${esc(cat.label)}${aff?` <small style="color:${affColor}">${affLbl}</small>`:""}</button>`;
+        }).join("");
+      })()}</div>
+    </div>
+
+    <div class="critcard">
+      <h3>4. Timing da campanha</h3>
+      <div class="desc">Defina como a verba deve se distribuir ao longo do tempo. Pulsado/concentrado aceitam mais de um período de pico.</div>
+      <select class="critselect" data-crit="timing">
+        <option value="continuo" ${c.timing==="continuo"?"selected":""}>Contínuo — presença constante, sem picos</option>
+        <option value="pulsado" ${c.timing==="pulsado"?"selected":""}>Pulsado — picos em momentos-chave</option>
+        <option value="concentrado" ${c.timing==="concentrado"?"selected":""}>Concentrado — tudo em janelas curtas</option>
+      </select>
+      ${c.timing!=="continuo"?`<div style="margin-top:12px;display:flex;flex-direction:column;gap:8px">
+        ${c.picos.map((pc,i)=>`<div class="critrow2" style="align-items:end">
+          <div class="f"><label>Início do pico ${i+1}</label><input type="date" class="critdate" data-pico="${i}.inicio" value="${pc.inicio||""}"></div>
+          <div class="f" style="display:flex;gap:8px;align-items:end"><div style="flex:1"><label>Fim do pico ${i+1}</label><input type="date" class="critdate" data-pico="${i}.fim" value="${pc.fim||""}"></div><button class="ib" data-act="del-pico" data-idx="${i}" title="Remover pico" style="margin-bottom:1px">×</button></div>
+        </div>`).join("")}
+        <button class="tbtn" data-act="add-pico" style="align-self:flex-start">+ Adicionar período de pico</button>
+      </div>`:""}
+    </div>
+
+    <div class="critcard">
+      <h3>5. KPI de sucesso por etapa do funil</h3>
+      <div class="desc">O KPI que julga o sucesso muda por etapa — e às vezes uma etapa precisa de mais de um (ex.: alcance + brand lift no topo). Marque um ou mais por etapa.</div>
+      <div class="funilrow">
+        ${Object.entries(FUNIL).map(([k,label])=>`
+          <div class="funilfield"><label>${label}</label>
+            <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px">
+              ${Object.entries(KPI_OPTS).map(([kk,vv])=>`
+                <label style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:500;text-transform:none;color:var(--ink-soft);cursor:pointer">
+                  <input type="checkbox" data-kpi="${k}.${kk}" ${c.kpi[k].includes(kk)?"checked":""}> ${vv.label}
+                </label>
+              `).join("")}
+            </div>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  </div>`;
+
+  el.querySelectorAll("[data-field]").forEach(input=>{
+    input.addEventListener("change",()=>{ p[input.dataset.field]=input.value; save(); render(); });
+  });
+  el.querySelectorAll("[data-crit]").forEach(input=>{
+    const evt = "change";
+    input.addEventListener(evt,()=>{
+      const path=input.dataset.crit;
+      if(path.startsWith("funil.")) c.funil[path.split(".")[1]]=parseFloat(input.value)||0;
+      else c[path]=input.value;
+      save(); render();
+    });
+  });
+  el.querySelectorAll("[data-kpi]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [stage,kpiKey]=input.dataset.kpi.split(".");
+      const arr=c.kpi[stage];
+      const i=arr.indexOf(kpiKey);
+      if(input.checked){ if(i<0) arr.push(kpiKey); } else if(i>=0) arr.splice(i,1);
+      save(); render();
+    });
+  });
+  el.querySelectorAll("[data-pico]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [idx,field]=input.dataset.pico.split(".");
+      c.picos[+idx][field]=input.value; save(); render();
+    });
+  });
+  el.querySelectorAll("[data-target]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [idx,field]=input.dataset.target.split(".");
+      c.targets[+idx][field]=input.value;
+      c.publicoTamanho=publicoEstimado(c);
+      save(); render();
+    });
+  });
+  el.querySelectorAll("[data-meta]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      c.metaNumerica[input.dataset.meta]=input.value; save(); render();
+    });
+  });
+}
+
+function monthlyMap(p){
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length) return null;
+  let min=null,max=null;
+  dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+  const months=[];
+  let cur=new Date(min.getFullYear(),min.getMonth(),1);
+  const last=new Date(max.getFullYear(),max.getMonth(),1);
+  while(cur<=last){
+    const start=new Date(cur), end=new Date(cur.getFullYear(),cur.getMonth()+1,0);
+    months.push({key:cur.getFullYear()+"-"+String(cur.getMonth()+1).padStart(2,"0"), label:cur.toLocaleDateString("pt-BR",{month:"short",year:"2-digit"}), start, end});
+    cur=new Date(cur.getFullYear(),cur.getMonth()+1,1);
+  }
+  const rows=dated.slice().sort((a,b)=>{ const va=vehicle(a.veiculo), vb=vehicle(b.veiculo); return (va?va.cat:"").localeCompare(vb?vb.cat:""); }).map(l=>{
+    const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
+    const verba=parseFloat(l.verba)||0;
+    const values={};
+    const diasMap=l.insercoesPorDia||{};
+    const totalInsercoesDia=Object.values(diasMap).reduce((s,n)=>s+n,0);
+    if(totalInsercoesDia>0){
+      // usa a grade real de inserções por dia (preenchida pelo aluno) em vez de prorateio linear
+      months.forEach(m=>{ values[m.key]=0; });
+      Object.entries(diasMap).forEach(([dayKey,n])=>{
+        const d=new Date(dayKey+"T00:00:00");
+        const mk=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0");
+        if(values[mk]===undefined) values[mk]=0;
+        values[mk]+=verba*(n/totalInsercoesDia);
+      });
+    }else{
+      const totalLineDays=Math.max(1,Math.round((lf-li)/86400000)+1);
+      months.forEach(m=>{
+        const overlapStart=li>m.start?li:m.start;
+        const overlapEnd=lf<m.end?lf:m.end;
+        const overlapDays=Math.max(0,Math.round((overlapEnd-overlapStart)/86400000)+1);
+        values[m.key]=verba*(overlapDays/totalLineDays);
+      });
+    }
+    return {line:l, values};
+  });
+  const totals={}; months.forEach(m=>{ totals[m.key]=rows.reduce((s,r)=>s+r.values[m.key],0); });
+  return {months,rows,totals};
+}
+
+const AVATARES=["🧑","👩","👨","🧕","👴","👵","🧑‍🦱","👩‍🦱","🧑‍🦳","👨‍🦳","🧑‍🎓","👩‍💼","👨‍💼","🧑‍🍳","👩‍🏫","🧑‍🌾","🧑‍🎨","🧑‍💻"];
+const PERSONA_CAMPOS_TEXTO=[
+  {k:"nome",label:"Nome",ph:"Ex.: Mariana Souza"},
+  {k:"idade",label:"Idade",ph:"Ex.: 28 anos"},
+  {k:"generoIdentidade",label:"Gênero",ph:"Ex.: mulher cisgênero"},
+  {k:"estadoCivil",label:"Estado civil / família",ph:"Ex.: casada, 1 filho"},
+  {k:"cidade",label:"Cidade / UF",ph:"Ex.: Belo Horizonte, MG"},
+  {k:"ocupacao",label:"Ocupação",ph:"Ex.: Analista de marketing"},
+  {k:"escolaridade",label:"Escolaridade",ph:"Ex.: superior completo"},
+  {k:"classeRenda",label:"Classe social / renda",ph:"Ex.: classe B, R$ 6-9 mil/mês"},
+  {k:"citacao",label:"Frase que a define",ph:"Ex.: “Quero praticidade sem abrir mão de qualidade”"},
+];
+const PERSONA_CAMPOS_TEXTAREA=[
+  {k:"rotina",label:"Rotina / dia a dia",ph:"Como é o dia dela — trabalho, deslocamento, telas que usa"},
+  {k:"comportamentoCompra",label:"Comportamento de compra",ph:"Como ela pesquisa e decide antes de comprar"},
+  {k:"gatilhos",label:"Gatilhos de decisão",ph:"O que a faz fechar a compra (preço, prova social, urgência...)"},
+  {k:"objetivos",label:"Objetivos / motivações",ph:"O que ela busca?"},
+  {k:"frustracoes",label:"Frustrações / objeções",ph:"O que trava a decisão dela?"},
+  {k:"dispositivos",label:"Dispositivos e hábitos digitais",ph:"Ex.: só celular, wi-fi em casa, prefere vídeo curto"},
+];
+function blankPersona(targetId){
+  const p={targetId, avatar:AVATARES[0]};
+  PERSONA_CAMPOS_TEXTO.forEach(f=>p[f.k]="");
+  PERSONA_CAMPOS_TEXTAREA.forEach(f=>p[f.k]="");
+  return p;
+}
+// garante um cartão de persona pra cada target declarado nos critérios (cria os que faltam, remove órfãos)
+function syncPersonas(p){
+  if(!Array.isArray(p.personas)) p.personas=[];
+  const ids=p.criteria.targets.map(t=>t.id);
+  p.personas=p.personas.filter(per=>ids.includes(per.targetId));
+  p.criteria.targets.forEach(t=>{
+    if(!p.personas.some(per=>per.targetId===t.id)) p.personas.push(blankPersona(t.id));
+    else{ const per=p.personas.find(x=>x.targetId===t.id); const blank=blankPersona(t.id); Object.keys(blank).forEach(k=>{ if(per[k]===undefined) per[k]=blank[k]; }); }
+  });
+}
+function renderPersonas(p){
+  syncPersonas(p);
+  const el=document.getElementById("stepview");
+  if(!p.criteria.targets.length){
+    el.innerHTML=`<div class="wrap"><div class="incomplete"><b>Nenhum target declarado ainda</b><p style="margin:8px 0 16px;color:var(--ink-soft)">Volte aos Critérios (etapa 1) e adicione ao menos um target — a persona é construída em cima dele.</p><button class="tbtn pri" data-act="set-view" data-view="criterios">Ir para Critérios</button></div></div>`;
+    return;
+  }
+  el.innerHTML=`<div class="wrap">
+    <div class="hint" style="margin-bottom:-6px">Dê um rosto e uma história completa a cada target declarado — isso ajuda a decidir tom, formatos e canais na hora de montar o plano, e cada linha de veiculação (na Alocação) pode ser marcada com a persona que ela deve atingir. Os canais de alta aderência vêm sugeridos automaticamente; o resto é você quem desenha.</div>
+    ${p.criteria.targets.map(t=>{
+      const per=p.personas.find(x=>x.targetId===t.id);
+      const target=TARGET_PROFILES[t.key];
+      const canaisFav=p.criteria.publico
+        .map(catKey=>({catKey,aff:affinityFor(catKey,t.key)}))
+        .filter(x=>x.aff==="alta")
+        .map(x=>catInfo(x.catKey).label);
+      const linhasDaPersona=p.lines.filter(l=>(l.targetIds||[]).includes(t.id));
+      const verbaPersona=linhasDaPersona.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+      return `<div class="critcard">
+        <div style="display:flex;gap:18px;flex-wrap:wrap">
+          <div style="flex:0 0 auto;text-align:center">
+            <select data-persona="${t.id}.avatar" style="font-size:44px;border:0;background:var(--surface-2);border-radius:12px;padding:6px;cursor:pointer">
+              ${AVATARES.map(a=>`<option value="${a}" ${per.avatar===a?"selected":""}>${a}</option>`).join("")}
+            </select>
+            <div style="margin-top:6px"><span class="badge ${t.papel==="primario"?"topo":"meio"}"><span class="d"></span>${t.papel==="primario"?"Primário":t.papel==="secundario"?"Secundário":"Terciário"}</span></div>
+            <div class="hint" style="margin-top:8px">${linhasDaPersona.length} linha(s)<br>${money(verbaPersona)}</div>
+          </div>
+          <div style="flex:1;min-width:280px">
+            <div class="critrow2">
+              ${PERSONA_CAMPOS_TEXTO.map(f=>`<div class="f"><label>${esc(f.label)}</label><input data-persona="${t.id}.${f.k}" value="${esc(per[f.k])}" placeholder="${esc(f.ph)}"></div>`).join("")}
+            </div>
+            <div class="critrow2">
+              ${PERSONA_CAMPOS_TEXTAREA.map(f=>`<div class="f"><label>${esc(f.label)}</label><textarea data-persona="${t.id}.${f.k}" rows="2" style="width:100%;border:1px solid var(--grid-strong);border-radius:9px;padding:8px 10px;font-size:13.5px;background:var(--surface);color:var(--ink);resize:vertical" placeholder="${esc(f.ph)}">${esc(per[f.k])}</textarea></div>`).join("")}
+            </div>
+            <div class="hint" style="margin-top:6px">
+              <b style="color:var(--ink)">Perfil de mídia (do target ${target?esc(target.label):""}):</b>
+              ${canaisFav.length?` alta aderência a ${canaisFav.join(", ")}.`:" nenhuma categoria de alta aderência marcada ainda em Critérios."}
+            </div>
+          </div>
+        </div>
+      </div>`;
+    }).join("")}
+  </div>`;
+  el.querySelectorAll("[data-persona]").forEach(input=>{
+    input.addEventListener("change",()=>{
+      const [targetId,field]=input.dataset.persona.split(".");
+      const per=p.personas.find(x=>x.targetId===targetId);
+      if(per) per[field]=input.value;
+      save(); render();
+    });
+  });
+}
+
+function renderJornada(p){
+  const el=document.getElementById("stepview");
+  const t=planTotals(p); const rf=reachFreq(p);
+  const mm=monthlyMap(p);
+  // matriz funil x papel
+  const matrix={};
+  Object.keys(FUNIL).forEach(f=>{ matrix[f]={}; Object.keys(PAPEL).forEach(pp=>matrix[f][pp]={verba:0,n:0}); });
+  p.lines.forEach(l=>{ if(matrix[l.funil]&&matrix[l.funil][l.papel]){ matrix[l.funil][l.papel].verba+=parseFloat(l.verba)||0; matrix[l.funil][l.papel].n++; } });
+  const maxCell=Math.max(1,...Object.values(matrix).flatMap(row=>Object.values(row).map(c=>c.verba)));
+
+  const dated=p.lines.filter(l=>l.inicio&&l.fim).slice().sort((a,b)=>new Date(a.inicio)-new Date(b.inicio));
+  let tlHtml=`<div class="hint">Defina início e fim nas linhas (aba Alocação) para visualizar o flowchart de veiculação.</div>`;
+  if(dated.length){
+    let min=null,max=null;
+    dated.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+    const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
+    const nWeeks=Math.max(1,Math.ceil(totalDays/7));
+    const weekHeader=`<div class="tlrow" style="grid-template-columns:190px 1fr">
+      <div class="tlname" style="font-weight:700;color:var(--muted);font-size:10.5px;text-transform:uppercase">${min.toLocaleDateString("pt-BR")} – ${max.toLocaleDateString("pt-BR")}</div>
+      <div style="display:flex">${Array.from({length:nWeeks}).map(()=>`<div style="flex:1;text-align:center;font-size:9.5px;font-weight:700;color:var(--faint);border-left:1px dashed var(--grid)"></div>`).join("")}<span style="position:absolute"></span></div>
+    </div>
+    <div class="tlrow" style="grid-template-columns:190px 1fr;padding-top:0">
+      <div></div><div style="display:flex">${Array.from({length:nWeeks}).map((_,i)=>`<div style="flex:1;text-align:left;font-size:9.5px;font-weight:700;color:var(--faint);border-left:1px dashed var(--grid);padding-left:3px">S${i+1}</div>`).join("")}</div>
+    </div>`;
+    const barRows=dated.map(l=>{
+      const v=vehicle(l.veiculo);
+      const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
+      const startPct=Math.max(0,(di-min)/86400000)/totalDays*100;
+      const widthPct=Math.max(2,(df-di)/86400000+1)/totalDays*100;
+      return `<div class="tlrow" style="grid-template-columns:190px 1fr">
+        <div class="tlname">${esc(l.titulo||(v?v.label:l.veiculo))} <span class="badge ${l.funil}" style="margin-left:4px"><span class="d"></span>${FUNIL[l.funil]}</span></div>
+        <div class="tltrack"><div class="tlbar" style="left:${startPct}%;width:${widthPct}%;background:${catColor(v?v.cat:"")}" title="${esc(v?v.label:l.veiculo)} · ${esc(PAPEL[l.papel])}"></div></div>
+      </div>`;
+    }).join("");
+    tlHtml=weekHeader+barRows;
+  }
+
+  el.innerHTML=`<div class="wrap">
+    <div class="hint" style="margin-bottom:-6px">A jornada mostra se o público é acompanhado do descobrimento à recompra, e se os canais se revezam em vez de duplicar o mesmo papel.</div>
+
+    <div class="critcard">
+      <h3>Alcance e frequência estimados</h3>
+      ${rf ? `<div class="critrow2">
+        <div class="tile" style="border:1px solid var(--grid);border-radius:9px;padding:12px;background:var(--surface)"><div class="k" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Cobertura estimada</div><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-top:4px">${rf.reachPct.toFixed(1)}%</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">${num(rf.reachPeople)} de ${num(rf.pop)} pessoas</div></div>
+        <div class="tile" style="border:1px solid var(--grid);border-radius:9px;padding:12px;background:var(--surface)"><div class="k" style="font-size:11px;color:var(--muted);font-weight:700;text-transform:uppercase">Frequência média</div><div style="font-family:'JetBrains Mono',monospace;font-size:22px;font-weight:800;margin-top:4px">${rf.avgFreq.toFixed(1)}x</div><div style="font-size:11.5px;color:var(--muted);margin-top:2px">exposições por pessoa alcançada</div></div>
+      </div>` : `<div class="hint">Informe o tamanho do público-alvo nos critérios (etapa 1) e aloque verba em linhas de CPM/CPP.</div>`}
+      ${(()=>{
+        const tvRadio=p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&(v.cat==="tv"||v.cat==="radio"); });
+        const withGrp=tvRadio.map(l=>grpTrp(l)).filter(Boolean);
+        if(!withGrp.length) return "";
+        const totalGrp=withGrp.reduce((s,g)=>s+g.grp,0), totalTrp=withGrp.reduce((s,g)=>s+(g.trp||0),0);
+        return `<div class="hint" style="margin-top:10px">TV/Rádio — GRP total: <b style="color:var(--ink)">${totalGrp.toFixed(1)}</b> · TRP no target: <b style="color:var(--ink)">${totalTrp.toFixed(1)}</b> (rating calculado sobre a audiência no target de cada linha, não sobre a praça inteira). Os valores de audiência são simulados para fins didáticos, não medição real de Ibope/Kantar.</div>`;
+      })()}
+    </div>
+
+    <div class="critcard">
+      <h3>Papel de cada veículo x etapa do funil</h3>
+      <div class="desc">Cada célula mostra a verba alocada cruzando a etapa do funil (linha) com o papel tático declarado por linha (coluna). Vazios em etapas com verba indicam possível lacuna na jornada.</div>
+      <div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:520px">
+        <thead><tr><th></th>${Object.values(PAPEL).map(l=>`<th style="text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:4px 8px">${l.split(" / ")[0]}</th>`).join("")}</tr></thead>
+        <tbody>${Object.entries(FUNIL).map(([fk,fl])=>`<tr>
+          <td style="font-size:12px;font-weight:700;padding:6px 8px;white-space:nowrap">${fl}</td>
+          ${Object.keys(PAPEL).map(pk=>{
+            const cell=matrix[fk][pk]; const op=cell.verba? Math.max(.12,cell.verba/maxCell):0;
+            return `<td style="padding:6px 8px"><div style="border-radius:8px;padding:8px;background:${cell.verba?`rgba(63,107,240,${op})`:"var(--surface-2)"};min-height:34px">
+              ${cell.verba?`<div style="font-size:12px;font-weight:700">${money(cell.verba)}</div><div style="font-size:10.5px;color:var(--muted)">${cell.n} linha${cell.n>1?"s":""}</div>`:`<div style="font-size:10.5px;color:var(--faint)">—</div>`}
+            </div></td>`;
+          }).join("")}
+        </tr>`).join("")}</tbody>
+      </table></div>
+    </div>
+
+    <div class="critcard">
+      <h3>Mapa mensal por veículo</h3>
+      <div class="desc">Verba de cada linha distribuída mês a mês (prorateada pelos dias de veiculação dentro de cada mês) — a leitura clássica de mapa de mídia para acompanhar o ritmo de investimento por veículo ao longo do plano.</div>
+      ${mm ? `<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;min-width:${560+mm.months.length*90}px">
+        <thead><tr>
+          <th style="text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:6px 8px;position:sticky;left:0;background:var(--surface-2)">Veículo</th>
+          ${mm.months.map(m=>`<th class="num" style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:6px 8px">${m.label}</th>`).join("")}
+          <th class="num" style="font-size:10.5px;font-weight:700;text-transform:uppercase;color:var(--muted);padding:6px 8px">Total</th>
+        </tr></thead>
+        <tbody>${mm.rows.map(r=>{
+          const v=vehicle(r.line.veiculo); const c=catInfo(v?v.cat:"");
+          const totalLinha=Object.values(r.values).reduce((s,x)=>s+x,0);
+          return `<tr style="border-top:1px solid var(--grid)">
+            <td style="padding:7px 8px;font-size:12.5px;font-weight:600;white-space:nowrap;position:sticky;left:0;background:var(--surface)">${esc(r.line.titulo||(v?v.label:r.line.veiculo))} <span class="badge ${c?c.cls:""}" style="margin-left:4px">${c?esc(c.label):""}</span></td>
+            ${mm.months.map(m=>`<td class="num" style="padding:7px 8px;font-size:12px;color:${r.values[m.key]>0?"var(--ink)":"var(--faint)"}">${r.values[m.key]>0?money(r.values[m.key]):"—"}</td>`).join("")}
+            <td class="num" style="padding:7px 8px;font-size:12px;font-weight:700">${money(totalLinha)}</td>
+          </tr>`;
+        }).join("")}</tbody>
+        <tfoot><tr style="border-top:2px solid var(--grid-strong)">
+          <td style="padding:7px 8px;font-size:12px;font-weight:800;position:sticky;left:0;background:var(--surface-2)">Total do mês</td>
+          ${mm.months.map(m=>`<td class="num" style="padding:7px 8px;font-size:12px;font-weight:800">${money(mm.totals[m.key])}</td>`).join("")}
+          <td class="num" style="padding:7px 8px;font-size:12px;font-weight:800">${money(Object.values(mm.totals).reduce((s,x)=>s+x,0))}</td>
+        </tr></tfoot>
+      </table></div>` : `<div class="hint">Defina início e fim nas linhas (aba Alocação) para gerar o mapa mensal.</div>`}
+    </div>
+
+    <div class="critcard">
+      <h3>Flowchart de veiculação</h3>
+      <div class="desc">Visão semana a semana de quando cada ação está no ar — o formato clássico de flowchart de plano de mídia. Leia como multicanalidade real: o público deveria ser tocado por papéis diferentes em momentos diferentes, não pelo mesmo canal repetido.</div>
+      ${tlHtml}
+    </div>
+  </div>`;
+}
+
+function renderCoerencia(p){
+  const el=document.getElementById("stepview");
+  const missing=criteriaMissing(p);
+  if(missing.length){
+    el.innerHTML=`<div class="wrap"><div class="incomplete">
+      <b>Falta completar os critérios de planejamento</b>
+      <p style="margin:8px 0 12px;color:var(--ink-soft)">A checagem de coerência compara a alocação real com o que você declarou nos Critérios. Ainda falta:</p>
+      <ul style="text-align:left;max-width:480px;margin:0 auto 16px;padding-left:20px;color:var(--ink-soft);font-size:13.5px;line-height:1.7">
+        ${missing.map(m=>`<li>${esc(m)}</li>`).join("")}
+      </ul>
+      <button class="tbtn pri" data-act="set-view" data-view="criterios">Ir para Critérios</button>
+    </div></div>`;
+    return;
+  }
+  const checks=computeChecks(p);
+  const icon={ok:"✓",warn:"!",na:"–"};
+  el.innerHTML=`<div class="wrap">
+    <div class="hint" style="margin-bottom:-6px">O sistema não sugere uma alocação — ele só confere se a sua alocação bate com os critérios que você mesmo definiu. Onde houver divergência, explique por que decidiu manter assim.</div>
+    ${checks.map(ch=>`
+      <div class="checkcard">
+        <div class="checkhead">
+          <div class="checkicon ${ch.status}">${icon[ch.status]}</div>
+          <div class="checkbody"><h4>${esc(ch.title)}</h4><p>${esc(ch.detail)}</p></div>
+        </div>
+        ${ch.status==="warn"?`<div class="justif">
+          <label>Por que manter essa escolha mesmo assim?</label>
+          <textarea data-justif="${ch.id}" placeholder="Explique o racional por trás dessa divergência...">${esc(p.justificativas[ch.id]||"")}</textarea>
+        </div>`:""}
+      </div>
+    `).join("")}
+  </div>`;
+  el.querySelectorAll("[data-justif]").forEach(ta=>{
+    ta.addEventListener("change",()=>{ p.justificativas[ta.dataset.justif]=ta.value; save(); });
+  });
+}
+
+function renderGrid(p){
+  const el=document.getElementById("gridwrap");
+  if(!p.lines.length){
+    el.innerHTML=`<div class="empty"><div class="em">Nenhuma linha de veiculação</div><p>Adicione veículos para montar o mix de mídia do plano.</p><button data-act="add-line">+ Adicionar linha</button></div>`;
+    return;
+  }
+  const optionsAllByCat=CATS.map(c=>{
+    const opts=VEHICLES.filter(v=>v.cat===c.key).map(v=>`<option value="${v.k}">${esc(v.label)}</option>`).join("");
+    return `<optgroup label="${esc(c.label)}">${opts}</optgroup>`;
+  }).join("");
+
+  const groups=CATS.map(c=>({cat:c, lines:p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&v.cat===c.key; })})).filter(g=>g.lines.length);
+
+  const groupHtml=groups.map(g=>{
+    const extraFields=tacticalFieldsFor(g.cat.key);
+    const subtotal=g.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    const rows=g.lines.map(l=>{
+      const v=vehicle(l.veiculo)||VEHICLES[0];
+      const r=lineResult(l);
+      const idx=p.lines.indexOf(l)+1;
+      const extraCells=extraFields.map(f=>{
+        const val=esc((l.extra&&l.extra[f.k])||"");
+        let inp;
+        if(f.type==="select"){
+          inp=`<select class="cellsel" data-line="${l.id}" data-k="extra.${f.k}"><option value="">${esc(f.ph||"—")}</option>${Object.entries(f.opts).map(([ok,ov])=>`<option value="${ok}" ${(l.extra&&l.extra[f.k])===ok?"selected":""}>${esc(ov)}</option>`).join("")}</select>`;
+        }else if(f.list){
+          // datalist com os nomes de referência (programas filtrados por rede/emissora quando aplicável)
+          let nomes=[];
+          if(f.list==="tv"||f.list==="radio"){
+            const rede=l.extra&&l.extra.emissora;
+            nomes=Object.entries(PROGRAMAS_REF[f.list]||{}).filter(([,v])=>!rede||v.rede===rede).map(([n])=>n);
+          }else if(f.list==="impresso") nomes=Object.keys(PUBLICACOES_REF);
+          else if(f.list==="cinema") nomes=Object.keys(CINEMA_REF);
+          else if(f.list==="ooh") nomes=Object.keys(OOH_REF);
+          const dlId=`dl_${f.list}_${l.id}`;
+          inp=`<input class="cellinput left" type="text" data-line="${l.id}" data-k="extra.${f.k}" value="${val}" placeholder="${esc(f.ph||"")}" list="${dlId}">
+            <datalist id="${dlId}">${nomes.map(n=>`<option value="${esc(n)}">`).join("")}</datalist>`;
+        }else{
+          inp=`<input class="cellinput left" type="${f.type||"text"}" ${f.step?`step="${f.step}"`:""} data-line="${l.id}" data-k="extra.${f.k}" value="${val}" placeholder="${esc(f.ph||"")}">`;
+        }
+        let btn="";
+        if(f.list==="tv"||f.list==="radio"||f.list==="impresso"||f.list==="cinema"||f.list==="ooh"){
+          const nome=l.extra&&l.extra[f.k];
+          const ref = f.list==="tv"||f.list==="radio" ? programaRef(f.list,nome)
+            : f.list==="impresso" ? publicacaoRef(nome)
+            : f.list==="cinema" ? cinemaRef(nome)
+            : oohRef(nome);
+          const caption = f.list==="tv"||f.list==="radio" ? `preencher tudo (rating ${ref&&ref.rating}%)` : "preencher tudo automaticamente";
+          if(ref){
+            btn=`<button class="benchbtn" data-act="usar-audiencia-ref" data-id="${l.id}" title="Preencher audiência, valor e verba automaticamente">${caption}</button>`;
+            if(!MERCADOS_TV[l.extra.praca]) btn+=`<div class="hint" style="font-size:10.5px;color:var(--danger)">selecione a praça para calcular audiência/valor</div>`;
+          }else if(nome){
+            btn=`<div class="hint" style="font-size:10.5px;color:var(--danger)">sem dado de referência p/ este nome — confira a grafia ou preencha os campos manualmente</div>`;
+          }
+        }
+        return `<td>${inp}${btn}</td>`;
+      }).join("");
+      return `<tr data-id="${l.id}">
+        <td class="rownum">${idx}</td>
+        <td class="catcell"><select class="cellsel" data-line="${l.id}" data-k="veiculo">${optionsAllByCat}</select></td>
+        <td><input class="cellinput left" type="text" data-line="${l.id}" data-k="titulo" value="${esc(l.titulo||"")}" placeholder="Título da peça/ação"></td>
+        <td>${p.criteria.targets.length?p.criteria.targets.map(t=>{
+          const per=(p.personas||[]).find(x=>x.targetId===t.id);
+          const nomeCurto=(per&&per.nome)?per.nome.split(" ")[0]:(t.papel==="primario"?"Primário":t.papel==="secundario"?"Secundário":"Terciário");
+          return `<button class="chip ${((l.targetIds||[]).includes(t.id))?"on":""}" style="padding:3px 8px;font-size:10.5px;margin:1px" data-act="toggle-line-target" data-id="${l.id}" data-target="${t.id}" title="Persona alvo desta linha">${esc(nomeCurto)}</button>`;
+        }).join(""):`<span class="hint" style="font-size:10.5px">sem targets</span>`}</td>
+        ${extraCells}
+        <td><select class="cellsel" data-line="${l.id}" data-k="funil">${Object.entries(FUNIL).map(([k,v2])=>`<option value="${k}" ${l.funil===k?"selected":""}>${v2}</option>`).join("")}</select></td>
+        <td><select class="cellsel" data-line="${l.id}" data-k="papel">${Object.entries(PAPEL).map(([k,v2])=>`<option value="${k}" ${l.papel===k?"selected":""}>${v2.split(" / ")[0]}</option>`).join("")}</select></td>
+        <td><select class="cellsel" data-line="${l.id}" data-k="modelo">${Object.entries(MODELO).map(([k,v2])=>`<option value="${k}" ${l.modelo===k?"selected":""}>${v2}</option>`).join("")}</select></td>
+        <td><input class="cellinput" type="number" min="0" step="0.01" data-line="${l.id}" data-k="custo" value="${l.custo||""}" placeholder="0,00" ${l.modelo==="FIXO"?"disabled":""}></td>
+        <td class="benchcell">${BENCHNUM[v.k]?`<button class="benchbtn" data-act="usar-bench" data-id="${l.id}" title="Preencher com a média da faixa de mercado">${money(BENCHNUM[v.k][0])}–${money(BENCHNUM[v.k][1])}</button>`:`<span class="hint" style="font-size:11px">${esc(v.bench)}</span>`}</td>
+        <td>
+          <input class="cellinput" type="number" min="0" step="10" data-line="${l.id}" data-k="verba" value="${l.verba||""}" placeholder="0">
+          ${(l.extra&&l.extra.insercoes&&l.custo)?`<button class="benchbtn" data-act="usar-insercoes" data-id="${l.id}" title="Verba = custo unitário × nº de inserções">= ${l.extra.insercoes}× ${money(l.custo)}</button>`:""}
+        </td>
+        <td class="result">${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote fechado":"—")}${(l.extra&&l.extra.audienciaTarget&&l.custo)?`<div class="hint" style="font-size:10.5px;margin-top:2px">CPM real: ${money(l.custo/l.extra.audienciaTarget*1000)}</div>`:""}${(()=>{ const gt=grpTrp(l); return gt?`<div class="hint" style="font-size:10.5px;margin-top:2px">GRP ${gt.grp.toFixed(1)}${gt.trp!==null?` · TRP ${gt.trp.toFixed(1)}`:""}</div>`:""; })()}</td>
+        <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="inicio" value="${l.inicio||""}"></td>
+        <td><input class="cellinput left" type="date" data-line="${l.id}" data-k="fim" value="${l.fim||""}"></td>
+        <td class="delcell">
+          <button class="rmbtn" data-act="grade-dias" data-id="${l.id}" title="Grade de inserções por dia" ${(!l.inicio||!l.fim)?"disabled":""}>📅</button>
+          <button class="rmbtn" data-act="del-line" data-id="${l.id}" title="Excluir linha">×</button>
+        </td>
+      </tr>`;
+    }).join("");
+    const totalCols=14+extraFields.length; // rownum,veiculo,titulo,personas,extras...,funil,papel,modelo,custo,ref,verba,resultado,inicio,fim,ações
+    return `<div class="sheetgroup">
+      <div class="sheetgrouphead"><span class="badge ${g.cat.cls}">${esc(g.cat.label)}</span><span>${g.lines.length} ${g.lines.length===1?"linha":"linhas"}</span><span class="sp"></span><b>${money(subtotal)}</b></div>
+      <table class="sheet">
+        <thead><tr>
+          <th class="rownum">#</th><th>Veículo</th><th>Título da ação</th><th>Persona(s)</th>${extraFields.map(f=>`<th>${esc(f.label)}</th>`).join("")}
+          <th>Funil</th><th>Papel</th><th>Modelo</th>
+          <th class="num">Custo unit.</th><th>Ref. mercado</th><th class="num">Verba</th><th class="num">Resultado est.</th>
+          <th>Início</th><th>Fim</th><th></th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tbody><tr class="addrow"><td colspan="${totalCols}"><button class="addrowbtn" data-act="add-line" data-veiculo="${VEHICLES.find(v=>v.cat===g.cat.key).k}">+ Adicionar linha em ${esc(g.cat.label)}</button></td></tr></tbody>
+      </table>
+    </div>`;
+  }).join("");
+
+  const t=planTotals(p);
+  el.innerHTML=`<div class="sheetsummary">Total do plano: <b>${money(t.totalVerba)}</b> em ${p.lines.length} ${p.lines.length===1?"linha":"linhas"} · ${num(t.impressoes)} impressões est. · ${num(t.cliques)} cliques est.</div>
+    ${groupHtml}
+    <div class="addcatrow"><label>Adicionar linha em outra categoria:</label>
+      <select id="addCatSelect">${optionsAllByCat}</select>
+      <button class="tbtn pri" data-act="add-line-select">+ Adicionar</button>
+    </div>`;
+
+  // select vehicle values (can't set selected in template safely with dynamic optgroups) + bind
+  p.lines.forEach(l=>{
+    el.querySelectorAll(`select[data-line="${l.id}"][data-k="veiculo"]`).forEach(sel=>sel.value=l.veiculo);
+  });
+  el.querySelectorAll("[data-line]").forEach(input=>{
+    const evt = "change";
+    input.addEventListener(evt,()=>{
+      const line=p.lines.find(x=>x.id===input.dataset.line);
+      if(!line) return;
+      const k=input.dataset.k;
+      let v=input.value;
+      if(k==="custo"||k==="verba") v=parseFloat(v)||0;
+      if(k.startsWith("extra.")){
+        if(!line.extra) line.extra={};
+        line.extra[k.split(".")[1]]=v;
+      }else{
+        line[k]=v;
+      }
+      if(k==="veiculo"){
+        const veh=vehicle(v); const oldVeh=vehicle(line.veiculo);
+        if(veh){
+          const oldCat=oldVeh?oldVeh.cat:null;
+          line.funil=veh.funil; line.modelo=veh.modelo; line.papel=PAPEL_POR_FUNIL[veh.funil];
+          if(oldCat!==veh.cat) line.extra={};
+        }
+      }
+      if(k==="funil" && !line._papelManual){ line.papel=PAPEL_POR_FUNIL[v]; }
+      if(k==="papel"){ line._papelManual=true; }
+      // dispara o preenchimento automático (cada categoria com sua própria lógica) sempre que o campo que
+      // identifica o inventário mudar: veículo, praça, ou o campo-referência específico da categoria
+      // (programa/emissora p/ TV e rádio, publicação p/ impresso, rede p/ cinema, formato p/ OOH).
+      const gatilhos=["veiculo","extra.praca","extra.programa","extra.emissora","extra.publicacao","extra.rede","extra.formatoOOH","extra.insercoes"];
+      if(gatilhos.includes(k)){
+        const veh=vehicle(line.veiculo);
+        if(veh) autoFillRef(line, veh.cat, p.criteria);
+      }
+      // assim que custo e nº de inserções estiverem definidos, a verba se preenche sozinha — sem precisar
+      // clicar em nada ou "estimar" à parte, valendo pra qualquer categoria.
+      if((k==="extra.insercoes"||k==="custo") && line.extra&&line.extra.insercoes&&line.custo){
+        line.verba=Math.round(parseFloat(line.custo)*parseFloat(line.extra.insercoes)*100)/100;
+      }
+      save();
+      render();
+    });
+  });
+  const addSel=document.getElementById("addCatSelect");
+  const addBtn=el.querySelector('[data-act="add-line-select"]');
+  if(addBtn) addBtn.addEventListener("click",()=>{
+    const p2=curPlan(); const veh=vehicle(addSel.value);
+    p2.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
+    save(); render();
+  });
+}
+
+function renderStatusbar(p){
+  const t=planTotals(p);
+  const pct = p.verba? Math.round(t.totalVerba/parseFloat(p.verba)*100) : null;
+  document.getElementById("statusbar").innerHTML=`
+    <div class="stat">Verba alocada <b>${money(t.totalVerba)}</b>${pct!==null?` <span style="color:var(--faint)">(${pct}% da verba total)</span>`:""}</div>
+    <div class="stat">Impressões <b>${num(t.impressoes)}</b></div>
+    <div class="stat">Cliques <b>${num(t.cliques)}</b>${t.impressoes?` <span style="color:var(--faint)">CTR ${((t.cliques/t.impressoes*100)||0).toFixed(2)}%</span>`:""}</div>
+    <div class="stat">Views <b>${num(t.views)}</b></div>
+    <div class="stat">Conversões <b>${num(t.conversoes)}</b></div>
+  `;
+}
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = data.plans.map(p=>`
+    <div class="tab ${p.id===activePlanId?"on":""}" data-act="select-plan" data-id="${p.id}">
+      <span>${esc(p.nome)}</span>
+      <button class="tabx" data-act="del-plan" data-id="${p.id}" title="Excluir plano">×</button>
+    </div>
+  `).join("") + `<button class="addtab" data-act="new-plan" title="Novo plano">+</button>`;
+}
+
+/* ===================== painel de análises ===================== */
+function catColor(catKey){
+  const palette={tv:"#3F6BF0",radio:"#2F6FB2",ooh:"#B96A22",cinema:"#9A57A8",impresso:"#7A7D93",audio:"#B0496B",busca:"#D33B3B",social:"#0E8C7F",display:"#4C9A51",video:"#0E8C7F",retail:"#C2410C",influ:"#B9820C",afiliados:"#5759D1",crm:"#159069",app:"#2F6FB2",gaming:"#B0496B"};
+  return palette[catKey]||"#3F6BF0";
+}
+function funilColor(k){return {topo:"var(--topo)",meio:"var(--meio)",fundo:"var(--fundo)",retencao:"var(--ret)"}[k]||"var(--brand)";}
+function barList(byKey, labels, total, colorFn){
+  const rows=Object.entries(byKey).sort((a,b)=>b[1]-a[1]);
+  if(!rows.length) return `<div class="hint">Sem verba alocada ainda.</div>`;
+  return `<div class="barlist">${rows.map(([k,v])=>{
+    const pct=total? Math.round(v/total*100):0;
+    return `<div class="barrow"><div class="bl"><b>${esc(labels[k]||k)}</b><span>${money(v)} · ${pct}%</span></div>
+      <div class="bartrack"><i style="width:${pct}%;background:${colorFn(k)}"></i></div></div>`;
+  }).join("")}</div>`;
+}
+function stackBar(byKey, labels, total, colorFn){
+  const keys=Object.keys(labels).filter(k=>byKey[k]);
+  if(!keys.length) return `<div class="hint">Sem verba alocada ainda.</div>`;
+  const stack=`<div class="stack">${keys.map(k=>{
+    const pct=total? (byKey[k]/total*100):0;
+    return `<span style="width:${pct}%;background:${colorFn(k)}"></span>`;
+  }).join("")}</div>`;
+  const legend=`<div class="legend">${keys.map(k=>{
+    const pct=total? Math.round(byKey[k]/total*100):0;
+    return `<span><i style="background:${colorFn(k)}"></i>${esc(labels[k])} — ${pct}%</span>`;
+  }).join("")}</div>`;
+  return stack+legend;
+}
+function timelineHTML(p){
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length) return `<div class="hint">Defina início e fim nas linhas para ver o cronograma.</div>`;
+  let min=null,max=null;
+  dated.forEach(l=>{
+    const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
+    if(!min||di<min) min=di; if(!max||df>max) max=df;
+  });
+  const totalDays=Math.max(1, Math.round((max-min)/86400000)+1);
+  const rows=dated.map(l=>{
+    const v=vehicle(l.veiculo);
+    const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00");
+    const startPct=Math.max(0,(di-min)/86400000)/totalDays*100;
+    const widthPct=Math.max(2,(df-di)/86400000+1)/totalDays*100;
+    return `<div class="tlrow"><div class="tlname">${esc(v?v.label:l.veiculo)}</div>
+      <div class="tltrack"><div class="tlbar" style="left:${startPct}%;width:${widthPct}%;background:${catColor(v?v.cat:"")}"></div></div></div>`;
+  }).join("");
+  return rows;
+}
+function openAnalytics(){
+  const p=curPlan(); const t=planTotals(p);
+  document.getElementById("panel").innerHTML=`
+    <header><h3>Análises do plano</h3><button class="x" data-act="close-panel">×</button></header>
+    <div class="panelbody">
+      <h4>Verba por veículo</h4>
+      ${barList(t.byCat, CATS.reduce((o,c)=>{o[c.key]=c.label;return o;},{}), t.totalVerba, catColor)}
+      <h4>Verba por etapa do funil</h4>
+      ${stackBar(t.byFunil, FUNILFULL, t.totalVerba, funilColor)}
+      <h4>Offline × Digital</h4>
+      ${stackBar(t.byClass, {off:"Offline",dig:"Digital"}, t.totalVerba, c=>c==="off"?"var(--off)":"var(--dig)")}
+      <h4>Verba por praça</h4>
+      ${barList(t.byRegiao, Object.keys(t.byRegiao).reduce((o,k)=>{o[k]=pracaLabelAny(k);return o;},{}), t.totalVerba, ()=>"var(--brand)")}
+      <h4>Cronograma de veiculação</h4>
+      ${timelineHTML(p)}
+    </div>`;
+  document.getElementById("panel").classList.add("open");
+  document.getElementById("panelback").classList.add("open");
+}
+function closeAnalytics(){
+  document.getElementById("panel").classList.remove("open");
+  document.getElementById("panelback").classList.remove("open");
+}
+
+/* ===================== glossário ===================== */
+/* ===================== grade de inserções por dia ===================== */
+function openGradeDias(lineId){
+  const p=curPlan(); const l=p.lines.find(x=>x.id===lineId); if(!l||!l.inicio||!l.fim) return;
+  const v=vehicle(l.veiculo);
+  const start=new Date(l.inicio+"T00:00:00"), end=new Date(l.fim+"T00:00:00");
+  const days=[]; for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)) days.push(new Date(d));
+  const byMonth={};
+  days.forEach(d=>{ const key=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0"); (byMonth[key]=byMonth[key]||[]).push(d); });
+  const dias=l.insercoesPorDia||{};
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Grade de inserções — ${esc(v?v.label:l.veiculo)}</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="form" style="max-height:60vh;overflow:auto">
+      <div class="hint" style="margin-bottom:10px">Preencha o nº de inserções em cada dia — igual às planilhas tradicionais de mapa de mídia. O total substitui o campo "Nº inserções" e passa a valer no mapa mensal.</div>
+      ${Object.entries(byMonth).map(([mk,ds])=>`
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:6px">${ds[0].toLocaleDateString("pt-BR",{month:"long",year:"numeric"})}</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px">
+            ${ds.map(d=>{
+              const key=ymd_(d);
+              return `<div style="border:1px solid var(--grid-strong);border-radius:8px;padding:5px 7px;background:var(--surface-2)">
+                <div style="font-size:10px;color:var(--muted);font-weight:700">${d.toLocaleDateString("pt-BR",{day:"2-digit",weekday:"short"})}</div>
+                <input type="number" min="0" step="1" data-day="${key}" value="${dias[key]||""}" style="width:100%;border:0;background:transparent;font-size:14px;font-weight:700;padding:2px 0;font-family:'JetBrains Mono',monospace">
+              </div>`;
+            }).join("")}
+          </div>
+        </div>
+      `).join("")}
+      <button class="save" data-act="save-grade-dias" data-id="${l.id}">Salvar grade</button>
+    </div>`;
+  document.getElementById("backdrop").classList.add("open");
+}
+function ymd_(d){ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0"); }
+function saveGradeDias(lineId){
+  const p=curPlan(); const l=p.lines.find(x=>x.id===lineId); if(!l) return;
+  const novo={}; let total=0;
+  document.querySelectorAll("[data-day]").forEach(inp=>{
+    const n=parseFloat(inp.value)||0;
+    if(n>0){ novo[inp.dataset.day]=n; total+=n; }
+  });
+  l.insercoesPorDia=novo;
+  if(!l.extra) l.extra={};
+  if(total>0) l.extra.insercoes=total;
+  save(); closeModal(); render();
+}
+
+// links oficiais de anunciante/mídia kit levantados por pesquisa (checados, não inventados). Quando não
+// encontrei uma página oficial confiável, deixo o termo de busca sugerido em vez de arriscar um link errado.
+const MIDIA_KITS = [
+  {grupo:"TV aberta", itens:[
+    {nome:"Globo (site institucional — contato comercial em Fale Conosco)", url:"https://www.globo.com/"},
+    {nome:"SBT Ads — plataforma de anúncios", url:"https://www.sbtads.com.br/"},
+    {nome:"Record Ads — comercial", url:"https://comercial.recordtv.com.br/"},
+    {nome:"Band — Portal Comercial (TV e rádio do grupo)", url:"https://comercial.band.com.br/"},
+    {nome:"RedeTV! (site institucional)", url:"https://redetv.uol.com.br/"},
+  ]},
+  {grupo:"Rádio", itens:[
+    {nome:"Jovem Pan — Anuncie", url:"https://jovempan.com.br/anuncie"},
+    {nome:"CBN (site institucional)", url:"https://cbn.globoradio.globo.com/"},
+    {nome:"BandNews FM / Grupo Bandeirantes — Portal Comercial", url:"https://comercial.band.com.br/"},
+  ]},
+  {grupo:"OOH / Mídia Exterior", itens:[
+    {nome:"Eletromidia — mídia kit institucional", url:"https://home.eletromidia.com.br/midia-kit-institucional"},
+    {nome:"Eletromidia — mídia em elevadores/edifícios", url:"https://home.eletromidia.com.br/midia-kit-edificios"},
+    {nome:"JCDecaux Brasil", url:"https://www.jcdecaux.com.br/"},
+    {nome:"Central de Outdoor — portal do setor de OOH/DOOH (referência para achar fornecedores)", url:"https://centraldeoutdoor.org.br/"},
+  ]},
+  {grupo:"Cinema", itens:[
+    {nome:"FLIX Media — publicidade em Cinemark e outras redes", url:"https://www.flixmedia.com.br/cinemark"},
+    {nome:"Cinépolis — Anuncie", url:"https://www.cinepolis.com.br/anuncie/"},
+  ]},
+  {grupo:"Impresso (revista/jornal)", itens:[
+    {nome:"Editora Abril (Veja, Claudia, Época) — Publiabril", url:"https://publiabril.abril.com.br/"},
+    {nome:"Folha de S.Paulo (site institucional)", url:"https://www1.folha.uol.com.br/"},
+    {nome:"Estadão — Publicidade e mídia kit", url:"https://www.publicidadeestadao.com.br/"},
+  ]},
+  {grupo:"Áudio / Streaming", itens:[
+    {nome:"Spotify Advertising", url:"https://ads.spotify.com/pt-BR/"},
+    {nome:"Deezer for Business — Advertising", url:"https://business.deezer.com/advertising/"},
+  ]},
+  {grupo:"Busca e Vídeo", itens:[
+    {nome:"Google Ads (inclui YouTube Ads)", url:"https://ads.google.com/home/"},
+    {nome:"Microsoft Advertising (Bing)", url:"https://about.ads.microsoft.com/pt-br"},
+  ]},
+  {grupo:"Social Ads", itens:[
+    {nome:"Meta for Business (Facebook/Instagram)", url:"https://business.meta.com/"},
+    {nome:"TikTok for Business", url:"https://business.tiktok.com/pt-BR"},
+    {nome:"LinkedIn Marketing Solutions", url:"https://business.linkedin.com/marketing-solutions/ads"},
+    {nome:"Pinterest Business", url:"https://business.pinterest.com/advertise/"},
+    {nome:"X Ads", url:"https://business.x.com/en/advertising"},
+    {nome:"Snapchat for Business", url:"https://forbusiness.snapchat.com/advertising/snapchat-ads"},
+    {nome:"Kwai (site institucional)", url:"https://www.kwai.com/aboutus"},
+  ]},
+  {grupo:"Retail Media", itens:[
+    {nome:"Mercado Ads (Mercado Livre)", url:"https://ads.mercadolivre.com.br/"},
+    {nome:"Amazon Ads Brasil", url:"https://advertising.amazon.com/pt-br"},
+    {nome:"Magalu Ads", url:"https://portal-ads.magazineluiza.com.br/magalu-ads/login"},
+    {nome:"Shopee Ads", url:"https://ads.shopee.com.br/"},
+  ]},
+  {grupo:"Influenciadores / Afiliados", itens:[
+    {nome:"YOUPIX — Mapa da Creator Economy (referência de plataformas e agências)", url:"https://youpix.com.br/"},
+    {nome:"Influencer Brasil — plataforma de creators/UGC", url:"https://influencerbrasil.com.br/"},
+    {nome:"Lomadee — rede de afiliados, programa para anunciantes", url:"https://www.lomadee.com.br/pt-br/anunciantes"},
+    {nome:"Awin — rede de afiliados", url:"https://www.awin.com/br/"},
+  ]},
+];
+function openMidiaKits(){
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Mídia Kits do mercado</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="glossary" style="padding:12px 20px 20px">
+      <div class="hint" style="margin-bottom:12px">Links oficiais checados por pesquisa. Onde não achei uma página confiável, deixei o termo pronto pra você buscar — grades e páginas de anunciante mudam com frequência.</div>
+      ${MIDIA_KITS.map(g=>`
+        <div style="margin-bottom:14px">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);margin-bottom:6px">${esc(g.grupo)}</div>
+          ${g.itens.map(it=>it.url
+            ? `<div class="gitem"><b>${esc(it.nome)}</b><p><a href="${esc(it.url)}" target="_blank" rel="noopener">${esc(it.url)}</a></p></div>`
+            : `<div class="gitem"><b>${esc(it.nome)}</b><p>Busque: <i>"${esc(it.busca)}"</i></p></div>`
+          ).join("")}
+        </div>
+      `).join("")}
+    </div>`;
+  document.getElementById("modal").classList.add("wide");
+  document.getElementById("backdrop").classList.add("open");
+}
+function openGlossary(){
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Glossário de mídia</h3><button class="x" data-act="close-modal">×</button></header>
+    <div class="gsearch"><input id="gSearch" placeholder="Buscar termo (ex.: CPM, alcance, ROAS)..."></div>
+    <div class="glossary" id="gList"></div>`;
+  document.getElementById("backdrop").classList.add("open");
+  function renderList(q){
+    q=(q||"").toLowerCase();
+    const items=GLOSSARY.filter(g=>!q||g.t.toLowerCase().includes(q)||g.d.toLowerCase().includes(q));
+    document.getElementById("gList").innerHTML=items.map(g=>`<div class="gitem"><b>${esc(g.t)}</b><p>${esc(g.d)}</p></div>`).join("")||`<div class="hint" style="padding:20px 0">Nenhum termo encontrado.</div>`;
+  }
+  document.getElementById("gSearch").addEventListener("input",e=>renderList(e.target.value));
+  renderList("");
+}
+function closeModal(){ document.getElementById("backdrop").classList.remove("open"); document.getElementById("modal").classList.remove("wide"); }
+
+// substitui window.confirm — dentro do artefato publicado o confirm() nativo pode ser bloqueado
+// silenciosamente pelo sandbox (o mesmo problema que já tivemos com window.print()), fazendo o
+// botão "parecer" que não funciona. Este modal próprio funciona em qualquer contexto.
+function askConfirm(message, onYes){
+  document.getElementById("modal").innerHTML=`
+    <header><h3>Confirmar ação</h3><button class="x" data-act="close-modal">×</button></header>
+    <div style="padding:4px 20px 20px">
+      <p style="font-size:14px;color:var(--ink-soft);line-height:1.5;margin:0 0 16px">${esc(message)}</p>
+      <div style="display:flex;gap:8px;justify-content:flex-end">
+        <button class="tbtn" data-act="close-modal">Cancelar</button>
+        <button class="tbtn danger" id="askConfirmYes">Confirmar</button>
+      </div>
+    </div>`;
+  document.getElementById("backdrop").classList.add("open");
+  document.getElementById("askConfirmYes").addEventListener("click",()=>{ closeModal(); onYes(); });
+}
+
+/* ===================== import/export ===================== */
+// monta um registro formatado do plano (capa, briefing, estratégia, linhas por veículo, mapa mensal,
+// personas) só pra impressão/"salvar como PDF" — não aparece na tela, só no @media print.
+function renderPrintReport(p){ document.getElementById("printReport").innerHTML=buildPrintReportHTML(p); }
+// mapa de inserções no formato tradicional (linhas = veiculação, colunas = semanas do período do plano,
+// célula = nº de inserções naquela semana) — usa a grade de dias real quando o aluno preencheu; senão
+// marca "•" nas semanas em que a linha está ativa, sem quantidade exata.
+// Formato clássico de mapa de mídia (o mesmo usado em planilhas profissionais do mercado):
+// um bloco técnico com os dados do plano, e uma grade dia-a-dia (TV/rádio/áudio) ou
+// semana-a-semana (impresso/OOH/cinema) marcando "X" nos dias/semanas em que cada linha veicula,
+// com totais de inserção e investimento por linha e por mês.
+const MAPA_MIDIA_GRADE_DIARIA = new Set(["tv_aberta","tv_paga","ctv_avod","radio_am_fm","podcast_hostread","podcast_prog","audio_streaming"]);
+function buildMapaInsercoesHTML(p){
+  const dated=p.lines.filter(l=>l.inicio&&l.fim);
+  if(!dated.length) return null;
+  const c=p.criteria; const rf=reachFreq(p);
+  const pracasLbl=c.pracas.map(pr=>{ const [tipo,key]=pr.split(":"); return tipo==="nacional"?"Nacional":tipo==="regiao"?REGIOES[key]:ESTADOS[key]; }).join(", ")||"—";
+  const targetsLbl=c.targets.map(tg=>`${tg.papel==="primario"?"Primário":tg.papel==="secundario"?"Secundário":"Terciário"}: ${TARGET_PROFILES[tg.key]?TARGET_PROFILES[tg.key].label:"—"}`).join(" · ")||"—";
+
+  const headerHtml=`<table class="pr-table" style="margin-bottom:14px;font-size:11px"><tbody>
+    <tr><td><b>Mercado</b></td><td>${esc(pracasLbl)}</td><td><b>Target</b></td><td>${esc(targetsLbl)}</td></tr>
+    <tr><td><b>População estimada no target</b></td><td>${num(publicoEstimado(c))}</td><td><b>Cobertura / frequência desejadas</b></td><td>${c.coberturaAlvo||"—"}% · ${c.freqMin||"—"}x–${c.freqMax||"—"}x</td></tr>
+    <tr><td><b>Cobertura estimada</b></td><td>${rf?rf.reachPct.toFixed(1)+"%":"—"}</td><td><b>Frequência média estimada</b></td><td>${rf?rf.avgFreq.toFixed(1)+"x":"—"}</td></tr>
+  </tbody></table>`;
+
+  const groups=CATS.map(cat=>({cat, lines:dated.filter(l=>{ const v=vehicle(l.veiculo); return v&&v.cat===cat.key; })})).filter(g=>g.lines.length);
+  if(!groups.length) return null;
+
+  const blocksHtml=groups.map(g=>{
+    const isDayGrid=MAPA_MIDIA_GRADE_DIARIA.has(g.cat.key);
+    let min=null,max=null;
+    g.lines.forEach(l=>{ const di=new Date(l.inicio+"T00:00:00"), df=new Date(l.fim+"T00:00:00"); if(!min||di<min) min=di; if(!max||df>max) max=df; });
+    const months=[]; let cur=new Date(min.getFullYear(),min.getMonth(),1); const last=new Date(max.getFullYear(),max.getMonth(),1);
+    while(cur<=last){ months.push(new Date(cur)); cur=new Date(cur.getFullYear(),cur.getMonth()+1,1); }
+
+    const monthTables=months.map(monthStart=>{
+      const monthEnd=new Date(monthStart.getFullYear(),monthStart.getMonth()+1,0);
+      const daysInMonth=monthEnd.getDate();
+      const linesNoMes=g.lines.filter(l=>{ const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00"); return li<=monthEnd && lf>=monthStart; });
+      if(!linesNoMes.length) return null;
+      const weeksInMonth=Math.ceil(daysInMonth/7);
+      const colHeaders=isDayGrid?Array.from({length:daysInMonth},(_,i)=>i+1):Array.from({length:weeksInMonth},(_,i)=>`${i+1}S`);
+
+      const rows=linesNoMes.map(l=>{
+        const v=vehicle(l.veiculo);
+        const li=new Date(l.inicio+"T00:00:00"), lf=new Date(l.fim+"T00:00:00");
+        const diasMap=l.insercoesPorDia||{};
+        const temGrade=Object.keys(diasMap).length>0;
+        const cells=Array(colHeaders.length).fill(null);
+        let totalInsercoesMes=0;
+        if(isDayGrid){
+          for(let d=1; d<=daysInMonth; d++){
+            const dayDate=new Date(monthStart.getFullYear(),monthStart.getMonth(),d);
+            const dayKey=dayDate.getFullYear()+"-"+String(dayDate.getMonth()+1).padStart(2,"0")+"-"+String(d).padStart(2,"0");
+            const n=diasMap[dayKey];
+            if(n>0){ cells[d-1]="X".repeat(Math.min(n,3)); totalInsercoesMes+=n; }
+            else if(!temGrade && dayDate>=li && dayDate<=lf){ cells[d-1]="X"; totalInsercoesMes+=1; }
+          }
+        }else{
+          for(let w=0; w<weeksInMonth; w++){
+            const wStart=new Date(monthStart.getFullYear(),monthStart.getMonth(),w*7+1);
+            const wEnd=new Date(Math.min(new Date(monthStart.getFullYear(),monthStart.getMonth(),(w+1)*7).getTime(), monthEnd.getTime()));
+            let n=0;
+            Object.entries(diasMap).forEach(([dk,cnt])=>{ const d=new Date(dk+"T00:00:00"); if(d>=wStart&&d<=wEnd) n+=cnt; });
+            if(n>0){ cells[w]="X"; totalInsercoesMes+=n; }
+            else if(!temGrade && li<=wEnd && lf>=wStart){ cells[w]="X"; totalInsercoesMes+=1; }
+          }
+        }
+        const gt=grpTrp(l);
+        const totalInsercoesLinha=(l.extra&&l.extra.insercoes)?parseFloat(l.extra.insercoes):totalInsercoesMes;
+        const verbaMes=(temGrade&&totalInsercoesLinha)?(parseFloat(l.verba)||0)*(totalInsercoesMes/totalInsercoesLinha):parseFloat(l.verba)||0;
+        return {label:(l.titulo||(v?v.label:l.veiculo)), horario:(l.extra&&l.extra.horario)||"—", custo:l.custo, cells, totalInsercoesMes, trp:gt?gt.trp:null, verbaMes};
+      });
+      const totalInsercoes=rows.reduce((s,r)=>s+r.totalInsercoesMes,0);
+      const totalInvest=rows.reduce((s,r)=>s+(r.verbaMes||0),0);
+      return {monthLabel:monthStart.toLocaleDateString("pt-BR",{month:"long",year:"numeric"}), colHeaders, rows, totalInsercoes, totalInvest};
+    }).filter(Boolean);
+    if(!monthTables.length) return null;
+
+    const tablesHtml=monthTables.map(mt=>`<div style="margin-bottom:10px">
+      <div style="font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#7A7D93;margin-bottom:4px">Mês: ${esc(mt.monthLabel)}</div>
+      <div style="overflow-x:auto"><table class="pr-table" style="font-size:9px"><thead><tr>
+        <th>Programa / Veículo</th><th>Horário</th><th class="num">Valor unit.</th>
+        ${mt.colHeaders.map(h=>`<th class="num">${h}</th>`).join("")}
+        <th class="num">Inserções</th><th class="num">TRP</th><th class="num">Investimento</th>
+      </tr></thead><tbody>
+        ${mt.rows.map(r=>`<tr><td>${esc(r.label)}</td><td>${esc(r.horario)}</td><td class="num">${r.custo?money(r.custo):"—"}</td>
+          ${r.cells.map(cell=>`<td class="num">${cell||"—"}</td>`).join("")}
+          <td class="num">${r.totalInsercoesMes||"—"}</td><td class="num">${r.trp!==null?r.trp.toFixed(1):"—"}</td><td class="num">${money(r.verbaMes)}</td></tr>`).join("")}
+        <tr class="pr-totalrow"><td colspan="${3+mt.colHeaders.length}">TOTAL DO MÊS</td><td class="num">${mt.totalInsercoes||"—"}</td><td class="num">—</td><td class="num">${money(mt.totalInvest)}</td></tr>
+      </tbody></table></div>
+    </div>`).join("");
+    return `<div class="pr-cat"><h3>${esc(g.cat.label)}</h3>${tablesHtml}</div>`;
+  }).filter(Boolean).join("");
+
+  return headerHtml + blocksHtml +
+    `<div class="hint" style="font-size:10px;color:#7A7D93;margin-top:2px">"X" marca o dia (rádio/TV/áudio) ou a semana (impresso/OOH/cinema) em que a linha está no ar; onde a grade de inserções por dia (📅 na Alocação) não foi preenchida, o sistema estima com base só no período de início/fim da linha.</div>`;
+}
+function buildPrintReportHTML(p){
+  const t=planTotals(p); const c=p.criteria; const rf=reachFreq(p);
+  const hoje=new Date().toLocaleDateString("pt-BR",{day:"2-digit",month:"long",year:"numeric"});
+  const pracasLbl=c.pracas.map(pr=>{ const [tipo,key]=pr.split(":"); return tipo==="nacional"?"Nacional":tipo==="regiao"?REGIOES[key]:ESTADOS[key]; }).join(", ")||"—";
+  const targetsLbl=c.targets.map(tg=>`${tg.papel==="primario"?"Primário":tg.papel==="secundario"?"Secundário":"Terciário"}: ${TARGET_PROFILES[tg.key]?TARGET_PROFILES[tg.key].label:"—"}`).join(" · ")||"—";
+
+  const groups=CATS.map(cat=>({cat, lines:p.lines.filter(l=>{ const v=vehicle(l.veiculo); return v&&v.cat===cat.key; })})).filter(g=>g.lines.length);
+  const linhasHtml=groups.map(g=>{
+    const subtotal=g.lines.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    return `<div class="pr-cat">
+      <h3>${esc(g.cat.label)} — ${money(subtotal)}</h3>
+      <table class="pr-table"><thead><tr>
+        <th>Veículo</th><th>Título</th><th>Funil</th><th>Modelo</th><th class="num">Custo</th><th class="num">Verba</th><th>Resultado est.</th>
+      </tr></thead><tbody>
+        ${g.lines.map(l=>{
+          const v=vehicle(l.veiculo); const r=lineResult(l);
+          return `<tr><td>${esc(v?v.label:l.veiculo)}</td><td>${esc(l.titulo||"—")}</td><td>${FUNIL[l.funil]||""}</td><td>${MODELO[l.modelo]||""}</td>
+            <td class="num">${l.modelo==="FIXO"?"—":money(l.custo)}</td><td class="num">${money(l.verba)}</td><td>${r.qty?num(r.qty)+" "+r.label:(l.modelo==="FIXO"?"pacote":"—")}</td></tr>`;
+        }).join("")}
+      </tbody></table>
+    </div>`;
+  }).join("")||`<p style="font-size:13px;color:#7A7D93">Nenhuma linha de veiculação cadastrada.</p>`;
+
+  const mm=monthlyMap(p);
+  const mapaHtml = mm ? `<table class="pr-table"><thead><tr><th>Veículo</th>${mm.months.map(m=>`<th class="num">${m.label}</th>`).join("")}<th class="num">Total</th></tr></thead>
+    <tbody>${mm.rows.map(r=>{ const v=vehicle(r.line.veiculo); const total=Object.values(r.values).reduce((s,x)=>s+x,0);
+      return `<tr><td>${esc(v?v.label:r.line.veiculo)}</td>${mm.months.map(m=>`<td class="num">${money(r.values[m.key])}</td>`).join("")}<td class="num">${money(total)}</td></tr>`;
+    }).join("")}
+    <tr class="pr-totalrow"><td>Total do mês</td>${mm.months.map(m=>`<td class="num">${money(mm.totals[m.key])}</td>`).join("")}<td class="num">${money(Object.values(mm.totals).reduce((s,x)=>s+x,0))}</td></tr>
+    </tbody></table>` : `<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa mensal.</p>`;
+
+  const personasComNome=(p.personas||[]).filter(per=>per.nome);
+  const personasHtml = personasComNome.length ? personasComNome.map(per=>{
+    const tg=c.targets.find(x=>x.id===per.targetId); const target=tg&&TARGET_PROFILES[tg.key];
+    return `<div class="pr-persona"><div class="pr-av">${esc(per.avatar||"🧑")}</div><div>
+      <b>${esc(per.nome)}</b>${per.idade?", "+esc(per.idade):""}${per.cidade?" — "+esc(per.cidade):""}<br>
+      ${per.ocupacao?`<span style="color:#454764">${esc(per.ocupacao)}</span><br>`:""}
+      ${per.citacao?`<i>"${esc(per.citacao)}"</i><br>`:""}
+      ${target?`<span style="font-size:11px;color:#7A7D93">Target: ${esc(target.label)}</span>`:""}
+    </div></div>`;
+  }).join("") : "";
+
+  const estrategiaPorPersonaHtml = c.targets.length ? c.targets.map(tg=>{
+    const per=(p.personas||[]).find(x=>x.targetId===tg.id);
+    const target=TARGET_PROFILES[tg.key];
+    const linhasDaPersona=p.lines.filter(l=>(l.targetIds||[]).includes(tg.id));
+    const subtotal=linhasDaPersona.reduce((s,l)=>s+(parseFloat(l.verba)||0),0);
+    const papelLbl=tg.papel==="primario"?"Primário":tg.papel==="secundario"?"Secundário":"Terciário";
+    const nomePersona=(per&&per.nome)?per.nome:(target?target.label:"—");
+    if(!linhasDaPersona.length){
+      return `<div class="pr-cat"><h3>${papelLbl}: ${esc(nomePersona)} — sem linhas atribuídas</h3></div>`;
+    }
+    return `<div class="pr-cat">
+      <h3>${papelLbl}: ${esc(nomePersona)} — ${money(subtotal)} (${((subtotal/(t.totalVerba||1))*100).toFixed(0)}% do plano)</h3>
+      <table class="pr-table"><thead><tr><th>Veículo</th><th>Título</th><th>Funil</th><th class="num">Verba</th></tr></thead><tbody>
+        ${linhasDaPersona.map(l=>{ const v=vehicle(l.veiculo);
+          return `<tr><td>${esc(v?v.label:l.veiculo)}</td><td>${esc(l.titulo||"—")}</td><td>${FUNIL[l.funil]||""}</td><td class="num">${money(l.verba)}</td></tr>`;
+        }).join("")}
+      </tbody></table>
+    </div>`;
+  }).join("") : "";
+
+  const mapaInsercoesHtml = buildMapaInsercoesHTML(p);
+
+  const checks = criteriaComplete(p) ? computeChecks(p) : null;
+  const statusLabel={ok:"OK",warn:"Atenção",na:"N/D"};
+  const coerenciaHtml = checks ? `<table class="pr-table"><thead><tr><th>Critério</th><th>Status</th><th>Detalhe</th><th>Justificativa do aluno</th></tr></thead><tbody>
+    ${checks.map(ch=>`<tr><td>${esc(ch.title)}</td><td>${statusLabel[ch.status]||ch.status}</td><td style="font-size:11px">${esc(ch.detail)}</td><td style="font-size:11px">${ch.status==="warn"?esc(p.justificativas[ch.id]||"— não justificado —"):"—"}</td></tr>`).join("")}
+  </tbody></table>` : `<p style="font-size:13px;color:#7A7D93">Critérios de planejamento incompletos — a checagem de coerência não pôde ser calculada.</p>`;
+
+  return `<div class="pr-page">
+    <div class="pr-cover">
+      <div class="pr-eyebrow">Plano de Mídia</div>
+      <h1>${esc(p.nome)}</h1>
+      <div class="pr-meta">
+        <span><b>Cliente:</b> ${esc(p.cliente||"—")}</span>
+        <span><b>Período:</b> ${p.inicio?fmtd(p.inicio):"—"} – ${p.fim?fmtd(p.fim):"—"}</span>
+        <span><b>Verba total:</b> ${money(p.verba)}</span>
+        <span><b>Gerado em:</b> ${hoje}</span>
+      </div>
+    </div>
+
+    <div class="pr-section"><h2>Briefing</h2>
+      <div class="pr-grid2">
+        <div class="pr-kv"><b>Objetivo</b><span>${esc(p.objetivo||"—")}</span></div>
+        <div class="pr-kv"><b>Persona / observações</b><span>${esc(p.publico||"—")}</span></div>
+        <div class="pr-kv"><b>Praças</b><span>${esc(pracasLbl)}</span></div>
+        <div class="pr-kv"><b>Target(s)</b><span>${esc(targetsLbl)}</span></div>
+      </div>
+    </div>
+
+    <div class="pr-section"><h2>Estratégia</h2>
+      <div class="pr-grid2">
+        <div class="pr-kv"><b>Meta numérica do objetivo</b><span>${(c.metaNumerica&&c.metaNumerica.valor)?`${num(c.metaNumerica.valor)} ${esc(c.metaNumerica.unidade)} em ${FUNIL[c.metaNumerica.etapa]}`:"—"}</span></div>
+        <div class="pr-kv"><b>Postura de custo</b><span>${({eficiencia:"Eficiência",premium:"Premium",misto:"Misto"})[c.custoPostura]||"—"}</span></div>
+        <div class="pr-kv"><b>Distribuição por funil</b><span>${Object.entries(c.funil).map(([k,v])=>`${FUNIL[k]} ${v}%`).join(" · ")}</span></div>
+        <div class="pr-kv"><b>KPI por etapa</b><span>${Object.entries(c.kpi).map(([k,arr])=>`${FUNIL[k]}: ${arr.map(kk=>KPI_OPTS[kk]?KPI_OPTS[kk].label:kk).join(", ")||"—"}`).join(" · ")}</span></div>
+        <div class="pr-kv"><b>População estimada no target</b><span>${num(publicoEstimado(c))} pessoas</span></div>
+        <div class="pr-kv"><b>Cobertura / Frequência desejadas</b><span>${c.coberturaAlvo||"—"}% · ${c.freqMin||"—"}x–${c.freqMax||"—"}x</span></div>
+        ${rf?`<div class="pr-kv"><b>Cobertura estimada</b><span>${rf.reachPct.toFixed(1)}%</span></div>
+        <div class="pr-kv"><b>Frequência média estimada</b><span>${rf.avgFreq.toFixed(1)}x</span></div>`:""}
+      </div>
+    </div>
+
+    ${personasHtml?`<div class="pr-section"><h2>Personas</h2>${personasHtml}</div>`:""}
+
+    <div class="pr-section"><h2>Linhas de veiculação</h2>${linhasHtml}
+      <table class="pr-table"><tr class="pr-totalrow"><td>Total do plano</td><td class="num">${money(t.totalVerba)}</td></tr></table>
+    </div>
+
+    ${estrategiaPorPersonaHtml?`<div class="pr-section"><h2>Estratégia por persona</h2>${estrategiaPorPersonaHtml}</div>`:""}
+
+    <div class="pr-section"><h2>Mapa mensal de investimento</h2>${mapaHtml}</div>
+
+    <div class="pr-section"><h2>Mapa de mídia</h2>${mapaInsercoesHtml||`<p style="font-size:13px;color:#7A7D93">Defina início e fim nas linhas para gerar o mapa de mídia.</p>`}</div>
+
+    <div class="pr-section"><h2>Coerência do plano</h2>${coerenciaHtml}</div>
+
+    <div class="pr-footer">Simulador educacional desenvolvido com apoio de inteligência artificial por Leandro Dorigatti, para uso exclusivo na disciplina de Mídia II na ESAMC. Dados, valores e estimativas são fictícios, com finalidade estritamente didática — não têm valor legal, comercial ou de mercado e não devem ser usados como referência real. Uso restrito aos alunos da disciplina; reprodução ou distribuição fora desse contexto não é autorizada.</div>
+  </div>`;
+}
+
+// CSS do relatório, embutido inline no arquivo baixado (fora do artefato ele não tem acesso ao <style> da página).
+const PRINT_CSS = `
+body{background:#fff;color:#111;margin:0;font-family:"Inter",Arial,sans-serif}
+.pr-page{max-width:800px;margin:0 auto;padding:24px 8px}
+.pr-cover{padding:30px 0;border-bottom:3px solid #191A2B;margin-bottom:22px}
+.pr-cover .pr-eyebrow{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#7A7D93}
+.pr-cover h1{font-family:"Manrope",sans-serif;font-size:30px;font-weight:800;margin:6px 0 10px}
+.pr-cover .pr-meta{font-size:13px;color:#454764;display:flex;gap:18px;flex-wrap:wrap}
+.pr-section{margin-bottom:26px;break-inside:avoid}
+.pr-section h2{font-family:"Manrope",sans-serif;font-size:15px;font-weight:800;text-transform:uppercase;letter-spacing:.03em;border-bottom:1px solid #D6D4EC;padding-bottom:6px;margin-bottom:12px}
+.pr-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px}
+.pr-kv b{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:#7A7D93;margin-bottom:2px}
+.pr-kv span{font-size:13.5px;color:#191A2B}
+.pr-cat{margin-bottom:16px;break-inside:avoid}
+.pr-cat h3{font-family:"Manrope",sans-serif;font-size:12.5px;font-weight:800;margin:0 0 6px;color:#3F6BF0}
+table.pr-table{width:100%;border-collapse:collapse;font-size:11.5px;margin-bottom:6px}
+table.pr-table th{text-align:left;background:#F3F4F8;padding:5px 7px;font-weight:700;border-bottom:1px solid #D6D4EC}
+table.pr-table td{padding:5px 7px;border-bottom:1px solid #E7E6F5}
+table.pr-table td.num,table.pr-table th.num{text-align:right;font-variant-numeric:tabular-nums}
+.pr-totalrow{font-weight:800;background:#F7F6FD}
+.pr-persona{display:flex;gap:12px;border:1px solid #D6D4EC;border-radius:10px;padding:12px;margin-bottom:10px;break-inside:avoid}
+.pr-persona .pr-av{font-size:32px}
+.pr-footer{font-size:10px;color:#AEB0C2;text-align:center;margin-top:30px;padding-top:10px;border-top:1px solid #E7E6F5}
+@media print{ body{margin:0} }
+`;
+// dentro do artefato publicado, window.print() roda numa aba isolada (iframe) e o navegador costuma
+// bloquear silenciosamente a impressão vinda de lá — por isso, em vez de depender disso, baixamos um
+// arquivo HTML pronto: o aluno abre e usa Ctrl/Cmd+P > Salvar como PDF na própria aba do navegador.
+async function exportPDF(){
+  const p=curPlan();
+  const reportBody=buildPrintReportHTML(p);
+  const fullHtml=`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${esc(p.nome)} — Plano de Mídia</title><style>${PRINT_CSS}</style></head><body>${reportBody}</body></html>`;
+  const filename=`plano-de-midia-${p.nome.replace(/[^\w\-]+/g,"_")}.html`;
+  try{
+    const downloads=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(downloads){
+      const blob=new Blob([fullHtml],{type:"text/html"});
+      await downloads.save({filename,data:blob});
+      toast("Baixado! Abra o arquivo e use Ctrl/Cmd+P → Salvar como PDF.");
+      return;
+    }
+  }catch(e){}
+  // fora do artefato (GitHub Pages, arquivo local): a impressão direta funciona normalmente
+  renderPrintReport(p);
+  window.print();
+}
+
+async function exportExcel(){
+  if(typeof XLSX==="undefined"){ toast("Biblioteca de Excel não carregou — tente novamente."); return; }
+  const p=curPlan(); const t=planTotals(p); const rf=reachFreq(p); const c=p.criteria;
+  const wb=XLSX.utils.book_new();
+
+  // Resumo
+  const resumo=[
+    ["Plano de Mídia — "+p.nome],
+    [],
+    ["Cliente", p.cliente||""], ["Objetivo", p.objetivo||""], ["Persona/público", p.publico||""],
+    ["Praças", c.pracas.map(pr=>{ const [tipo,key]=pr.split(":"); return tipo==="nacional"?"Nacional":tipo==="regiao"?REGIOES[key]:ESTADOS[key]; }).join(", ")],
+    ["Targets", c.targets.map(t2=>`${t2.papel}: ${TARGET_PROFILES[t2.key]?TARGET_PROFILES[t2.key].label:"—"}`).join(" | ")],
+    ["População estimada no target", num(publicoEstimado(c))],
+    ["Cobertura desejada", (c.coberturaAlvo||"—")+"%"], ["Frequência desejada", `${c.freqMin||"—"}x – ${c.freqMax||"—"}x`],
+    [],
+    ["Verba total do plano", p.verba||0], ["Verba alocada", t.totalVerba],
+    ["Impressões estimadas", Math.round(t.impressoes)], ["Cliques estimados", Math.round(t.cliques)],
+    ["Views estimados", Math.round(t.views)], ["Conversões estimadas", Math.round(t.conversoes)],
+    rf?["Cobertura estimada (%)", rf.reachPct.toFixed(1)]:["Cobertura estimada (%)","—"],
+    rf?["Frequência média estimada", rf.avgFreq.toFixed(1)]:["Frequência média estimada","—"],
+    [],
+    ["Verba por veículo"],
+    ...Object.entries(t.byCat).map(([k,v])=>[catInfo(k)?catInfo(k).label:k, v]),
+    [],
+    ["Verba por etapa do funil"],
+    ...Object.entries(t.byFunil).map(([k,v])=>[FUNILFULL[k]||k, v]),
+  ];
+  const wsResumo=XLSX.utils.aoa_to_sheet(resumo);
+  XLSX.utils.book_append_sheet(wb, wsResumo, "Resumo");
+
+  // Linhas de veiculação
+  const allExtraKeys=[...new Set(p.lines.flatMap(l=>Object.keys(l.extra||{})))];
+  const header=["#","Categoria","Veículo","Título","Funil","Papel","Modelo","Custo unitário","Verba","Resultado estimado","Início","Fim",...allExtraKeys];
+  const linhas=[header, ...p.lines.map((l,i)=>{
+    const v=vehicle(l.veiculo); const cat=v?catInfo(v.cat):null; const r=lineResult(l);
+    return [i+1, cat?cat.label:"", v?v.label:l.veiculo, l.titulo||"", FUNIL[l.funil]||"", PAPEL[l.papel]||"", MODELO[l.modelo]||"",
+      l.custo||0, l.verba||0, r.qty?`${Math.round(r.qty)} ${r.label}`:(l.modelo==="FIXO"?"pacote fechado":""),
+      l.inicio||"", l.fim||"", ...allExtraKeys.map(k=>(l.extra&&l.extra[k])||"")];
+  })];
+  const wsLinhas=XLSX.utils.aoa_to_sheet(linhas);
+  XLSX.utils.book_append_sheet(wb, wsLinhas, "Linhas de veiculação");
+
+  // Mapa mensal
+  const mm=monthlyMap(p);
+  if(mm){
+    const mmHeader=["Veículo", ...mm.months.map(m=>m.label), "Total"];
+    const mmRows=mm.rows.map(r=>{
+      const v=vehicle(r.line.veiculo);
+      const totalLinha=Object.values(r.values).reduce((s,x)=>s+x,0);
+      return [v?v.label:r.line.veiculo, ...mm.months.map(m=>Math.round(r.values[m.key])), Math.round(totalLinha)];
+    });
+    const mmTotais=["Total do mês", ...mm.months.map(m=>Math.round(mm.totals[m.key])), Math.round(Object.values(mm.totals).reduce((s,x)=>s+x,0))];
+    const wsMM=XLSX.utils.aoa_to_sheet([mmHeader, ...mmRows, mmTotais]);
+    XLSX.utils.book_append_sheet(wb, wsMM, "Mapa mensal");
+  }
+
+  const filename=`plano-de-midia-${p.nome.replace(/[^\w\-]+/g,"_")}.xlsx`;
+  try{
+    const downloads=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(downloads){
+      const arr=XLSX.write(wb,{bookType:"xlsx",type:"array"});
+      const blob=new Blob([arr],{type:"application/octet-stream"});
+      await downloads.save({filename,data:blob});
+      return;
+    }
+  }catch(e){}
+  XLSX.writeFile(wb, filename);
+}
+
+async function exportJSON(){
+  const filename="plano-de-midia-backup-"+new Date().toISOString().slice(0,10)+".json";
+  const json=JSON.stringify(data,null,2);
+  try{
+    const downloads=window.claude&&window.claude.use?await window.claude.use("downloads"):null;
+    if(downloads){ await downloads.save({filename,data:json}); return; }
+  }catch(e){}
+  const blob=new Blob([json],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob); a.download=filename;
+  document.body.appendChild(a); a.click(); a.remove();
+}
+function importJSON(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const incoming=JSON.parse(reader.result);
+      if(incoming&&Array.isArray(incoming.plans)){
+        incoming.plans.forEach(p=>{ if(!p.id) p.id=uid(); });
+        data.plans=data.plans.concat(incoming.plans);
+        activePlanId=incoming.plans.length?incoming.plans[incoming.plans.length-1].id:activePlanId;
+        save(); render(); toast("Planos importados com sucesso.");
+      }else toast("Arquivo inválido.");
+    }catch(e){ toast("Erro ao ler o arquivo."); }
+  };
+  reader.readAsText(file);
+}
+function toast(msg){
+  let t=document.querySelector(".toast");
+  if(!t){ t=document.createElement("div"); t.className="toast"; document.body.appendChild(t); }
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove("show"),2600);
+}
+
+/* ===================== eventos globais ===================== */
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-act]"); if(!b) return;
+  const act=b.dataset.act, id=b.dataset.id;
+  if(act==="new-plan") newPlan();
+  else if(act==="select-plan"){ activePlanId=id; viewMode=criteriaComplete(curPlan())?"alocacao":"criterios"; render(); }
+  else if(act==="set-view"){
+    const p=curPlan();
+    const gated=["alocacao","jornada","coerencia"];
+    if(gated.includes(b.dataset.view) && !criteriaComplete(p)){
+      viewMode="criterios"; blockedMsg=`Complete os critérios de planejamento antes de ir para "${{alocacao:"Alocação de verba",jornada:"Jornada e multicanalidade",coerencia:"Coerência do plano"}[b.dataset.view]}". É essa etapa que obriga você a decidir o racional do plano antes de escolher veículos.`;
+    }else{ viewMode=b.dataset.view; blockedMsg=null; }
+    render();
+  }
+  else if(act==="toggle-line-target"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id); const targetId=b.dataset.target;
+    if(line){
+      if(!line.targetIds) line.targetIds=[];
+      const i=line.targetIds.indexOf(targetId);
+      if(i>=0) line.targetIds.splice(i,1); else line.targetIds.push(targetId);
+      save(); render();
+    }
+  }
+  else if(act==="toggle-cat"){
+    const p=curPlan(); const key=b.dataset.key; const i=p.criteria.publico.indexOf(key);
+    if(i>=0) p.criteria.publico.splice(i,1); else p.criteria.publico.push(key);
+    save(); render();
+  }
+  else if(act==="add-praca"){
+    const p=curPlan(); const sel=document.getElementById("pracaAddSelect"); if(!sel||!sel.value) return;
+    if(!p.criteria.pracas.includes(sel.value)) p.criteria.pracas.push(sel.value);
+    p.criteria.publicoTamanho=publicoEstimado(p.criteria);
+    save(); render();
+  }
+  else if(act==="del-praca"){
+    const p=curPlan(); const i=p.criteria.pracas.indexOf(b.dataset.key);
+    if(i>=0) p.criteria.pracas.splice(i,1);
+    p.criteria.publicoTamanho=publicoEstimado(p.criteria);
+    save(); render();
+  }
+  else if(act==="add-target"){
+    const p=curPlan();
+    const papel = p.criteria.targets.some(t=>t.papel==="primario") ? "secundario" : "primario";
+    p.criteria.targets.push({id:uid(),papel,key:""}); save(); render();
+  }
+  else if(act==="del-target"){
+    const p=curPlan(); p.criteria.targets.splice(+b.dataset.idx,1);
+    p.criteria.publicoTamanho=publicoEstimado(p.criteria);
+    save(); render();
+  }
+  else if(act==="add-pico"){
+    const p=curPlan(); p.criteria.picos.push({inicio:"",fim:""}); save(); render();
+  }
+  else if(act==="del-pico"){
+    const p=curPlan(); p.criteria.picos.splice(+b.dataset.idx,1); save(); render();
+  }
+  else if(act==="del-plan"){ e.stopPropagation(); askConfirm("Excluir este plano de mídia? Essa ação não pode ser desfeita.", ()=>delPlan(id)); }
+  else if(act==="add-line"){
+    const p=curPlan();
+    const veh = b.dataset.veiculo ? vehicle(b.dataset.veiculo) : VEHICLES[0];
+    p.lines.push({id:uid(),veiculo:veh.k,funil:veh.funil,papel:PAPEL_POR_FUNIL[veh.funil],titulo:"",modelo:veh.modelo,custo:"",verba:"",inicio:"",fim:"",extra:{}});
+    save(); render();
+  }
+  else if(act==="del-line"){ const p=curPlan(); p.lines=p.lines.filter(x=>x.id!==id); save(); render(); }
+  else if(act==="usar-bench"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo); const range=v&&BENCHNUM[v.k];
+    if(line&&range){ line.custo=Math.round(((range[0]+range[1])/2)*100)/100; save(); render(); }
+  }
+  else if(act==="grade-dias") openGradeDias(id);
+  else if(act==="save-grade-dias") saveGradeDias(id);
+  else if(act==="usar-audiencia-ref"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id); const v=line&&vehicle(line.veiculo);
+    if(line&&v){
+      const ok=autoFillRef(line, v.cat, p.criteria);
+      if(ok && !MERCADOS_TV[line.extra.praca]) toast("Selecione a praça/mercado desta linha para calcular audiência no target e valor exato.");
+      else if(ok && !combinedTargetPct(p.criteria)) toast("Declare ao menos um target nos Critérios (etapa 2) para calcular a audiência no target.");
+      save(); render();
+    }
+  }
+  else if(act==="usar-insercoes"){
+    const p=curPlan(); const line=p.lines.find(x=>x.id===id);
+    if(line&&line.extra&&line.extra.insercoes&&line.custo){ line.verba=Math.round(parseFloat(line.custo)*parseFloat(line.extra.insercoes)*100)/100; save(); render(); }
+  }
+  else if(act==="glossary") openGlossary();
+  else if(act==="close-modal") closeModal();
+  else if(act==="analytics") openAnalytics();
+  else if(act==="close-panel") closeAnalytics();
+  else if(act==="print") exportPDF();
+  else if(act==="export") exportJSON();
+  else if(act==="export-excel") exportExcel();
+  else if(act==="reset-plan"){ askConfirm("Apagar todos os dados deste plano e começar do zero? Essa ação não pode ser desfeita.", ()=>resetPlan(curPlan().id)); }
+  else if(act==="midiakits") openMidiaKits();
+  else if(act==="import") document.getElementById("importFile").click();
+});
+document.getElementById("backdrop").addEventListener("click",e=>{ if(e.target.id==="backdrop") closeModal(); });
+document.getElementById("panelback").addEventListener("click",closeAnalytics);
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ closeModal(); closeAnalytics(); } });
+document.getElementById("importFile").addEventListener("change",e=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; });
+document.getElementById("planNameInput").addEventListener("change",e=>{ const p=curPlan(); p.nome=e.target.value||"Sem nome"; save(); renderTabs(); });
+
+/* ===================== boot ===================== */
+(async function(){ await load(); viewMode=criteriaComplete(curPlan())?"alocacao":"criterios"; render(); })();
+</script>
+</body>
+</html>
