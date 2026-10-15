@@ -510,6 +510,19 @@ const KPI_OPTS = {
   brandlift:{label:"Brand Lift / Lembrança", modelos:["CPM","CPP"]},
 };
 
+// métodos de definição de verba (os 8 ensinados em aula): o aluno declara qual usou e por quê —
+// o sistema nunca escolhe o método nem calcula a verba a partir dele, só documenta a decisão.
+const METODOS_VERBA = {
+  pctvendas:{label:"Porcentagem de vendas", desc:"Aplica-se um percentual fixo sobre as vendas passadas ou projetadas."},
+  paridade:{label:"Paridade competitiva", desc:"Investe-se um valor parecido com o dos principais concorrentes."},
+  objetivoetarefa:{label:"Objetivo e tarefa", desc:"Define-se o objetivo, as tarefas de mídia para atingi-lo e o custo de cada uma. A soma é a verba."},
+  verbadisponivel:{label:"Verba disponível", desc:"Investe-se o que sobra depois de cobrir as demais despesas."},
+  subjetivo:{label:"Estabelecimento subjetivo", desc:"A gestão decide a verba por julgamento, pesando fatores do negócio."},
+  ciclovida:{label:"Ciclo de vida do produto", desc:"A verba acompanha a fase em que o produto está: introdução, crescimento, maturidade ou declínio."},
+  testes:{label:"Testes e experimentos", desc:"Testa-se em pequena escala com verbas, mensagens ou canais diferentes, e escala-se o que performa melhor."},
+  sov:{label:"Share of voice (SOV)", desc:"Define-se a verba pela participação de voz desejada frente ao investimento da concorrência, não pela paridade simples."},
+};
+
 // alvos de mídia padrão (nomenclatura clássica de mercado) e faixa etária associada, usada para
 // estimar tamanho do público (item abaixo) e aderência de veículo (AFFINITY). % é uma estimativa
 // didática de penetração sobre a população total — não é dado de pesquisa real.
@@ -901,6 +914,8 @@ function defaultCriteria(){
     metaNumerica:{valor:"",unidade:"",etapa:"fundo"},
     custoPostura:"",
     sovAlvo:"", verbaConcorrencia:"",
+    metodoVerba:"", metodoVerbaJustificativa:"",
+    estrategiaParagrafo:"",
   };
 }
 function samplePlan(){
@@ -1067,6 +1082,8 @@ function criteriaMissing(p){
   if(!(parseFloat(c.freqMax)>0)) missing.push("informe a frequência efetiva máxima");
   if(!c.metaNumerica||!(parseFloat(c.metaNumerica.valor)>0)||!c.metaNumerica.unidade) missing.push("defina a meta numérica ligada ao objetivo, com valor e unidade (etapa 0)");
   if(!c.custoPostura) missing.push("declare a postura de custo do plano (etapa 0)");
+  if(!c.metodoVerba) missing.push("declare qual dos 8 métodos de definição de verba foi usado para chegar na verba total (etapa 0)");
+  if(!c.estrategiaParagrafo||c.estrategiaParagrafo.trim().length<30) missing.push("escreva a estratégia em um parágrafo: qual canal faz o quê (Passo 4)");
   if(!c.kpi||!Object.values(c.kpi).every(v=>Array.isArray(v)&&v.length)) missing.push("escolha ao menos um KPI de sucesso para cada uma das 4 etapas do funil");
   if(c.timing!=="continuo"){
     if(!c.picos||!c.picos.length) missing.push("adicione ao menos um período de pico (você escolheu timing pulsado/concentrado)");
@@ -1353,6 +1370,15 @@ function renderCriterios(p){
           <button class="tbtn pri" data-act="add-praca">+ Adicionar</button>
         </div>
       </div>
+      <div class="f" style="margin-top:14px"><label>Método de definição de verba</label>
+        <select class="critselect" data-crit="metodoVerba">
+          <option value="">Selecione...</option>
+          ${Object.entries(METODOS_VERBA).map(([k,v])=>`<option value="${k}" ${c.metodoVerba===k?"selected":""}>${esc(v.label)}</option>`).join("")}
+        </select>
+        ${c.metodoVerba&&METODOS_VERBA[c.metodoVerba]?`<div class="desc" style="margin-top:4px">${esc(METODOS_VERBA[c.metodoVerba].desc)}</div>`:""}
+      </div>
+      <div class="f"><label>Justifique como chegou nessa verba com esse método</label><textarea data-crit="metodoVerbaJustificativa" rows="2" placeholder="Ex.: a marca investiu R$ 180 mil no ano passado e decidimos manter o percentual de vendas aplicado...">${esc(c.metodoVerbaJustificativa)}</textarea></div>
+      <div class="desc" style="margin-top:2px">O sistema não escolhe o método nem calcula a verba por você — isso é decisão sua. Ele só exige que você declare qual dos 8 métodos usou e explique o racional, antes de definir a verba total do plano (acima, na barra de informações).</div>
       <div class="critrow2" style="margin-top:14px">
         <div class="f"><label>Meta numérica ligada ao objetivo</label><input type="number" min="0" step="any" data-meta="valor" value="${esc(c.metaNumerica.valor)}" placeholder="Ex.: 5000"></div>
         <div class="f"><label>Unidade da meta</label><input data-meta="unidade" value="${esc(c.metaNumerica.unidade)}" placeholder="Ex.: vendas, leads, % de lembrança de marca"></div>
@@ -1380,7 +1406,7 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>1. Distribuição por etapa do funil</h3>
+      <h3>1. Nível 1 · Objetivo de mídia — distribuição por etapa do funil</h3>
       <div class="desc">Antes de escolher qualquer veículo, decida quanto da verba faz sentido em cada etapa para o objetivo do plano. Os quatro campos devem somar 100%.</div>
       <div class="funilrow">
         ${Object.entries(FUNILFULL).map(([k,label])=>`
@@ -1391,8 +1417,8 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>2. Target, cobertura e frequência</h3>
-      <div class="desc">Adicione um ou mais targets no formato clássico de mídia (ex.: AS AB 25+) — primário, secundário etc. O sistema soma a população das praças (etapa 0) e combina a penetração de todos os targets para estimar o público. Cobertura e frequência desejadas ficam por sua conta.</div>
+      <h3>2. Nível 1 · Objetivo de mídia — alcance, frequência e GRP</h3>
+      <div class="desc">O objetivo de mídia se escreve em quatro números: alcance, frequência média, GRP (alcance × frequência) e timing (etapa 4). Adicione um ou mais targets no formato clássico de mídia (ex.: AS AB 25+) — primário, secundário etc. O sistema soma a população das praças (etapa 0) e combina a penetração de todos os targets para estimar o público. Cobertura e frequência desejadas ficam por sua conta.</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px">
         ${c.targets.map((t,i)=>`<div class="critrow2" style="align-items:end">
           <div class="f"><label>Papel</label><select class="critselect" data-target="${i}.papel"><option value="primario" ${t.papel==="primario"?"selected":""}>Primário</option><option value="secundario" ${t.papel==="secundario"?"selected":""}>Secundário</option><option value="terciario" ${t.papel==="terciario"?"selected":""}>Terciário</option></select></div>
@@ -1402,17 +1428,18 @@ function renderCriterios(p){
       </div>
       <div class="hint" style="margin:8px 0">${publicoEstimado(c)>0 ? `População estimada no target: <b style="color:var(--ink)">${num(publicoEstimado(c))} pessoas</b> (${num(populacaoDasPracas(c))} pessoas nas praças declaradas × ${(combinedTargetPct(c)*100).toFixed(1)}% de penetração combinada — estimativa didática)` : "Declare praças (etapa 0) e ao menos um target para estimar o público."}</div>
       <div class="critrow2">
-        <div class="f"><label>Cobertura desejada (%)</label><input type="number" min="0" max="100" class="critdate" data-crit="coberturaAlvo" value="${c.coberturaAlvo||""}" placeholder="ex.: 55"></div>
+        <div class="f"><label>Alcance desejado (%)</label><input type="number" min="0" max="100" class="critdate" data-crit="coberturaAlvo" value="${c.coberturaAlvo||""}" placeholder="ex.: 55"></div>
         <div></div>
       </div>
       <div class="critrow2">
         <div class="f"><label>Frequência efetiva mínima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMin" value="${c.freqMin||""}" placeholder="ex.: 3"></div>
         <div class="f"><label>Frequência efetiva máxima</label><input type="number" min="0" step="0.5" class="critdate" data-crit="freqMax" value="${c.freqMax||""}" placeholder="ex.: 8"></div>
       </div>
+      <div class="hint" style="margin-top:8px">${(parseFloat(c.coberturaAlvo)>0 && parseFloat(c.freqMin)>0 && parseFloat(c.freqMax)>0) ? `<b style="color:var(--ink)">GRP objetivo:</b> ${(parseFloat(c.coberturaAlvo)*((parseFloat(c.freqMin)+parseFloat(c.freqMax))/2)).toFixed(0)} (alcance ${c.coberturaAlvo}% × frequência média ${((parseFloat(c.freqMin)+parseFloat(c.freqMax))/2).toFixed(1)}) — confira depois, na Jornada, se o GRP das linhas de TV/rádio se aproxima desse número.` : "Preencha alcance e frequência para ver o GRP objetivo (alcance × frequência)."}</div>
     </div>
 
     <div class="critcard">
-      <h3>3. Onde esse público realmente consome mídia</h3>
+      <h3>3. Nível 2 · Passo 1 e 2 — onde esse público realmente consome mídia</h3>
       <div class="desc">Marque as categorias de veículo que fazem sentido para o target escolhido. A etiqueta mostra a aderência estimada de cada categoria ao target (estimativa didática, não pesquisa real).</div>
       <div class="chiprow">${(()=>{
         const primario=(c.targets.find(t=>t.papel==="primario")||{}).key;
@@ -1426,8 +1453,8 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>4. Timing da campanha</h3>
-      <div class="desc">Defina como a verba deve se distribuir ao longo do tempo. Pulsado/concentrado aceitam mais de um período de pico.</div>
+      <h3>4. Nível 2 · Passo 2 — timing da campanha</h3>
+      <div class="desc">Defina como a verba deve se distribuir ao longo do tempo. Contínuo, pulsado (picos) ou concentrado. Pulsado/concentrado aceitam mais de um período de pico.</div>
       <select class="critselect" data-crit="timing">
         <option value="continuo" ${c.timing==="continuo"?"selected":""}>Contínuo — presença constante, sem picos</option>
         <option value="pulsado" ${c.timing==="pulsado"?"selected":""}>Pulsado — picos em momentos-chave</option>
@@ -1443,7 +1470,7 @@ function renderCriterios(p){
     </div>
 
     <div class="critcard">
-      <h3>5. KPI de sucesso por etapa do funil</h3>
+      <h3>5. Nível 2 · Passo 3 — avaliação de canais: KPI de sucesso por etapa do funil</h3>
       <div class="desc">O KPI que julga o sucesso muda por etapa — e às vezes uma etapa precisa de mais de um (ex.: alcance + brand lift no topo). Marque um ou mais por etapa.</div>
       <div class="funilrow">
         ${Object.entries(FUNIL).map(([k,label])=>`
@@ -1458,6 +1485,12 @@ function renderCriterios(p){
           </div>
         `).join("")}
       </div>
+    </div>
+
+    <div class="critcard">
+      <h3>6. Nível 2 · Passo 4 — definir a estratégia em um parágrafo</h3>
+      <div class="desc">Escreva, em um parágrafo só, qual canal faz o quê no plano. Se um canal não tem função clara no parágrafo, ele não devia estar no plano.</div>
+      <textarea data-crit="estrategiaParagrafo" rows="4" placeholder="Ex.: Para o lançamento do produto X, a TV aberta gera alcance e impacto visual nas primeiras semanas. O rádio reforça a frequência nos deslocamentos. As redes sociais demonstram o produto e geram prova social. A busca captura a demanda criada pelos outros canais.">${esc(c.estrategiaParagrafo)}</textarea>
     </div>
   </div>`;
 
@@ -2378,17 +2411,21 @@ function buildPrintReportHTML(p){
       </div>
     </div>
 
-    <div class="pr-section"><h2>Estratégia</h2>
+    <div class="pr-section"><h2>Objetivo e estratégia de mídia</h2>
       <div class="pr-grid2">
+        <div class="pr-kv"><b>Método de definição de verba</b><span>${METODOS_VERBA[c.metodoVerba]?METODOS_VERBA[c.metodoVerba].label:"—"}</span></div>
+        <div class="pr-kv"><b>Justificativa da verba</b><span>${esc(c.metodoVerbaJustificativa||"—")}</span></div>
         <div class="pr-kv"><b>Meta numérica do objetivo</b><span>${(c.metaNumerica&&c.metaNumerica.valor)?`${num(c.metaNumerica.valor)} ${esc(c.metaNumerica.unidade)} em ${FUNIL[c.metaNumerica.etapa]}`:"—"}</span></div>
         <div class="pr-kv"><b>Postura de custo</b><span>${({eficiencia:"Eficiência",premium:"Premium",misto:"Misto"})[c.custoPostura]||"—"}</span></div>
         <div class="pr-kv"><b>Distribuição por funil</b><span>${Object.entries(c.funil).map(([k,v])=>`${FUNIL[k]} ${v}%`).join(" · ")}</span></div>
         <div class="pr-kv"><b>KPI por etapa</b><span>${Object.entries(c.kpi).map(([k,arr])=>`${FUNIL[k]}: ${arr.map(kk=>KPI_OPTS[kk]?KPI_OPTS[kk].label:kk).join(", ")||"—"}`).join(" · ")}</span></div>
         <div class="pr-kv"><b>População estimada no target</b><span>${num(publicoEstimado(c))} pessoas</span></div>
-        <div class="pr-kv"><b>Cobertura / Frequência desejadas</b><span>${c.coberturaAlvo||"—"}% · ${c.freqMin||"—"}x–${c.freqMax||"—"}x</span></div>
+        <div class="pr-kv"><b>Objetivo de mídia: alcance / frequência</b><span>${c.coberturaAlvo||"—"}% · ${c.freqMin||"—"}x–${c.freqMax||"—"}x</span></div>
+        <div class="pr-kv"><b>GRP objetivo (alcance × frequência)</b><span>${(parseFloat(c.coberturaAlvo)>0 && parseFloat(c.freqMin)>0 && parseFloat(c.freqMax)>0) ? (parseFloat(c.coberturaAlvo)*((parseFloat(c.freqMin)+parseFloat(c.freqMax))/2)).toFixed(0) : "—"}</span></div>
         ${rf?`<div class="pr-kv"><b>Cobertura estimada</b><span>${rf.reachPct.toFixed(1)}%</span></div>
         <div class="pr-kv"><b>Frequência média estimada</b><span>${rf.avgFreq.toFixed(1)}x</span></div>`:""}
       </div>
+      <div class="pr-kv" style="margin-top:4px"><b>Estratégia em um parágrafo (qual canal faz o quê)</b><span>${esc(c.estrategiaParagrafo||"—")}</span></div>
     </div>
 
     ${personasHtml?`<div class="pr-section"><h2>Personas</h2>${personasHtml}</div>`:""}
